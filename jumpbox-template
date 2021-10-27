@@ -1,0 +1,171 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "JumpBox01-storageacoount-test01Type": {
+            "type": "string",
+            "defaultValue": "Standard_LRS",
+            "allowedValues": [
+                "Standard_LRS",
+                "Standard_ZRS",
+                "Standard_GRS",
+                "Standard_RAGRS",
+                "Premium_LRS"
+            ]
+        },
+        "JumpBox01Name": {
+            "type": "string",
+            "minLength": 1
+        },
+        "JumpBox01AdminUserName": {
+            "type": "string",
+            "minLength": 1
+        },
+        "JumpBox01AdminPassword": {
+            "type": "securestring"
+        },
+        "JumpBox01WindowsOSVersion": {
+            "type": "string",
+            "defaultValue": "2012-R2-Datacenter",
+            "allowedValues": [
+                "2008-R2-SP1",
+                "2012-Datacenter",
+                "2012-R2-Datacenter",
+                "Windows-Server-Technical-Preview"
+            ]
+        }
+    },
+    "resources": [
+        {
+            "name": "vnet01",
+            "type": "Microsoft.Network/virtualNetworks",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [],
+            "tags": {
+                "displayName": "vnet01"
+            },
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('vnet01Prefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('vnet01Subnet1Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('vnet01Subnet1Prefix')]"
+                        }
+                    },
+                    {
+                        "name": "[variables('vnet01Subnet2Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('vnet01Subnet2Prefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[variables('JumpBox01-storageacoount-test01Name')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [],
+            "tags": {
+                "displayName": "JumpBox01-storageacoount-test01"
+            },
+            "properties": {
+                "accountType": "[parameters('JumpBox01-storageacoount-test01Type')]"
+            }
+        },
+        {
+            "name": "[variables('JumpBox01NicName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', 'vnet01')]"
+            ],
+            "tags": {
+                "displayName": "JumpBox01Nic"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[variables('JumpBox01SubnetRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[parameters('JumpBox01Name')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', variables('JumpBox01-storageacoount-test01Name'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', variables('JumpBox01NicName'))]"
+            ],
+            "tags": {
+                "displayName": "JumpBox01"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('JumpBox01VmSize')]"
+                },
+                "osProfile": {
+                    "computerName": "[parameters('JumpBox01Name')]",
+                    "adminUsername": "[parameters('JumpBox01AdminUsername')]",
+                    "adminPassword": "[parameters('JumpBox01AdminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('JumpBox01ImagePublisher')]",
+                        "offer": "[variables('JumpBox01ImageOffer')]",
+                        "sku": "[parameters('JumpBox01WindowsOSVersion')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "JumpBox01OSDisk",
+                        "vhd": {
+                            "uri": "[concat('http://', variables('JumpBox01-storageacoount-test01Name'), '.blob.core.windows.net/', variables('JumpBox01StorageAccountContainerName'), '/', variables('JumpBox01OSDiskName'), '.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('JumpBox01NicName'))]"
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "variables": {
+        "vnet01Prefix": "10.88.0.0/16",
+        "vnet01Subnet1Name": "Subnet-1",
+        "vnet01Subnet1Prefix": "10.88.0.0/24",
+        "vnet01Subnet2Name": "Subnet-2",
+        "vnet01Subnet2Prefix": "10.88.1.0/24",
+        "JumpBox01-storageacoount-test01Name": "[concat('JumpBox01-storageacoount-test01', uniqueString(resourceGroup().id))]",
+        "JumpBox01ImagePublisher": "MicrosoftWindowsServer",
+        "JumpBox01ImageOffer": "WindowsServer",
+        "JumpBox01OSDiskName": "JumpBox01OSDisk",
+        "JumpBox01VmSize": "Standard_D1",
+        "JumpBox01VnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'vnet01')]",
+        "JumpBox01SubnetRef": "[concat(variables('JumpBox01VnetID'), '/subnets/', variables('vnet01Subnet1Name'))]",
+        "JumpBox01StorageAccountContainerName": "vhds",
+        "JumpBox01NicName": "[concat(parameters('JumpBox01Name'), 'NetworkInterface')]"
+    }
+}
