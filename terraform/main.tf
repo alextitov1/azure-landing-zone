@@ -15,12 +15,12 @@ provider "azurerm" {
 }
 
 resource "azurerm_resource_group" "rg" {
-  name     = "TFR_TEST_Lab01"
+  name     = "${var.prefix}-rg"
   location = var.location
 }
 
 resource "azurerm_virtual_network" "network" {
-  name                = "vnet01"
+  name                = "${var.prefix}-vnet01"
   address_space       = ["192.168.1.0/24"]
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
@@ -78,9 +78,10 @@ resource "azurerm_windows_virtual_machine" "jumphost" {
   name                = "jumphost01"
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
-  size                = "Standard_Da2_v4"
-  admin_username      = "alex"
-  admin_password      = "P@$$w0rd1234!"
+  size                = "Standard_D4_v3"
+  admin_username      = var.admin_username
+  admin_password      = var.admin_password
+  provision_vm_agent  = true
   network_interface_ids = [
     azurerm_network_interface.jumphost-nic01.id,
   ]
@@ -97,3 +98,20 @@ resource "azurerm_windows_virtual_machine" "jumphost" {
     version   = "latest"
   }
 }
+
+resource "azurerm_virtual_machine_extension" "post_provisioing" {
+  name                 = "postvmprovisioning"
+  publisher            = "Microsoft.Compute"
+  type                 = "CustomScriptExtension"
+  type_handler_version = "1.9"
+  virtual_machine_id   = azurerm_windows_virtual_machine.jumphost.id
+  settings             = <<SETTINGS
+  {
+    "commandToExecute": "powershell.exe -Command \"Install-WindowsFeature -Name Hyper-V -IncludeManagementTools -Restart \""
+  }
+SETTINGS
+}
+
+
+
+

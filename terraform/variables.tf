@@ -1,5 +1,6 @@
 variable "prefix" {
   description = "The prefix which should be used for all resources in this example"
+  default = "TRFtestlab"
 }
 
 variable "location" {
@@ -7,17 +8,12 @@ variable "location" {
   default = "australiaeast"
 }
 
-variable "resource_group_name" {
-  description = "The name of the resource group"
-  default = "testing"
-}
-
 variable "admin_username" {
   description = "Username for the Domain Administrator user"
-  default = "admin1"
+  default = "alex"
 }
 
 variable "admin_password" {
   description = "Password for the Adminstrator user"
-  default = "password1"
+  default = "P@$$w0rd1234!"
 }
