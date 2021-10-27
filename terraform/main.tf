@@ -16,7 +16,7 @@ provider "azurerm" {
 
 resource "azurerm_resource_group" "rg" {
   name     = "TFR_TEST_Lab01"
-  location = "australiaeast"
+  location = var.location
 }
 
 resource "azurerm_virtual_network" "network" {
@@ -78,7 +78,7 @@ resource "azurerm_windows_virtual_machine" "jumphost" {
   name                = "jumphost01"
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
-  size                = "Standard_D2_v3"
+  size                = "Standard_Da2_v4"
   admin_username      = "alex"
   admin_password      = "P@$$w0rd1234!"
   network_interface_ids = [
