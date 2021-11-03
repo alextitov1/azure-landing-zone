@@ -99,7 +99,20 @@ resource "azurerm_windows_virtual_machine" "jumphost" {
   }
 }
 
-resource "azurerm_virtual_machine_extension" "post_provisioing" {
+#resource "azurerm_virtual_machine_extension" "post_provisioing" {
+#  name                 = "postvmprovisioning"
+#  publisher            = "Microsoft.Compute"
+#  type                 = "CustomScriptExtension"
+#  type_handler_version = "1.9"
+#  virtual_machine_id   = azurerm_windows_virtual_machine.jumphost.id
+#  settings             = <<SETTINGS
+#  {
+#    "commandToExecute": "powershell.exe -Command \"Install-WindowsFeature -Name Hyper-V -IncludeManagementTools -Restart \""
+#  }
+#SETTINGS
+#}
+
+resource "azurerm_virtual_machine_extension" "choco" {
   name                 = "postvmprovisioning"
   publisher            = "Microsoft.Compute"
   type                 = "CustomScriptExtension"
@@ -107,11 +120,10 @@ resource "azurerm_virtual_machine_extension" "post_provisioing" {
   virtual_machine_id   = azurerm_windows_virtual_machine.jumphost.id
   settings             = <<SETTINGS
   {
-    "commandToExecute": "powershell.exe -Command \"Install-WindowsFeature -Name Hyper-V -IncludeManagementTools -Restart \""
+    "commandToExecute": "powershell.exe -Command \" Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1')) \""
   }
 SETTINGS
 }
-
 
 
 
