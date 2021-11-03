@@ -12,7 +12,7 @@ Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManage
 ```
 
 ```
-choco install googlecome vscode git vagrant   YES!!
+choco install -y googlecome vscode git vagrant
 ```
 
 
