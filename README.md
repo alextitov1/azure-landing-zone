@@ -4,6 +4,7 @@
 ## jump host modes
 
 ```powershell
+Set-MpPreference -DisableRealtimeMonitoring $false
 Uninstall-WindowsFeature Windows-Defender
 ```
 
@@ -21,6 +22,11 @@ New-NetNat -Name MyNATnetwork -InternalIPInterfaceAddressPrefix 172.16.0.0/24
 
 
 
+
+#destroy resource
+```
+terraform destroy -target azurerm_windows_virtual_machine.jumphost
+```
 
 #terraform and dsc examples
 

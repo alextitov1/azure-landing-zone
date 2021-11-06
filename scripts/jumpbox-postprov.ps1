@@ -9,13 +9,11 @@ iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocola
 ### install packages
 choco install -y googlecome vscode git vagrant
 
-
 ### install Hyper-v role
 Install-WindowsFeature -Name Hyper-V -IncludeManagementTools
 
 ### disable antivirus
-Uninstall-WindowsFeature Winchocdows-Defender
-
+Uninstall-WindowsFeature Windows-Defender
 
 ### restart host
 Restart-Computer
