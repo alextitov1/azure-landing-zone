@@ -38,23 +38,10 @@ resource "azurerm_windows_virtual_machine" "jumphost" {
   source_image_reference {
     publisher = "MicrosoftWindowsServer"
     offer     = "WindowsServer"
-    sku       = "2019-Datacenter"
+    sku       = "2022-Datacenter"
     version   = "latest"
   }
 }
-
-#resource "azurerm_virtual_machine_extension" "post_provisioing" {
-#  name                 = "postvmprovisioning"
-#  publisher            = "Microsoft.Compute"
-#  type                 = "CustomScriptExtension"
-#  type_handler_version = "1.9"
-#  virtual_machine_id   = azurerm_windows_virtual_machine.jumphost.id
-#  settings             = <<SETTINGS
-#  {
-#    "commandToExecute": "powershell.exe -Command \"Install-WindowsFeature -Name Hyper-V -IncludeManagementTools -Restart \""
-#  }
-#SETTINGS
-#}
 
 resource "azurerm_virtual_machine_extension" "post-provisioning" {
   name                 = "postvmprovisioning"

@@ -7,7 +7,7 @@ Set-MpPreference -DisableRealtimeMonitoring $false
 iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 
 ### install packages
-choco install -y googlecome vscode git vagrant
+choco install -y vscode git vagrant
 
 ### install Hyper-v role
 Install-WindowsFeature -Name Hyper-V -IncludeManagementTools

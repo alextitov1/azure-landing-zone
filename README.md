@@ -25,7 +25,7 @@ New-NetNat -Name MyNATnetwork -InternalIPInterfaceAddressPrefix 172.16.0.0/24
 
 #destroy resource
 ```
-terraform destroy -target azurerm_windows_virtual_machine.jumphost
+terraform destroy -target -auto-approve azurerm_windows_virtual_machine.jumphost
 ```
 
 #terraform and dsc examples
