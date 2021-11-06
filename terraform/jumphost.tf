@@ -56,7 +56,7 @@ resource "azurerm_windows_virtual_machine" "jumphost" {
 #SETTINGS
 #}
 
-resource "azurerm_virtual_machine_extension" "choco" {
+resource "azurerm_virtual_machine_extension" "post-provisioning" {
   name                 = "postvmprovisioning"
   publisher            = "Microsoft.Compute"
   type                 = "CustomScriptExtension"
@@ -64,7 +64,7 @@ resource "azurerm_virtual_machine_extension" "choco" {
   virtual_machine_id   = azurerm_windows_virtual_machine.jumphost.id
   settings             = <<SETTINGS
   {
-    "commandToExecute": "powershell.exe -Command \" Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1')) \""
+    "commandToExecute": "powershell.exe -Command \" Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/alextitov1/azure/main/scripts/jumpbox-postprov.ps1')) \""
   }
 SETTINGS
 }
