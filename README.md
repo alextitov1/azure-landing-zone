@@ -4,7 +4,24 @@
 ## jump host modes
 
 ```powershell
-Set-MpPreference -DisableRealtimeMonitoring $false
+Set-MpPreference -DisableRealtimeMonitoring $true
+Set-MpPreference -DisableArchiveScanning $true
+Set-MpPreference -DisableAutoExclusions $true
+Set-MpPreference -DisableBehaviorMonitoring $true
+Set-MpPreference -DisableBlockAtFirstSeen $true
+Set-MpPreference -DisableCatchupFullScan $true
+Set-MpPreference -DisableCatchupQuickScan $true
+Set-MpPreference -DisableEmailScanning $true
+Set-MpPreference -DisableIntrusionPreventionSystem $true
+Set-MpPreference -DisableIOAVProtection $true
+Set-MpPreference -DisablePrivacyMode $true
+Set-MpPreference -DisableRemovableDriveScanning $true
+Set-MpPreference -DisableRestorePoint $true
+Set-MpPreference -DisableScanningMappedNetworkDrivesForFullScan $true
+Set-MpPreference -DisableScanningNetworkFiles $true
+Set-MpPreference -DisableScriptScanning $true
+
+
 Uninstall-WindowsFeature Windows-Defender
 ```
 
