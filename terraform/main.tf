@@ -14,6 +14,12 @@ provider "azurerm" {
   features {}
 }
 
+backend "azurerm" {
+  resource_group_name  = "tf-githubaction"
+  storage_account_name = "tfgithubactions"
+  container_name       = "tfstateghactions"
+  key                  = "tfstateghactions.tfstate"
+}
 
 
 
