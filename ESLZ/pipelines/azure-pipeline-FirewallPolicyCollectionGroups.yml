@@ -3,17 +3,22 @@ name: $(BuildDefinitionName)_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
 trigger: none
 
 pool:
-  name: "ESLZ Build"
+  name: "ubuntu-latest"
 
 variables:
-  rg_storageaccount_name: rg-sndbx-tfstatefile-001
-  st_stfiles_name: stsndbxtfstate01
+  rg_storageaccount_name: nov-rg-sbx-tfstatefile-001
+  st_stfiles_name: novstsbxtfstate01
+  
   container_name: firewallpolicycollection
-  tf_code_path: 'terraform/development/network/firewallpolicycollection'
-  backendServiceArm: 'CloudDevOps-Sandbox-DEV'
+  tf_code_path: 'ESLZ/terraform/network/firewallpolicycollection'
+  backendServiceArm: 'tf-eslz-deployment'
 
 
 steps:
+  - task: TerraformInstaller@1
+    inputs:
+      terraformVersion: 'latest'
+
   - template: templates/template-tf-init.yml
     parameters:
       backend_rgstorageaccount_name: $(rg_storageaccount_name)
