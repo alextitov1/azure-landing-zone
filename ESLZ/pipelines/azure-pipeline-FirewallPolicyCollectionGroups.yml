@@ -3,7 +3,7 @@ name: $(BuildDefinitionName)_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
 trigger: none
 
 pool:
-  name: "ubuntu-latest"
+  vmImage: "ubuntu-latest"
 
 variables:
   rg_storageaccount_name: nov-rg-sbx-tfstatefile-001
