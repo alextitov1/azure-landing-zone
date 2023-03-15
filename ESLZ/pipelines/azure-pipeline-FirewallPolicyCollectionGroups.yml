@@ -1,0 +1,28 @@
+name: $(BuildDefinitionName)_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
+
+trigger: none
+
+pool:
+  name: "ESLZ Build"
+
+variables:
+  rg_storageaccount_name: rg-sndbx-tfstatefile-001
+  st_stfiles_name: stsndbxtfstate01
+  container_name: firewallpolicycollection
+  tf_code_path: 'terraform/development/network/firewallpolicycollection'
+  backendServiceArm: 'CloudDevOps-Sandbox-DEV'
+
+
+steps:
+  - template: templates/template-tf-init.yml
+    parameters:
+      backend_rgstorageaccount_name: $(rg_storageaccount_name)
+      backend_ststatefiles_name: $(st_stfiles_name)
+      backend_container_name: $(container_name)
+      tf_code_path: $(tf_code_path)
+      backend_serviceconnection: $(backendServiceArm)
+  
+  - template: templates/template-tf-plan.yml
+    parameters:
+      env_service_connection: $(backendServiceArm)
+      tf_code_path: $(tf_code_path)
