@@ -15,9 +15,6 @@ variables:
 
 
 steps:
-  - task: TerraformInstaller@1
-    inputs:
-      terraformVersion: 'latest'
 
   - template: templates/template-tf-init.yml
     parameters:
