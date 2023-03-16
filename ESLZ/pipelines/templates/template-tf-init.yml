@@ -1,8 +1,10 @@
+parameters:
 - name: backendBlobKey
   displayName: "Container blob key"
   type: string
   default: "terraform.tfstate"
 
+steps:
   - task: TerraformCLI@0
     displayName: "TF init $(terraformFilesPath)"
     inputs:
