@@ -4,12 +4,12 @@ name: $(BuildDefinitionName)_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
 
 trigger: none
 
-
 variables:
-  backendContainerName: firewallpolicycollection # blob in storag account
-  terraformFilesPath: 'ESLZ/terraform/network/firewallpolicycollection'
+  - name: backendContainerName
+    value: firewallpolicycollection # blob in storag account
+  - name:  terraformFilesPath
+    value: 'ESLZ/terraform/network/firewallpolicycollection'
 
-variables:
   - template: templates/template-common-variables.yml
 
 pool:
