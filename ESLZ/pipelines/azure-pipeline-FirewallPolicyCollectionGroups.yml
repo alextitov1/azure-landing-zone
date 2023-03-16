@@ -1,36 +1,46 @@
 name: $(BuildDefinitionName)_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
 # {Repo Name} - { Pipeline Description }
 
+parameters:
+- name: location
+  displayName: Location
+  type: string
+  default: australiaeast
+  values:
+    - australiaeast
+    - australiacentral
+    - australiasoutheast
+
 
 trigger: none
 
 variables:
-  - name: backendContainerName
-    value: firewallpolicycollection # blob in storag account
-  - name:  terraformFilesPath
-    value: 'ESLZ/terraform/network/firewallpolicycollection'
-
+  ## common environment variables
   - template: templates/template-common-variables.yml
+
+  ## backend specific for this pipeline variables
+  - name: backendContainerName # blob in a storage account
+    value: firewall # + location
+  
+  ## path to the tf root dir
+  - name:  terraformFilesPath
+    value: 'ESLZ/terraform/network/firewall'
+  
+  ## service connection to target if it's different from backend
+  - name: environmentServiceConnection 
+    value: $(backendServiceConnection)
+
+
+  ##TERRAFORM ENV VARS
+  - name: TF_VAR_environment
+    value: $(environment)
+  - name: TF_VAR_location
+    value: ${{parameters.location}}
 
 pool:
   name: $(agentPoolName)
 
 
-steps:
+stages:
+  - template: templates/template-tf-generic.yml
 
-  - bash: env
-    displayName: "List env vars"
-
-    # TF init
-  - template: templates/template-tf-init.yml
-    # parameters:
-    #   backend_rgstorageaccount_name: $(backendResourceGroup)
-    #   backend_ststatefiles_name: $(backendStorageAccount)
-    #   backend_container_name: $(backendContainerName)
-    #   tf_code_path: $(terraformFilesPath)
-    #   backend_serviceconnection: $(backendServiceArm)
-  
-  # - template: templates/template-tf-plan.yml
-  #   parameters:
-  #     env_service_connection: $(backendServiceArm)
-  #     tf_code_path: $(tf_code_path)

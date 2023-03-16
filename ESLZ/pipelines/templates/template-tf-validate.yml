@@ -1,0 +1,7 @@
+steps:
+  - task: TerraformCLI@0
+    displayName: "TF validate $(terraformFilesPath)"
+    inputs:
+      command: 'validate'
+      environmentServiceName: $(environmentServiceConnection)
+      allowTelemetryCollection: false

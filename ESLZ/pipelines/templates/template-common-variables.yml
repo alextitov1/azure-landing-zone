@@ -3,9 +3,10 @@ variables:
   environment: sndbx
   agentPoolName: TF-ESLZ-DEV
   # backend (storage account) related variables
-  backendServiceCon: "tf-eslz-deployment"
+  backendServiceConnection: "tf-eslz-deployment"
   backendResourceGroup: nov-rg-sbx-tfstatefile-001
   backendStorageAccount: novstsbxtfstate01
+  backendBlobKey: terraform.tfstate
 
   tfVersion: "1.4.0"
  

@@ -1,0 +1,37 @@
+stages:
+  - stage: validate
+    displayName: TF Validate
+    jobs:
+      - job:
+        steps:
+          - bash: env | sort
+            displayName: "List env vars"
+          - template: template-tf-init.yml
+          - template: template-tf-validate.yml
+
+  - stage: plan
+    displayName: TF Plan
+    jobs:
+      - job:
+        steps:
+          - template: template-tf-init.yml
+          - template: template-tf-plan.yml
+
+  - stage: apply
+    displayName: TF Apply
+    jobs:
+      - job: wait_for_approval
+        displayName: Wait for a manual approval
+        pool: server # run task on the server (not a build agent)
+        steps:
+          - task: ManualValidation@0
+            timeoutInMinutes: 60
+            inputs:
+              instructions: "There changes to approve"
+              onTimeout: reject
+              notifyUsers: ae.titov@gmail.com
+      - job: apply
+        dependsOn: wait_for_approval
+        steps:
+          - template: template-tf-init.yml
+          - template: template-tf-apply.yml

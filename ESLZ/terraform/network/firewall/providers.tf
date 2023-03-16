@@ -7,9 +7,9 @@ terraform {
   }
   backend "azurerm" {
     # using Service Principal
-    use_azuread_auth     = true
-    container_name = "firewall"
-    key = "terraform.tfstate"
+    use_azuread_auth = true
+    container_name   = "firewall"
+    key              = "terraform.tfstate"
 
   }
 }
@@ -17,5 +17,4 @@ terraform {
 provider "azurerm" {
   features {}
   storage_use_azuread = true
-  subscription_id = var.subscription_id
 }

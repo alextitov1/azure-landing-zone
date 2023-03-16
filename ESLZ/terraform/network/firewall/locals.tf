@@ -1,7 +1,7 @@
 locals {
- 
+
   all_tags = {
-    env       = var.environment,
+    env       = var.ENVIRONMENT,
     terraform = true
   }
 }

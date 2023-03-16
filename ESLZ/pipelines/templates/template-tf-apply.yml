@@ -1,0 +1,8 @@
+steps:
+  - task: TerraformCLI@0
+    displayName: "Terraform plan $(terraformFilesPath)"
+    inputs:
+      provider: 'azurerm'
+      command: 'apply'
+      environmentServiceName: $(environmentServiceConnection)
+      workingDirectory: $(terraformFilesPath)

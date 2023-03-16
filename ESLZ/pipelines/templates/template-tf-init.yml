@@ -1,19 +1,13 @@
-parameters:
-- name: backendBlobKey
-  displayName: "Container blob key"
-  type: string
-  default: "terraform.tfstate"
-
 steps:
   - task: TerraformCLI@0
     displayName: "TF init $(terraformFilesPath)"
     inputs:
       command: 'init'
       backendType: 'azurerm'
-      backendServiceArm: $(backendServiceCon)
+      backendServiceArm: $(backendServiceConnection)
       backendAzureRmResourceGroupName: $(backendResourceGroup)
       backendAzureRmStorageAccountName: $(backendStorageAccount)
       backendAzureRmContainerName: $(backendContainerName)
-      backendAzureRmKey: ${{ parameters.backendBlobKey }}
+      backendAzureRmKey: $(backendBlobKey)
       allowTelemetryCollection: false
       workingDirectory: $(terraformFilesPath)

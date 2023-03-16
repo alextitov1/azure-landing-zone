@@ -1,19 +1,11 @@
-parameters:
-- name: tf_code_path
-  displayName: "Relative path to tf code"
-  type: string
-
-- name: env_service_connection
-  displayName: "Service connection to access environment"
-  type: string
-
 steps:
-  - task: TerraformTaskV4@4
-    displayName: "Terraform plan --dir_path ${{parameters.tf_code_path}}"
+  - task: TerraformCLI@0
+    displayName: "Terraform plan $(terraformFilesPath)"
     inputs:
       provider: 'azurerm'
       command: 'plan'
-      environmentServiceNameAzureRM: ${{ parameters.env_service_connection }}
-      publishPlanResults: "plan result"
-      workingDirectory: ${{ parameters.tf_code_path }}
+      environmentServiceName: $(environmentServiceConnection)
+      publishPlanResults: "planResult"
+      workingDirectory: $(terraformFilesPath)
       commandOptions: "-out=$(System.DefaultWorkingDirectory)/terraform.tfplan"
+      allowTelemetryCollection: false
