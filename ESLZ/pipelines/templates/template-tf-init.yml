@@ -1,38 +1,17 @@
-parameters:
-- name: backend_rgstorageaccount_name
-  displayName: "Resource group with backend storage account"
-  type: string
-
-- name: backend_ststatefiles_name
-  displayName: "Backend storage account name"
-  type: string
-
-- name: backend_container_name
-  displayName: "Container name"
-  type: string
-
-- name: backend_blob_key
+- name: backendBlobKey
   displayName: "Container blob key"
   type: string
   default: "terraform.tfstate"
 
-- name: tf_code_path
-  displayName: "Relative path to tf code"
-  type: string
-
-- name: backend_serviceconnection
-  displayName: "Service connection to access storage account"
-  type: string
-
-steps:
-  - task: TerraformTaskV4@4
-    displayName: "Terraform init --dir_path ${{parameters.tf_code_path}}"
+  - task: TerraformCLI@0
+    displayName: "TF init $(terraformFilesPath)"
     inputs:
-      provider: 'azurerm'
       command: 'init'
-      workingDirectory: ${{ parameters.tf_code_path }}
-      backendAzureRmResourceGroupName: ${{ parameters.backend_rgstorageaccount_name }}
-      backendAzureRmStorageAccountName: ${{ parameters.backend_ststatefiles_name }}
-      backendAzureRmContainerName: ${{ parameters.backend_container_name }}
-      backendAzureRmKey: ${{ parameters.backend_blob_key }}
-      backendServiceArm: ${{ parameters.backend_serviceconnection }}
+      backendType: 'azurerm'
+      backendServiceArm: $(backendServiceCon)
+      backendAzureRmResourceGroupName: $(backendResourceGroup)
+      backendAzureRmStorageAccountName: $(backendStorageAccount)
+      backendAzureRmContainerName: $(backendContainerName)
+      backendAzureRmKey: ${{ parameters.backendBlobKey }}
+      allowTelemetryCollection: false
+      workingDirectory: $(terraformFilesPath)

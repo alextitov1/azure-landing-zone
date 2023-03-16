@@ -1,30 +1,35 @@
 name: $(BuildDefinitionName)_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
+# {Repo Name} - { Pipeline Description }
+
 
 trigger: none
 
-pool:
-  name: TF-ESLZ-DEV
 
 variables:
-  rg_storageaccount_name: nov-rg-sbx-tfstatefile-001
-  st_stfiles_name: novstsbxtfstate01
-  
-  container_name: firewallpolicycollection
-  tf_code_path: 'ESLZ/terraform/network/firewallpolicycollection'
-  backendServiceArm: 'tf-eslz-deployment'
+  backendContainerName: firewallpolicycollection # blob in storag account
+  terraformFilesPath: 'ESLZ/terraform/network/firewallpolicycollection'
+
+  - template: templates/template-common-variables.yml
+
+pool:
+  name: $(agentPoolName)
 
 
 steps:
 
+  - bash: env
+    displayName: "List env vars"
+
+    # TF init
   - template: templates/template-tf-init.yml
-    parameters:
-      backend_rgstorageaccount_name: $(rg_storageaccount_name)
-      backend_ststatefiles_name: $(st_stfiles_name)
-      backend_container_name: $(container_name)
-      tf_code_path: $(tf_code_path)
-      backend_serviceconnection: $(backendServiceArm)
+    # parameters:
+    #   backend_rgstorageaccount_name: $(backendResourceGroup)
+    #   backend_ststatefiles_name: $(backendStorageAccount)
+    #   backend_container_name: $(backendContainerName)
+    #   tf_code_path: $(terraformFilesPath)
+    #   backend_serviceconnection: $(backendServiceArm)
   
-  - template: templates/template-tf-plan.yml
-    parameters:
-      env_service_connection: $(backendServiceArm)
-      tf_code_path: $(tf_code_path)
+  # - template: templates/template-tf-plan.yml
+  #   parameters:
+  #     env_service_connection: $(backendServiceArm)
+  #     tf_code_path: $(tf_code_path)

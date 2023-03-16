@@ -1,0 +1,11 @@
+variables:
+#  ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/master') }}:
+  environment: sndbx
+  agentPoolName: TF-ESLZ-DEV
+  # backend (storage account) related variables
+  backendServiceCon: "tf-eslz-deployment"
+  backendResourceGroup: nov-rg-sbx-tfstatefile-001
+  backendStorageAccount: novstsbxtfstate01
+
+  tfVersion: "1.4.0"
+ 
