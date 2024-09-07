@@ -20,3 +20,5 @@ module dns './dns.bicep' = [ for dnsZone in items(dnsZones) : {
     dnsZoneName: dnsZone
   }
 }]
+
+// output testOutPut array = dns[0].outputs.txtRecords 

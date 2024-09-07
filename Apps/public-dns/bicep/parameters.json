@@ -7,10 +7,87 @@
         "dnsZones": {
             "value": {
                 "4esnok.su": {
-                    "aRecords": []
+                    "aRecords": {
+                        "@": {
+                            "ipv4": [
+                                "127.0.0.1",
+                                "127.0.0.2"
+                            ],
+                            "ttl": 600
+                        },
+                        "ovpn": {
+                            "ipv4": [
+                                "202.27.39.167"
+                            ]
+                        }
+                    },
+                    "aaaaRecords": {
+                        "@": {
+                            "ipv6": [
+                                "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+                                "2001:0db8:85a3:0000:0000:8a2e:0370:7335"
+                            ],
+                            "ttl": 600
+                        }
+                    },
+                    "cnameRecords": {
+                        "www": {
+                            "cname": "4esnok.su",
+                            "ttl": 600
+                        }
+                    },
+                    "mxRecords": {
+                        "@": {
+                            "mx": [
+                                {
+                                    "exchange": "mail.4esnok.su",
+                                    "preference": 10
+                                },
+                                {
+                                    "exchange": "mail1.4esnok.su",
+                                    "preference": 20
+                                }
+                            ],
+                            "ttl": 600
+                        }
+                    },
+                    "txtRecords": {
+                        "@": {
+                            "txt": [
+                                "v=spf1 mx -all",
+                                "google-site-verification=google-site-verification-code"
+                            ],
+                            "ttl": 600
+                        }
+                    }
                 },
                 "titov.spb.ru": {
-                    "aRecords": []
+                    "aRecords": {
+                        "@": {
+                            "ipv4": [
+                                "185.199.108.153"
+                            ]
+                        }
+                    },
+                    "cnameRecords": {
+                        "cheat": {
+                            "cname": "alextitov1.github.io."
+                        }
+                    },
+                    "txtRecords": {
+                        "_github-pages-challenge-alextitov1": {
+                            "txt": [
+                                "ac110200afe01008f13e1df737ee57"
+                            ]
+                        }
+                    },
+                    "aaaaRecords": {
+                        "@": {
+                            "ipv6": [
+                                "2606:50c0:8000::153"
+                            ]
+                        }
+                    }
                 }
             }
         }
