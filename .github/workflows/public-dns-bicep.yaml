@@ -24,8 +24,9 @@ jobs:
     - name: Deploy Bicep file
       uses: azure/arm-deploy@v2
       with:
-        scope: 'subscription'
+        # scope: 'subscription'
         region: 'Australia East'
+        resourceGroupName: 'rg-public-dns-01'
         # subscriptionId: ${{ env.MSDN_SUB }}
         # resourceGroupName: ${{ secrets.AZURE_RG }}
         template: ./Apps/public-dns/bicep/main.bicep

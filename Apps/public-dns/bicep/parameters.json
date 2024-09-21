@@ -1,9 +1,6 @@
 {
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "location": {
-            "value": "Australia East"
-        },
         "dnsZones": {
             "value": {
                 "4esnok.su": {
