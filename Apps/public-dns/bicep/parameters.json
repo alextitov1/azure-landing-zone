@@ -55,9 +55,9 @@
                         "@": {
                             "txt": [
                                 "v=spf1 mx -all",
-                                "google-site-verification=google-site-verification-code"
+                                "MS=ms55909409"
                             ],
-                            "ttl": 600
+                            "ttl": 3600
                         }
                     }
                 },
