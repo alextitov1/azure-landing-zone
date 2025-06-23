@@ -52,7 +52,7 @@
                         "@": {
                             "txt": [
                                 "v=spf1 include:spf.protection.outlook.com -all",
-                                "MS=ms80916008"
+                                "MS=ms81161978"
                             ],
                             "ttl": 3600
                         }
