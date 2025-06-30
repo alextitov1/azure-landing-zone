@@ -1,19 +1,19 @@
 locals {
-  location          = "newzealandnorth"
-  
+  location = "newzealandnorth"
+
   deployment_suffix = ["vm01"]
 
   vnet_address_space = ["10.5.0.0/16"]
 
   vm_sku = {
-    cpus = 2
-    memory_gb = 4
+    cpus         = 2
+    memory_gb    = 4
     disk_size_gb = 128
     vm_image = {
-        publisher = "MicrosoftWindowsServer"
-        offer     = "WindowsServer"
-        sku       = "2022-datacenter-g2"
-        version   = "latest"
+      publisher = "MicrosoftWindowsServer"
+      offer     = "WindowsServer"
+      sku       = "2022-datacenter-g2"
+      version   = "latest"
     }
   }
 
