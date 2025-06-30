@@ -31,28 +31,28 @@
                         "www": {
                             "cname": "4esnok.su",
                             "ttl": 600
+                        },
+                        "autodiscover": {
+                            "cname": "autodiscover.outlook.com",
+                            "ttl": 3600
                         }
                     },
                     "mxRecords": {
                         "@": {
                             "mx": [
                                 {
-                                    "exchange": "mail.4esnok.su",
-                                    "preference": 10
-                                },
-                                {
-                                    "exchange": "mail1.4esnok.su",
-                                    "preference": 20
+                                    "exchange": "4esnok-su.mail.protection.outlook.com",
+                                    "preference": 0
                                 }
                             ],
-                            "ttl": 600
+                            "ttl": 3600
                         }
                     },
                     "txtRecords": {
                         "@": {
                             "txt": [
-                                "v=spf1 mx -all",
-                                "MS=ms55909409"
+                                "v=spf1 include:spf.protection.outlook.com -all",
+                                "MS=ms81161978"
                             ],
                             "ttl": 3600
                         }
