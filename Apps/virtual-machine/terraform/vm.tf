@@ -24,6 +24,14 @@ module "windows_vm" {
   source           = "Azure/avm-res-compute-virtualmachine/azurerm"
   version          = "0.19.3"
   enable_telemetry = false
+  # priority         = "Spot"
+  # eviction_policy  = "Delete"
+
+  os_type                = "Windows"
+  sku_size               = module.vm_sku.sku
+  # sku_size               = "Standard_B2s_v2"
+  source_image_reference = local.vm_sku.vm_image
+  license_type           = "Windows_Server"
 
   resource_group_name = module.resource_group.name
   location            = local.location
@@ -90,7 +98,7 @@ custom_data = base64encode(<<-CD
   )
 
 extensions = {
-  install_winrms = {
+  config_vm = {
     name                        = "CustomScriptExtension"
     failure_suppression_enabled = false
     publisher                   = "Microsoft.Compute"
@@ -125,8 +133,5 @@ extensions = {
   #     }
   #   }
 
-  os_type                = "Windows"
-  sku_size               = module.vm_sku.sku
-  source_image_reference = local.vm_sku.vm_image
 
 }
