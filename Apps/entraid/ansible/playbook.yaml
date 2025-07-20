@@ -1,0 +1,52 @@
+---
+- name: Create Multiple Entra ID Users
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  
+  vars:
+    user_domain: "4esnok.su"
+    tenant_id: ""
+    users:
+      - user_principal_name: "john.doe"
+        display_name: "John Doe"
+        given_name: "John"
+        surname: "Doe"
+        department: "IT"
+        job_title: "Developer"
+        mail_nickname: "johndoe"
+      - user_principal_name: "jane.smith"
+        display_name: "Jane Smith"
+        given_name: "Jane"
+        surname: "Smith"
+        department: "HR"
+        job_title: "Manager"
+        mail_nickname: "janesmith"
+    
+    default_password: ""
+    
+  tasks:
+    - name: Create users in Entra ID
+      azure.azcollection.azure_rm_aduser:
+        auth_source: "cli"
+        # tenant: "64269fca-0667-45db-bbf4-db2a3041ebe0"
+        user_principal_name: "{{ item.user_principal_name }}@{{ user_domain }}"
+        display_name: "{{ item.display_name }}"
+        # given_name: "{{ item.given_name }}"
+        # surname: "{{ item.surname }}"
+        password_profile: "{{ default_password }}"
+        password_force_change: false
+        password_force_change_mfa: false
+        account_enabled: true
+        mail_nickname: "{{ item.user_principal_name }}"
+        # department: "{{ item.department | default(omit) }}"
+        # job_title: "{{ item.job_title | default(omit) }}"
+        state: present
+      loop: "{{ users }}"
+      register: users_result
+      
+    - name: Display results
+      debug:
+        msg: "Created user: {{ item.item.display_name }}"
+      loop: "{{ users_result.results }}"
+      when: item.changed

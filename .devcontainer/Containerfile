@@ -1,0 +1,30 @@
+FROM almalinux:9
+
+RUN dnf -y update && \
+    dnf -y install \
+        git \
+        which \
+        zsh \
+        sshpass \
+        util-linux-user
+
+# Ansible
+RUN python3 -m ensurepip && \
+    python3 -m pip install --upgrade pip && \
+    python3 -m pip install ansible-core ansible-lint \
+    # azcollection
+    && ansible-galaxy collection install azure.azcollection \
+    # install collection dependencies
+    && python3 -m pip install --root-user-action=ignore -r /root/.ansible/collections/ansible_collections/azure/azcollection/requirements.txt
+
+# oh myzsh
+RUN chsh root -s $(which zsh) && \
+    git clone https://github.com/ohmyzsh/ohmyzsh.git /root/ohmyzsh && \
+    /root/ohmyzsh/tools/install.sh && \
+    rm -rf /root/ohmyzsh
+
+# # az cli
+RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc \
+    && dnf install -y https://packages.microsoft.com/config/rhel/9.0/packages-microsoft-prod.rpm \
+    && dnf install -y azure-cli \
+    && dnf clean all
