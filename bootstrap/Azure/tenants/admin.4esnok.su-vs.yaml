@@ -1,0 +1,45 @@
+# Azure tenant registered on domain admin@4esnok.su with VS subscription
+default_custom_domain: 4esnok.su
+default_domain: admin4esnok.onmicrosoft.com
+entraid_tenant_id: 05af71f4-43e2-4c1a-8917-3bf5cb165cfe
+
+users:
+  - user_principal_name: "sysadmin@4esnok.su"
+    display_name: "(ADM) User"
+    department: "sysadmins"
+    job_title: "Site Reliability Engineer"
+    mail_nickname: "sysadmin"
+    # EntraID assignment
+    entraid_role_names:  # direct entraid role assignments
+      - Global Administrator
+
+    # onepassword
+    store_password_in_key_vault: true
+    key_vault_name: "azure_t1"
+
+  - user_principal_name: "developer@4esnok.su"
+    display_name: "(DEV) User"
+    department: "developers"
+    job_title: "developer"
+    mail_nickname: "developer1"
+
+groups:
+  - display_name: "az-4esnoksu-entraid-admins-r0"
+    assignable_to_role: false  # Requires AAD Premium.
+    # entraid_role_names:
+    #   - Global Administrator
+    members:
+      - sysadmin@4esnok.su
+  - display_name: "az-4esnoksu-aks-admins-r3"
+    members:
+      - sysadmin@4esnok.su
+
+pim_roles:
+  # - role_name: "Global Administrator"
+  #   assignment_type: "Group"
+  #   assignee_name: "grp-tenant-admins-mngmt-r1"
+  #   duration: "PT4H"
+  - role_name: "Global Reader"
+    assignment_type: "User"
+    assignee_name: "developer@4esnok.su"
+    duration: "PT8H"
