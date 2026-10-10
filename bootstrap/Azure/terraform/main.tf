@@ -118,3 +118,24 @@ module "entraid_role_assignment" {
 
 #   depends_on = [module.entraid_group, module.entraid_user]
 # }
+
+# HCP Terraform workload identities (OIDC): app registrations that HCP Terraform workspaces use to sign in to Azure
+locals {
+  hcp_workload_identities_by_workspace = {
+    for identity in try(local.tenant_config.hcp_workload_identities, []) : identity.workspace => identity
+  }
+}
+
+module "hcp_workload_identity" {
+  source   = "./modules/hcp_workload_identity"
+  for_each = local.hcp_workload_identities_by_workspace
+
+  organization            = local.tenant_config.hcp_organization
+  project                 = each.value.project
+  workspace               = each.key
+  tenant_id               = local.tenant_config.entraid_tenant_id
+  subscription_id         = try(each.value.subscription_id, null)
+  plan_graph_app_roles    = try(each.value.plan.graph_app_roles, [])
+  apply_graph_app_roles   = try(each.value.apply.graph_app_roles, [])
+  set_workspace_variables = try(each.value.set_workspace_variables, true)
+}

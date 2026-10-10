@@ -43,3 +43,34 @@ pim_roles:
     assignment_type: "User"
     assignee_name: "developer@4esnok.su"
     duration: "PT8H"
+
+# HCP Terraform workload identities (OIDC). Each entry creates a plan and an apply app registration,
+# trusts the workspace's run tokens, grants Microsoft Graph permissions and sets TFC_AZURE_* variables on the workspace.
+# The workspace must already exist (bootstrap/HCP/tier1).
+hcp_organization: 4esnok
+hcp_workload_identities:
+  # Azure tier 0: this configuration. Apply locally first, then switch the workspace to remote execution.
+  - workspace: 4esnok_su_entraid_bootstrap
+    project: 4esnok_su_azure
+    plan:
+      graph_app_roles:
+        - Directory.Read.All
+        - Application.Read.All
+        - RoleManagement.Read.Directory
+    apply:
+      graph_app_roles:
+        - User.ReadWrite.All
+        - Group.ReadWrite.All
+        - Application.ReadWrite.All
+        - AppRoleAssignment.ReadWrite.All
+        - RoleManagement.ReadWrite.Directory
+
+  # Azure tier 1 example: uncomment once the workspace exists in bootstrap/HCP/tier1.
+  # Azure RBAC for these identities (e.g. Reader for plan, Contributor for apply) is not managed here yet.
+  # - workspace: 4esnok_su_subscriptions
+  #   project: 4esnok_su_azure
+  #   subscription_id: 00000000-0000-0000-0000-000000000000
+  #   plan:
+  #     graph_app_roles: []
+  #   apply:
+  #     graph_app_roles: []

@@ -14,6 +14,8 @@ export TF_VAR_onepassword_service_account_token=$(op read "op://IT/op_azure_t1_r
 
 # token for terraform hcl
 export TF_TOKEN_app_terraform_io=$(op read "op://IT/terraform_hcp_4esnok_tier0/credential")
+# token for the tfe provider (sets workspace variables for HCP workload identities)
+export TFE_TOKEN="$TF_TOKEN_app_terraform_io"
 
 # env | sort
 
