@@ -1,8 +1,13 @@
 # Bootstrap Azure (EntraID) Tenant.
 
-- create users and groups in EntraID
-- assign PIM roles to groups
-- create service principals
+Each tenant is described by a YAML file in `tenants/`. The Terraform configuration in `terraform/` (Azure tier 0) manages:
+
+- users, including break-glass accounts, and groups (static or dynamic, with group-based licensing)
+- applications (app registrations and service principals) with OIDC federated credentials or client secrets
+- directory roles, PIM eligible roles, administrative units and access packages
+- tenant settings: security defaults, Conditional Access, authorization policy, cross-tenant access, custom domains and B2B guests
+
+`monitoring/` is a separate configuration that sends Entra ID logs to Log Analytics and alerts on break-glass use.
 
 ## How it works
 
@@ -13,6 +18,61 @@ The bootstrap process creates admin users, groups and service principals in the 
 - Terraform CLI
 - 1Password + 1Password CLI and access to the organization's vault(s)
 - Azure CLI
+
+## Tenant YAML reference
+
+Every section is optional. Features marked P1 or P2 need that Entra ID licence; leave them out of a tenant without it. The tenant files show each section, commented out where it does not apply.
+
+| Section | What it manages | Licence | Graph application permissions (tier-0 apply identity) |
+|---|---|---|---|
+| `users` | Users; `break_glass`, `password_length`, `account_enabled`, `usage_location`, `manager`, direct `entraid_role_names` | Free | `User.ReadWrite.All`, `RoleManagement.ReadWrite.Directory` |
+| `groups` | Security groups and members (users, applications, guests); `dynamic_rule`; `licenses` | Free; dynamic groups and licensing P1 | `Group.ReadWrite.All`; licensing `LicenseAssignment.ReadWrite.All`, `Organization.Read.All` |
+| `applications` | App registrations, see below | Free | `Application.ReadWrite.All`, `AppRoleAssignment.ReadWrite.All` |
+| `tenant_settings.security_defaults` | Security defaults on or off | Free | `Policy.Read.All`, `Policy.ReadWrite.ConditionalAccess` |
+| `tenant_settings.authorization_policy` | Default user and guest permissions (Graph property names) | Free | `Policy.ReadWrite.Authorization` |
+| `named_locations`, `authentication_strength_policies`, `conditional_access_policies` | Conditional Access | P1 | `Policy.Read.All`, `Policy.ReadWrite.ConditionalAccess` |
+| `pim_roles` | PIM eligible directory roles and their maximum activation `duration` | P2 | `RoleEligibilitySchedule.ReadWrite.Directory`, `RoleManagementPolicy.ReadWrite.Directory` |
+| `access_package_catalogs`, `access_packages` | Access packages with approval and access reviews | P2 or ID Governance | `EntitlementManagement.ReadWrite.All` |
+| `administrative_units` | Administrative units, members and scoped roles | Free; unit admins P1 | `AdministrativeUnit.ReadWrite.All`, `RoleManagement.ReadWrite.Directory` |
+| `guests` | B2B guest invitations | Free | `User.Invite.All` |
+| `cross_tenant_access` | Cross-tenant access default and partners (Graph property names) | Free | `Policy.ReadWrite.CrossTenantAccess` |
+| `domains` | Additional custom domains and their verification | Free | `Domain.ReadWrite.All` |
+| `monitoring` | Used by `monitoring/` only | Sign-in logs P1 | Azure RBAC on the subscription; Global or Security Administrator for the Entra ID diagnostic setting |
+
+Add a permission to the tier-0 apply application only when the tenant uses that section. The plan application needs the read equivalents (`Directory.Read.All` and `Policy.Read.All` cover most of them).
+
+Settings that every tenant already has (`tenant_settings`, `cross_tenant_access.default`, PIM activation duration) are updated in place: taking them out of the YAML leaves the tenant as it is.
+
+### Break-glass accounts
+
+A user with `break_glass: true` is an emergency access account. Each tenant has two, cloud-only on its `onmicrosoft.com` domain, with a permanent Global Administrator role and a 64-character password stored in 1Password (the plan fails if `store_password_in_key_vault` is not set). They are excluded from every Conditional Access policy automatically, and `monitoring/` alerts on any sign-in or change they make.
+
+After the first apply:
+
+1. Sign in with each account, register a FIDO2 security key (security defaults and Azure's mandatory MFA still require MFA for them), and keep the keys in separate safe places.
+2. Test each sign-in at least every few months.
+
+### MFA
+
+- **admin.4esnok.su (free):** `tenant_settings.security_defaults: true`. All users must register MFA; admins are always prompted.
+- **mail.4esnok.su (P1):** security defaults are off and replaced by Conditional Access: CA001 blocks legacy authentication and CA002 requires MFA for all users, both enabled; CA003 requires phishing-resistant MFA for admin roles in report-only mode. Switch CA003 to `enabled` once admins have FIDO2 keys, after checking its report-only results in the sign-in logs.
+
+Users register their own MFA methods at first sign-in; Terraform cannot do this for them.
+
+### Monitoring
+
+`monitoring/` reads the same tenant YAML. To enable it:
+
+1. Uncomment and fill in the tenant's `monitoring` section: subscription, resource group, workspace, alert email. Keep `log_categories` to `AuditLogs` in a tenant without P1.
+2. Add an HCP Terraform workspace for it in `bootstrap/HCP/tier1` with `execution_mode: local`.
+3. Run it locally as a Global Administrator (`az login`):
+
+```sh
+export TF_CLOUD_ORGANIZATION=4esnok TF_CLOUD_PROJECT=<project> TF_WORKSPACE=<monitoring workspace>
+export TF_TOKEN_app_terraform_io=$(op read "op://IT/terraform_hcp_4esnok_tier0/credential")
+terraform -chdir=monitoring init
+terraform -chdir=monitoring apply -var tenant_yaml_path=../tenants/<tenant>.yaml
+```
 
 ## Applications
 

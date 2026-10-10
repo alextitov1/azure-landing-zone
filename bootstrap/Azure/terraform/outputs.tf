@@ -7,3 +7,13 @@ output "applications" {
   }
   description = "Client IDs and service principal object IDs of the Entra ID applications"
 }
+
+output "domain_verification_records" {
+  value       = { for name, records in data.msgraph_resource.domain_verification_records : name => records.output.records }
+  description = "DNS records that prove ownership of each custom domain from the YAML"
+}
+
+output "break_glass_users" {
+  value       = local.break_glass_upns
+  description = "Emergency access accounts, excluded from Conditional Access"
+}
