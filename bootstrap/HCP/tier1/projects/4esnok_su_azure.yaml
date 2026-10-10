@@ -8,3 +8,6 @@ workspaces:
   4esnok_su_subscriptions:
     description: Subscription management
     tags: { env: prod, cloud: azure }
+  4esnok_su_test_from_github_pr:
+    description: Test workspace, will be deleted!
+    tags: { env: prod, cloud: azure }
