@@ -1,0 +1,6 @@
+# HCP Terraform organization settings, shared by tier 0 and tier 1.
+organization: 4esnok
+terraform_version: "~> 1.16"  # used by remote runs in every workspace
+github:
+  repo: alextitov1/azure-landing-zone
+  app_installation_name: alextitov1

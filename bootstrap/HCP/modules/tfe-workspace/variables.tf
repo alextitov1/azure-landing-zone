@@ -1,5 +1,5 @@
 variable "organization_name" {
-  description = "Name of the TFE organization."
+  description = "Name of the HCP Terraform organization."
   type        = string
 }
 
@@ -18,20 +18,17 @@ variable "workspaces" {
   description = "Map of workspaces to create within the project. Key is the workspace name."
   type = map(object({
     description       = optional(string)
+    execution_mode    = optional(string, "remote") # remote, local or agent
+    terraform_version = optional(string)           # version or constraint, e.g. "~> 1.16"
     auto_apply        = optional(bool, false)
     working_directory = optional(string)
+    trigger_patterns  = optional(list(string))
+    tags              = optional(map(string), {})
     vcs_repo = optional(object({
-      identifier     = string
-      branch         = optional(string)
-      oauth_token_id = string
+      identifier                 = string
+      branch                     = optional(string)
+      github_app_installation_id = string
     }))
-    tag_names = optional(list(string), [])
   }))
   default = {}
-}
-
-variable "execution_mode" {
-  description = "The execution mode for the workspaces (remote, local, agent)."
-  type        = string
-  default     = "remote"
 }
