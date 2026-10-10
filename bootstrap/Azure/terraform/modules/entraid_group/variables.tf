@@ -8,8 +8,8 @@ variable "entraid_group" {
   description = "Entra ID group configuration"
 }
 
-variable "user_ids" {
+variable "member_ids" {
   type        = map(string)
-  description = "Map of user principal names to their object IDs"
+  description = "Map of member names (user principal names and application display names) to their object IDs"
   default     = {}
 }

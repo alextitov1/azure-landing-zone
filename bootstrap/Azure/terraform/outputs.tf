@@ -1,9 +1,9 @@
-output "hcp_workload_identities" {
+output "applications" {
   value = {
-    for workspace, identity in module.hcp_workload_identity : workspace => {
-      client_ids                   = identity.client_ids
-      service_principal_object_ids = identity.service_principal_object_ids
+    for name, app in module.entraid_application : name => {
+      client_id                   = app.client_id
+      service_principal_object_id = app.service_principal_object_id
     }
   }
-  description = "Plan and apply identities per HCP Terraform workspace"
+  description = "Client IDs and service principal object IDs of the Entra ID applications"
 }

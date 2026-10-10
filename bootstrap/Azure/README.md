@@ -14,22 +14,35 @@ The bootstrap process creates admin users, groups and service principals in the 
 - 1Password + 1Password CLI and access to the organization's vault(s)
 - Azure CLI
 
-## HCP Terraform workload identities (OIDC)
+## Applications
 
-HCP Terraform workspaces sign in to Azure with [dynamic provider credentials](https://developer.hashicorp.com/terraform/cloud-docs/workspaces/dynamic-provider-credentials/azure-configuration) instead of a client secret. The `hcp_workload_identities` section of a tenant YAML file lists the workspaces; for each one the `hcp_workload_identity` module creates:
+The `applications` section of a tenant YAML file lists app registrations. Each entry creates the app registration and its enterprise application (service principal), and can set:
 
-- two app registrations and service principals, `hcp-<workspace>-plan` and `hcp-<workspace>-apply`, so plans run with read-only access
-- a federated credential on each, trusting `organization:<org>:project:<project>:workspace:<workspace>:run_phase:<plan|apply>` from `https://app.terraform.io`
-- Microsoft Graph application permissions (`graph_app_roles`) per phase
-- the workspace environment variables `TFC_AZURE_PROVIDER_AUTH`, `TFC_AZURE_PLAN_CLIENT_ID`, `TFC_AZURE_APPLY_CLIENT_ID`, `ARM_TENANT_ID` and, when `subscription_id` is set, `ARM_SUBSCRIPTION_ID`
+| Key | Purpose |
+|---|---|
+| `description` | Description of the app registration |
+| `owners` | User principal names of users from the `users` section |
+| `federated_credentials` | Workload identity federation: `name`, `issuer`, `subject`, optional `audiences` (default `api://AzureADTokenExchange`) and `description` |
+| `graph_app_roles` | Microsoft Graph application permissions, e.g. `Directory.Read.All` (admin consent is granted by the assignment) |
+| `entraid_role_names` | Permanent Entra ID directory roles for the service principal |
 
-The workspace must exist before this runs; workspaces are created in `bootstrap/HCP/tier1`. Do not set the same variables there, or the two configurations will fight over them.
+Groups can list applications as `members` by display name, next to users by user principal name. The `applications` output shows each application's client ID and service principal object ID.
+
+### HCP Terraform OIDC
+
+HCP Terraform workspaces sign in to Azure with [dynamic provider credentials](https://developer.hashicorp.com/terraform/cloud-docs/workspaces/dynamic-provider-credentials/azure-configuration) instead of a client secret. Each workspace gets two applications, one for plan runs (read-only) and one for apply runs, each with a federated credential:
+
+- issuer: `https://app.terraform.io`
+- subject: `organization:<org>:project:<project>:workspace:<workspace>:run_phase:<plan|apply>`
+
+The workspace's `TFC_AZURE_*` variables are set by `bootstrap/HCP/tier1` from the `azure_oidc` block of the workspace in its project YAML.
 
 ### Moving this configuration (Azure tier 0) to remote runs
 
-1. Run `./bootstrap-azure-su.sh apply` locally, signed in with `az login` as a Global Administrator. This creates the tier-0 identities and sets their variables on `4esnok_su_entraid_bootstrap`.
-2. Add the remaining inputs to the workspace as variables: `tenant_yaml_path` (Terraform), and `TF_VAR_onepassword_service_account_token` and `TFE_TOKEN` (sensitive environment variables).
-3. Set the workspace's working directory to `bootstrap/Azure/terraform`, so `../tenants` is uploaded with the configuration.
-4. Switch `execution_mode` to `remote` in `bootstrap/HCP/tier1/projects/4esnok_su_azure.yaml`.
+1. Run `./bootstrap-azure-su.sh apply` locally, signed in with `az login` as a Global Administrator. This creates the `hcp-4esnok_su_entraid_bootstrap-plan` and `-apply` applications.
+2. Copy their client IDs from `terraform output applications` into the `azure_oidc` block of `4esnok_su_entraid_bootstrap` in `bootstrap/HCP/tier1/projects/4esnok_su_azure.yaml`, and apply tier 1.
+3. Move the state from the current workspace (`4esnok_su/entraid_bootstrap`) to `4esnok_su_azure/4esnok_su_entraid_bootstrap`, and point `bootstrap-azure-su.sh` at it.
+4. Add the remaining inputs to the workspace: `tenant_yaml_path` (Terraform variable) and `TF_VAR_onepassword_service_account_token` (sensitive environment variable). Set its working directory to `bootstrap/Azure/terraform`, so `../tenants` is uploaded with the configuration.
+5. Switch `execution_mode` to `remote` in the project YAML.
 
-The tier-0 apply identity can change users, groups, app registrations and directory roles, so it controls the tenant. Restrict who can queue applies on its workspace and keep a break-glass Global Administrator account that is not managed by Terraform.
+The tier-0 apply application can change users, groups, applications and directory roles, so it controls the tenant. Restrict who can queue applies on its workspace and keep a break-glass Global Administrator account that is not managed by Terraform.

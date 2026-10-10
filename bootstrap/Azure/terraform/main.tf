@@ -10,6 +10,10 @@ locals {
   entraid_groups_by_display_name = {
     for group in local.tenant_config.groups : group.display_name => group
   }
+
+  entraid_applications_by_display_name = {
+    for app in try(local.tenant_config.applications, []) : app.display_name => app
+  }
 }
 
 # Validate that the YAML tenant ID matches the Azure tenant we're deploying to
@@ -29,13 +33,25 @@ module "entraid_user" {
   entraid_user = each.value
 }
 
+module "entraid_application" {
+  source   = "./modules/entraid_application"
+  for_each = local.entraid_applications_by_display_name
+
+  entraid_application = each.value
+  user_ids            = { for k, v in module.entraid_user : k => v.user_id }
+}
+
 module "entraid_group" {
   source        = "./modules/entraid_group"
   for_each      = local.entraid_groups_by_display_name
   entraid_group = each.value
-  user_ids      = { for k, v in module.entraid_user : k => v.user_id }
+  # members can be users (by user principal name) or applications (by display name)
+  member_ids = merge(
+    { for k, v in module.entraid_user : k => v.user_id },
+    { for k, v in module.entraid_application : k => v.service_principal_object_id },
+  )
 
-  depends_on = [module.entraid_user]
+  depends_on = [module.entraid_user, module.entraid_application]
 }
 
 # Permanent (active) Entra ID role assignments (defined at group and user level)
@@ -64,9 +80,20 @@ locals {
     ]
   ])
 
+  # Role assignments from applications (assigned to the service principal)
+  application_role_assignments = flatten([
+    for app in try(local.tenant_config.applications, []) : [
+      for role_name in try(app.entraid_role_names, []) : {
+        role_name       = role_name
+        assignee_name   = app.display_name
+        assignment_type = "ServicePrincipal"
+      }
+    ]
+  ])
+
   # Combined role assignments
   role_assignments_by_name = {
-    for role in concat(local.group_role_assignments, local.user_role_assignments) :
+    for role in concat(local.group_role_assignments, local.user_role_assignments, local.application_role_assignments) :
     "${role.role_name}-${role.assignee_name}" => role
   }
 
@@ -90,12 +117,13 @@ module "entraid_role_assignment" {
   source   = "./modules/entraid_role_assignment"
   for_each = local.role_assignments_by_name
 
-  role_assignment = each.value
-  role_id         = azuread_directory_role.activated[each.value.role_name].template_id
-  group_ids       = { for k, v in module.entraid_group : k => v.group_id }
-  user_ids        = { for k, v in module.entraid_user : k => v.user_id }
+  role_assignment       = each.value
+  role_id               = azuread_directory_role.activated[each.value.role_name].template_id
+  group_ids             = { for k, v in module.entraid_group : k => v.group_id }
+  user_ids              = { for k, v in module.entraid_user : k => v.user_id }
+  service_principal_ids = { for k, v in module.entraid_application : k => v.service_principal_object_id }
 
-  depends_on = [module.entraid_group, module.entraid_user]
+  depends_on = [module.entraid_group, module.entraid_user, module.entraid_application]
 }
 
 # PIM role eligibility assignments
@@ -118,24 +146,3 @@ module "entraid_role_assignment" {
 
 #   depends_on = [module.entraid_group, module.entraid_user]
 # }
-
-# HCP Terraform workload identities (OIDC): app registrations that HCP Terraform workspaces use to sign in to Azure
-locals {
-  hcp_workload_identities_by_workspace = {
-    for identity in try(local.tenant_config.hcp_workload_identities, []) : identity.workspace => identity
-  }
-}
-
-module "hcp_workload_identity" {
-  source   = "./modules/hcp_workload_identity"
-  for_each = local.hcp_workload_identities_by_workspace
-
-  organization            = local.tenant_config.hcp_organization
-  project                 = each.value.project
-  workspace               = each.key
-  tenant_id               = local.tenant_config.entraid_tenant_id
-  subscription_id         = try(each.value.subscription_id, null)
-  plan_graph_app_roles    = try(each.value.plan.graph_app_roles, [])
-  apply_graph_app_roles   = try(each.value.apply.graph_app_roles, [])
-  set_workspace_variables = try(each.value.set_workspace_variables, true)
-}

@@ -5,6 +5,6 @@ resource "azuread_group" "this" {
   security_enabled   = try(var.entraid_group.security_enabled, true)
 
   members = [
-    for upn in var.entraid_group.members : var.user_ids[upn]
+    for member in var.entraid_group.members : var.member_ids[member]
   ]
 }
