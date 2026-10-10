@@ -1,7 +1,8 @@
 This repository contains examples and PoCs for configuring Azure and other cloud environments using Infrastructure as Code (IaC) tools such as Bicep, Terraform and Ansible.
 
 
-- [Azure tenant bootstraps](./bootstrap/Azure/README.md)
+- [Azure tenant bootstrap](./bootstrap/Azure/README.md)
+- [HCP Terraform bootstrap](./bootstrap/HCP/README.md)
 
 ### TBD
 
