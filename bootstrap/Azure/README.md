@@ -25,6 +25,9 @@ The `applications` section of a tenant YAML file lists app registrations. Each e
 | `federated_credentials` | Workload identity federation: `name`, `issuer`, `subject`, optional `audiences` (default `api://AzureADTokenExchange`) and `description` |
 | `graph_app_roles` | Microsoft Graph application permissions, e.g. `Directory.Read.All` (admin consent is granted by the assignment) |
 | `entraid_role_names` | Permanent Entra ID directory roles for the service principal |
+| `client_secret` | Client secret stored in 1Password: `key_vault_name` (vault), optional `rotation_days` (default 180) and `overlap_days` (default 30) |
+
+Prefer `federated_credentials` where the caller supports OIDC. For a client secret, the 1Password item is titled after the application, with the client ID as username, the secret as password and the tenant and expiry in its notes. A new secret is created on the first apply after `rotation_days`; it is stored in 1Password before the old secret is deleted, so anything holding the old value must re-read it from 1Password. The secret expires `overlap_days` after its rotation date, which leaves time to run that apply. Like user passwords, the secret is also kept in the Terraform state.
 
 Groups can list applications as `members` by display name, next to users by user principal name. The `applications` output shows each application's client ID and service principal object ID.
 

@@ -12,3 +12,8 @@ output "service_principal_object_id" {
   value       = azuread_service_principal.this.object_id
   description = "The object ID of the enterprise application (service principal)"
 }
+
+output "client_secret_expires" {
+  value       = one(azuread_application_password.this[*].end_date)
+  description = "Expiry of the client secret, if one is managed"
+}

@@ -36,3 +36,40 @@ resource "azuread_app_role_assignment" "graph" {
   principal_object_id = azuread_service_principal.this.object_id
   resource_object_id  = data.azuread_service_principal.msgraph.object_id
 }
+
+# Client secret, rotated on a schedule and stored in 1Password.
+# On rotation the new secret is created and stored before the old one is deleted.
+resource "time_rotating" "client_secret" {
+  count = var.entraid_application.client_secret != null ? 1 : 0
+
+  rotation_days = var.entraid_application.client_secret.rotation_days
+}
+
+resource "azuread_application_password" "this" {
+  count = var.entraid_application.client_secret != null ? 1 : 0
+
+  application_id = azuread_application.this.id
+  display_name   = "managed by terraform"
+  end_date       = timeadd(time_rotating.client_secret[0].rotation_rfc3339, "${var.entraid_application.client_secret.overlap_days * 24}h")
+
+  rotate_when_changed = {
+    rotation = time_rotating.client_secret[0].id
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "onepassword_item" "client_secret" {
+  count = var.entraid_application.client_secret != null ? 1 : 0
+  vault = data.onepassword_vault.this[0].uuid
+
+  title    = var.entraid_application.display_name
+  category = "login"
+
+  username   = azuread_application.this.client_id
+  password   = azuread_application_password.this[0].value
+  url        = "https://login.microsoftonline.com/${data.azuread_client_config.current.tenant_id}"
+  note_value = "Entra ID application (client) secret. tenant_id: ${data.azuread_client_config.current.tenant_id}, client_id: ${azuread_application.this.client_id}, expires: ${azuread_application_password.this[0].end_date}. managed by terraform"
+}

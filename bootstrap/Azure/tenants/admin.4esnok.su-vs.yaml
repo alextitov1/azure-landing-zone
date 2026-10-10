@@ -65,8 +65,13 @@ applications:  # app registrations and their enterprise applications (service pr
       - AppRoleAssignment.ReadWrite.All
       - RoleManagement.ReadWrite.Directory
 
-  # Example: an application with a direct EntraID role, used as a group member by display name.
+  # Example: an application with a client secret stored in 1Password and a direct EntraID role,
+  # used as a group member by display name.
   # - display_name: "app-example"
+  #   client_secret:
+  #     key_vault_name: "azure_t1"  # 1Password vault
+  #     rotation_days: 180          # optional, default 180
+  #     overlap_days: 30            # optional, default 30: validity after the rotation date
   #   entraid_role_names:
   #     - Directory Readers
   # (and under groups: members: [app-example])
