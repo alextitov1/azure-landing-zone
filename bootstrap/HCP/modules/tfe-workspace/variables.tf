@@ -28,8 +28,17 @@ variable "workspaces" {
     vcs_repo = optional(object({
       identifier                 = string
       branch                     = optional(string)
-      github_app_installation_id = string
+      oauth_token_id             = optional(string) # OAuth VCS connection (works with team tokens)
+      github_app_installation_id = optional(string) # GitHub App (requires a user token)
     }))
   }))
   default = {}
+
+  validation {
+    condition = alltrue([
+      for ws in values(var.workspaces) :
+      ws.vcs_repo == null ? true : (ws.vcs_repo.oauth_token_id == null) != (ws.vcs_repo.github_app_installation_id == null)
+    ])
+    error_message = "vcs_repo needs exactly one of oauth_token_id or github_app_installation_id."
+  }
 }

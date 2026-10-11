@@ -23,6 +23,7 @@ resource "tfe_workspace" "this" {
     content {
       identifier                 = vcs_repo.value.identifier
       branch                     = vcs_repo.value.branch
+      oauth_token_id             = vcs_repo.value.oauth_token_id
       github_app_installation_id = vcs_repo.value.github_app_installation_id
     }
   }

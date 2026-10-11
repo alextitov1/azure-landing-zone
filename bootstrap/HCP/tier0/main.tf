@@ -10,6 +10,17 @@ data "tfe_github_app_installation" "this" {
   name = local.config.github.app_installation_name
 }
 
+# Organization-level GitHub connection for workspaces created by tier 1. Unlike the GitHub App,
+# it can be used with team tokens. Authenticates with a GitHub personal access token.
+resource "tfe_oauth_client" "github" {
+  name             = "github"
+  organization     = local.config.organization
+  service_provider = "github"
+  api_url          = "https://api.github.com"
+  http_url         = "https://github.com"
+  oauth_token      = var.github_token
+}
+
 # Pipeline identity: the HCP Terraform equivalent of a service principal.
 # The free plan cannot create custom teams, so the built-in owners team is used.
 data "tfe_team" "owners" {
@@ -43,9 +54,9 @@ module "hcp" {
       description       = "Tier 1: manages all other HCP Terraform projects and workspaces"
       execution_mode    = "remote"
       terraform_version = local.config.terraform_version
-      auto_apply        = false
+      auto_apply        = true # merge to main applies; review happens in the PR plan
       working_directory = "bootstrap/HCP/tier1"
-      trigger_patterns  = ["bootstrap/HCP/tier1/**", "bootstrap/HCP/config/**", "bootstrap/HCP/modules/**"]
+      trigger_patterns  = ["/bootstrap/HCP/tier1/**/*", "/bootstrap/HCP/config/**/*", "/bootstrap/HCP/modules/**/*"]
       tags              = { tier = "1" }
       vcs_repo = {
         identifier                 = local.config.github.repo
@@ -69,10 +80,10 @@ resource "tfe_variable" "tier1_tfe_token" {
   description  = "owners team token, managed by hcp-tier0"
 }
 
-resource "tfe_variable" "tier1_github_app_installation_id" {
+resource "tfe_variable" "tier1_github_oauth_token_id" {
   workspace_id = local.tier1_workspace_id
   category     = "terraform"
-  key          = "github_app_installation_id"
-  value        = data.tfe_github_app_installation.this.id
-  description  = "managed by hcp-tier0"
+  key          = "github_oauth_token_id"
+  value        = tfe_oauth_client.github.oauth_token_id
+  description  = "GitHub OAuth connection for tier-1 workspaces, managed by hcp-tier0"
 }
