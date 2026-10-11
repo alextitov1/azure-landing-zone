@@ -1,12 +1,17 @@
-# HCP Terraform bootstrap
+# HCP Terraform
+
+[Day two operations](#day-two-operations)
 
 This directory contains the bootstrap and day-two operations code for HCP (HashiCorp Cloud Platform).
 
-HCP Terraform is used as the backend for the Terraform state files of the deployments in this repository.
+HCP Terraform is used as the backend for the Terraform state files of the deployments in this repository. 
+Where it's possible, HPC workspaces are integrated with GitHub, 1Password and Azure, which makes it possible to deploy with a single commit to to the main branch.
 
 ## Prerequisites
 
-Secrets are managed in 1Password, but it is not strictly required.
+- HCP (Free Tier is sufficient)
+- 1Password for storing secrets
+
 
 ## Introduction
 
@@ -25,9 +30,10 @@ tier0/                     hcp-tier0, run with ./bootstrap-hcp.sh
 tier1/                     hcp-tier1, run by HCP Terraform
 tier1/projects/            one YAML file per project (!!update files in this directory to change projects and workspaces!!)
 modules/tfe-workspace/     project and workspaces, used by both tiers
+docs/                      diagrams
 ```
 
-## Bootstrap a new HCP account
+## Bootstrap a new HCP account (manual steps)
 
 1. **Create the organization.** Register an HCP account at https://portal.cloud.hashicorp.com,
    then sign in at https://app.terraform.io and create the organization.
@@ -38,9 +44,9 @@ modules/tfe-workspace/     project and workspaces, used by both tiers
 3. **Connect GitHub.** Go to **Workspaces → tier-0 → Version Control Workflow → GitHub.com**.
    - Authorize *Terraform Cloud by HashiCorp*.
    - Choose **Add another organization**.
-   - Once the repository appears in the list, cancel the wizard.
+   - !Once the repository appears in the list, cancel the wizard.
 
-4. **Create a token.** In HCP Terraform, click your avatar → **Account settings → Tokens → Create an API token**.
+4. **Create a user token.** In HCP Terraform, click your avatar → **Account settings → Tokens → Create an API token**.
    Save it in 1Password as `op://IT/terraform_hcp_4esnok_tier0/credential`.
 
 5. **Create a GitHub token.** In GitHub, go to **Settings → Developer settings → Personal access tokens → Fine-grained tokens**.
@@ -51,8 +57,7 @@ modules/tfe-workspace/     project and workspaces, used by both tiers
 
 6. **Set up 1Password for tier 1.** Tier 1 reads workspace secrets from the vault `azure_t1`, so the items it passes
    to workspaces must be there. Create a 1Password service account with read and write access to that vault only,
-   and save its token in the same vault as `op://azure_t1/op_hcp_rw_t1/credential`. Tier 1 uses it, and passes it
-   on to `4esnok_su_entraid`, which writes the passwords it generates to that vault.
+   and save its token in the same vault as `op://azure_t1/op_hcp_rw_t1/credential`.
 
 7. **Apply tier 0.**
    ```sh
@@ -67,6 +72,27 @@ modules/tfe-workspace/     project and workspaces, used by both tiers
    - the 1Password service account token on `hcp-tier1`, as `OP_SERVICE_ACCOUNT_TOKEN`
 
 8. **Check the pipeline.** Open `hcp-tier1` in the UI and check that its first run succeeds.
+
+> [!NOTE]
+> **Tokens**
+>
+> - The **user token** (step 4) acts as an admin user. It is used only to run `hcp-tier0` locally.
+>   Tier 0 needs it, because only a user token can link workspaces through the GitHub App.
+>
+> - (!need to refactor!) The **GitHub token** (step 5) is not an HCP Terraform token. It lets HCP Terraform read this repository and create
+>   webhooks for the workspaces that tier 1 links through the GitHub OAuth connection. Tier 1 cannot use the GitHub App
+>   for that, because HCP Terraform does not allow team tokens to link workspaces through it.
+>
+> - The **1Password token** (step 6) belongs to the service account `op_hcp_rw_t1`, which can only access the `azure_t1` vault. Tier 1 uses it to
+>   resolve `secrets:`. Anything in that vault can reach any workspace through a merged pull request. `azure_t1` also
+>   holds the passwords that bootstrap/Azure generates, including the break-glass accounts, so review `secrets:` changes
+>   carefully, and never store tier-0 credentials such as the HCP Terraform user token there.
+>
+> - The **team token** (managed by tier 0) of the `owners` team is the pipeline's identity: `hcp-tier1` uses it for every HCP Terraform
+>   API call, such as creating projects, workspaces and variables. Tier 0 creates and rotates it and stores it as
+>   `TFE_TOKEN` on `hcp-tier1`. It is visible under **Settings → Teams → owners**.
+
+![HCP Terraform tier 0](../../docs/pics/hcp-tier0-bootstrap.drawio.svg)
 
 ## Day-two operations
 Projects and workspaces are defined in `tier1/projects/*.yaml`, one file per project.
@@ -119,21 +145,4 @@ service account and stores them as sensitive variables, so the vault must be `az
 - **GitHub access:** to change which repositories the App can see, go to
   **GitHub → Settings → Applications → Installed GitHub Apps → Terraform Cloud → Configure**.
 
-## Tokens
-Four tokens are used, each for a different identity.
 
-The **user token** (step 4) acts as you. It is used only to run `hcp-tier0` locally.
-Tier 0 needs it, because only a user token can link workspaces through the GitHub App.
-
-The **team token** of the `owners` team is the pipeline's identity: `hcp-tier1` uses it for every HCP Terraform
-API call, such as creating projects, workspaces and variables. Tier 0 creates and rotates it and stores it as
-`TFE_TOKEN` on `hcp-tier1`. It is visible under **Settings → Teams → owners**.
-
-The **GitHub token** (step 5) is not an HCP Terraform token. It lets HCP Terraform read this repository and create
-webhooks for the workspaces that tier 1 links through the GitHub OAuth connection. Tier 1 cannot use the GitHub App
-for that, because HCP Terraform does not allow team tokens to link workspaces through it.
-
-The **1Password token** (step 6) belongs to the service account `op_hcp_rw_t1`, which can only access the `azure_t1` vault. Tier 1 uses it to
-resolve `secrets:`. Anything in that vault can reach any workspace through a merged pull request. `azure_t1` also
-holds the passwords that bootstrap/Azure generates, including the break-glass accounts, so review `secrets:` changes
-carefully, and never store tier-0 credentials such as the HCP Terraform user token there.
