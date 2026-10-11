@@ -9,6 +9,22 @@ locals {
     for f in fileset("${path.module}/projects", "*.yaml") :
     trimsuffix(f, ".yaml") => yamldecode(file("${path.module}/projects/${f}"))
   }
+
+  # Workspaces whose outputs provide Azure OIDC client IDs (azure_oidc.from_workspace)
+  oidc_source_workspaces = toset(flatten([
+    for p in values(local.projects) : [
+      for ws in values(p.workspaces) : ws.azure_oidc.from_workspace
+      if try(ws.azure_oidc.from_workspace, null) != null
+    ]
+  ]))
+}
+
+# hcp_oidc output of bootstrap/Azure: { tenant_id, workspaces = { <name> = { plan, apply } } }
+data "tfe_outputs" "oidc" {
+  for_each = local.oidc_source_workspaces
+
+  organization = local.config.organization
+  workspace    = each.key
 }
 
 module "project" {
@@ -21,24 +37,28 @@ module "project" {
 
   workspaces = {
     for name, ws in each.value.workspaces : name => merge(
-      { for k, v in ws : k => v if !contains(["vcs", "azure_oidc"], k) },
+      { for k, v in ws : k => v if !contains(["vcs", "azure_oidc", "env_vars"], k) },
       {
         terraform_version = try(ws.terraform_version, local.config.terraform_version)
-        env_vars = try(ws.azure_oidc, null) == null ? {} : merge(
-          {
-            TFC_AZURE_PROVIDER_AUTH   = "true"
-            TFC_AZURE_PLAN_CLIENT_ID  = ws.azure_oidc.plan_client_id
-            TFC_AZURE_APPLY_CLIENT_ID = ws.azure_oidc.apply_client_id
-            ARM_TENANT_ID             = ws.azure_oidc.tenant_id
-          },
-          try(ws.azure_oidc.subscription_id, null) == null ? {} : { ARM_SUBSCRIPTION_ID = ws.azure_oidc.subscription_id }
+        env_vars = merge(
+          try(ws.env_vars, {}),
+          try(ws.azure_oidc, null) == null ? {} : {
+            for k, v in {
+              TFC_AZURE_PROVIDER_AUTH = "true"
+              # Explicit values in the YAML win over the source workspace's outputs
+              TFC_AZURE_PLAN_CLIENT_ID  = try(ws.azure_oidc.plan_client_id, data.tfe_outputs.oidc[ws.azure_oidc.from_workspace].nonsensitive_values.hcp_oidc.workspaces[name].plan)
+              TFC_AZURE_APPLY_CLIENT_ID = try(ws.azure_oidc.apply_client_id, data.tfe_outputs.oidc[ws.azure_oidc.from_workspace].nonsensitive_values.hcp_oidc.workspaces[name].apply)
+              ARM_TENANT_ID             = try(ws.azure_oidc.tenant_id, data.tfe_outputs.oidc[ws.azure_oidc.from_workspace].nonsensitive_values.hcp_oidc.tenant_id)
+              ARM_SUBSCRIPTION_ID       = try(ws.azure_oidc.subscription_id, null)
+            } : k => v if v != null
+          }
         )
         working_directory = try(ws.vcs.working_directory, null)
-        trigger_patterns  = try(ws.vcs.trigger_patterns, ["${ws.vcs.working_directory}/**"], null)
+        trigger_patterns  = try(ws.vcs.trigger_patterns, ["/${ws.vcs.working_directory}/**/*"], null)
         vcs_repo = try(ws.vcs, null) == null ? null : {
-          identifier                 = local.config.github.repo
-          branch                     = try(ws.vcs.branch, "main")
-          github_app_installation_id = var.github_app_installation_id
+          identifier     = local.config.github.repo
+          branch         = try(ws.vcs.branch, "main")
+          oauth_token_id = var.github_oauth_token_id
         }
       }
     )
