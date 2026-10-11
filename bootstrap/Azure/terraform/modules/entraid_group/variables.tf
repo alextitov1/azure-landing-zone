@@ -1,6 +1,7 @@
 variable "entraid_group" {
   type = object({
     display_name       = string
+    description        = optional(string)
     mail_nickname      = optional(string)
     assignable_to_role = optional(bool, false)
     security_enabled   = optional(bool, true)

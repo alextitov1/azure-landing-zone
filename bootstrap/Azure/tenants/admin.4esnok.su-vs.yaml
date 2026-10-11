@@ -37,35 +37,23 @@ users:
     store_password_in_key_vault: true
     key_vault_name: "azure_t1"
 
-  # Emergency access (break-glass) account: cloud-only, on the onmicrosoft.com domain, excluded from
-  # Conditional Access. Register a FIDO2 key for it and test the sign-in regularly.
-  - user_principal_name: "breakglass02@admin4esnok.onmicrosoft.com"
-    display_name: "Break Glass 02"
-    department: "sysadmins"
-    job_title: "Emergency access account"
-    mail_nickname: "breakglass02"
-    break_glass: true
-    password_length: 64
-    entraid_role_names:
-      - Global Administrator
-    store_password_in_key_vault: true
-    key_vault_name: "azure_t1"
-
 groups:
-  - display_name: "az-4esnoksu-entraid-admins-r0"
+  - display_name: "sg-t0-entra-tenant-globaladmin"
+    description: "Global Administrator role for the tenant, doesn't work because the tenant is on the free tier"
     assignable_to_role: false  # Requires AAD Premium.
     # entraid_role_names:
     #   - Global Administrator
     members:
       - sysadmin@4esnok.su
-  - display_name: "az-4esnoksu-aks-admins-r3"
+  - display_name: "sg-t2-az-aks-admin"
+    description: "Admin access to AKS clusters"
     members:  # user principal names or application display names
       - sysadmin@4esnok.su
 
 applications:  # app registrations and their enterprise applications (service principals)
   # HCP Terraform workspace 4esnok_su_entraid_bootstrap (Azure tier 0) signs in with OIDC:
   # plan runs use the read-only identity, apply runs the privileged one.
-  - display_name: "hcp-4esnok_su_entraid_bootstrap-plan"
+  - display_name: "sp-t0-hcp-entraid-bootstrap-plan"
     description: "HCP Terraform plan runs of 4esnok/4esnok_su_azure/4esnok_su_entraid_bootstrap"
     owners:
       - sysadmin@4esnok.su
@@ -79,7 +67,7 @@ applications:  # app registrations and their enterprise applications (service pr
       - RoleManagement.Read.Directory
       - Policy.Read.All
 
-  - display_name: "hcp-4esnok_su_entraid_bootstrap-apply"
+  - display_name: "sp-t0-hcp-entraid-bootstrap-apply"
     description: "HCP Terraform apply runs of 4esnok/4esnok_su_azure/4esnok_su_entraid_bootstrap"
     owners:
       - sysadmin@4esnok.su
@@ -100,14 +88,14 @@ applications:  # app registrations and their enterprise applications (service pr
 
   # Example: an application with a client secret stored in 1Password and a direct EntraID role,
   # used as a group member by display name.
-  # - display_name: "app-example"
+  # - display_name: "sp-t1-example-directory-read"
   #   client_secret:
   #     key_vault_name: "azure_t1"  # 1Password vault
   #     rotation_days: 180          # optional, default 180
   #     overlap_days: 30            # optional, default 30: validity after the rotation date
   #   entraid_role_names:
   #     - Directory Readers
-  # (and under groups: members: [app-example])
+  # (and under groups: members: [sp-t1-example-directory-read])
 
 # PIM needs Entra ID P2, which this tenant does not have (see the example below)
 # pim_roles:
@@ -155,7 +143,7 @@ tenant_settings:
 
 # Dynamic group and group-based licensing (P1); licensed users need usage_location
 # groups:
-#   - display_name: "az-4esnoksu-developers-dyn"
+#   - display_name: "sg-t2-org-developers-dyn"
 #     dynamic_rule: 'user.department -eq "developers"'
 #     licenses:
 #       - sku: "SPB"  # SKU part number (Microsoft 365 Business Premium)
@@ -174,7 +162,7 @@ tenant_settings:
 # access_packages:
 #   - display_name: "Developer access"
 #     catalog: "General"
-#     groups: ["az-4esnoksu-developers"]
+#     groups: ["sg-t2-org-developers"]
 #     approvers: ["sysadmin@4esnok.su"]
 #     duration_days: 90
 #     review:

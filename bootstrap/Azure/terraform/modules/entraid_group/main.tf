@@ -1,5 +1,6 @@
 resource "azuread_group" "this" {
   display_name       = var.entraid_group.display_name
+  description        = var.entraid_group.description
   mail_nickname      = try(var.entraid_group.mail_nickname, var.entraid_group.display_name)
   assignable_to_role = var.entraid_group.assignable_to_role
   security_enabled   = var.entraid_group.security_enabled

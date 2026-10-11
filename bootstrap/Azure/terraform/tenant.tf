@@ -4,6 +4,9 @@
 locals {
   tenant_settings = try(local.tenant_config.tenant_settings, {})
 
+  # Remote runs sign in with the workspace's dynamic credentials; local runs use the Azure CLI login
+  remote_run = var.tfc_azure_dynamic_credentials != null
+
   domains_by_name = {
     for domain in try(local.tenant_config.domains, []) : domain.name => domain
   }
@@ -23,8 +26,10 @@ resource "msgraph_update_resource" "authorization_policy" {
 }
 
 # Security defaults: free baseline MFA. Must be off before Conditional Access policies can be created.
+# Needs Policy.ReadWrite.ConditionalAccess, which Azure CLI tokens never carry, so it is applied only
+# in remote runs (OIDC as the tier-0 apply application). New tenants have security defaults on.
 resource "msgraph_update_resource" "security_defaults" {
-  count = try(local.tenant_settings.security_defaults, null) != null ? 1 : 0
+  count = try(local.tenant_settings.security_defaults, null) != null && local.remote_run ? 1 : 0
 
   url = "policies/identitySecurityDefaultsEnforcementPolicy"
   body = {
@@ -80,3 +85,10 @@ resource "msgraph_resource_action" "domain_verify" {
 
 # The tenant's custom domain from the YAML must already be verified
 data "azuread_domains" "all" {}
+
+check "local_run_skips_security_defaults" {
+  assert {
+    condition     = local.remote_run || try(local.tenant_settings.security_defaults, null) == null
+    error_message = "security_defaults is not applied in local runs (the Azure CLI token lacks Policy.ReadWrite.ConditionalAccess). It is applied by the next remote run."
+  }
+}

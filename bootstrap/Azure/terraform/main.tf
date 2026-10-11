@@ -30,6 +30,18 @@ resource "null_resource" "validate_tenant" {
     }
     precondition {
       condition = alltrue([
+        for name in keys(local.entraid_groups_by_display_name) : can(regex("^(sg|m365)-t[0-2]-(entra|az|app|org)(-[a-z0-9]+)+$", name))
+      ])
+      error_message = "Group names must follow sg-<tier>-<target>-<scope>-<role>, e.g. sg-t0-entra-tenant-globaladmin (see README, Naming)."
+    }
+    precondition {
+      condition = alltrue([
+        for name in keys(local.entraid_applications_by_display_name) : can(regex("^(sp|app|mi)-t[0-2](-[a-z0-9]+){2,}$", name))
+      ])
+      error_message = "Application names must follow <sp|app|mi>-<tier>-<consumer>-<target>-<access>, e.g. sp-t0-hcp-entraid-bootstrap-apply (see README, Naming)."
+    }
+    precondition {
+      condition = alltrue([
         for user in local.tenant_config.users : try(user.store_password_in_key_vault, false) if try(user.break_glass, false)
       ])
       error_message = "Break-glass users must set store_password_in_key_vault: true, so their password is kept in 1Password."

@@ -47,14 +47,16 @@ users:
     key_vault_name: "azure_t1"
 
 groups:
-  - display_name: az-mail4esnoksu-entraid-admins-r0
+  - display_name: sg-t0-entra-tenant-globaladmin
+    description: Global Administrator role for the tenant
     assignable_to_role: true
     entraid_role_names:
       - Global Administrator
     members:
       - sysadmin@mail.4esnok.su
 
-  - display_name: az-mail4esnoksu-entraid-admins-readonly-r3
+  - display_name: sg-t0-entra-tenant-globalreader
+    description: Global Reader role for the tenant
     assignable_to_role: true
     entraid_role_names:
       - "Global Reader"
@@ -135,7 +137,7 @@ conditional_access_policies:
 
 # Dynamic group and group-based licensing (P1); licensed users need usage_location
 # groups:
-#   - display_name: "az-mail4esnoksu-developers-dyn"
+#   - display_name: "sg-t2-org-developers-dyn"
 #     dynamic_rule: 'user.department -eq "developers"'
 #     licenses:
 #       - sku: "SPB"  # SKU part number (Microsoft 365 Business Premium)
@@ -154,7 +156,7 @@ conditional_access_policies:
 # access_packages:
 #   - display_name: "Developer access"
 #     catalog: "General"
-#     groups: ["az-mail4esnoksu-developers"]
+#     groups: ["sg-t2-org-developers"]
 #     approvers: ["sysadmin@mail.4esnok.su"]
 #     duration_days: 90
 #     review:
