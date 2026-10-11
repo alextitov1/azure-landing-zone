@@ -87,3 +87,13 @@ resource "tfe_variable" "tier1_github_oauth_token_id" {
   value        = tfe_oauth_client.github.oauth_token_id
   description  = "GitHub OAuth connection for tier-1 workspaces, managed by hcp-tier0"
 }
+
+# 1Password service account (vault azure_t1): tier 1 resolves the `secrets:` references in projects/*.yaml with it
+resource "tfe_variable" "tier1_onepassword_token" {
+  workspace_id = local.tier1_workspace_id
+  category     = "env"
+  key          = "OP_SERVICE_ACCOUNT_TOKEN"
+  value        = var.tier1_onepassword_token
+  sensitive    = true
+  description  = "1Password service account op_hcp_rw_t1 (vault azure_t1), managed by hcp-tier0"
+}

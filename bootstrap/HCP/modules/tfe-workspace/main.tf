@@ -53,3 +53,23 @@ resource "tfe_variable" "env" {
   value        = each.value.value
   description  = "managed by hcp-tier1"
 }
+
+# Secrets (e.g. from 1Password). Keys are not secret, so they are unmarked for for_each.
+locals {
+  secret_env_vars = merge([
+    for ws_name, vars in var.secret_env_vars : {
+      for key, value in vars : "${ws_name}/${key}" => { workspace = ws_name, key = key, value = value }
+    }
+  ]...)
+}
+
+resource "tfe_variable" "secret_env" {
+  for_each = toset(nonsensitive(keys(local.secret_env_vars)))
+
+  workspace_id = tfe_workspace.this[local.secret_env_vars[each.key].workspace].id
+  category     = "env"
+  key          = nonsensitive(local.secret_env_vars[each.key].key)
+  value        = local.secret_env_vars[each.key].value
+  sensitive    = true
+  description  = "managed by hcp-tier1 (1Password)"
+}

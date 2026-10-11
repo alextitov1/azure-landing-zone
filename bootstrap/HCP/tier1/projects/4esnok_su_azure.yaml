@@ -10,13 +10,14 @@ workspaces:
 
     # Phase 2 (pipeline): once phase 1 has created sp-t0-hcp-entraid-bootstrap-plan/-apply, replace the
     # line above with the block below. Runs then execute in HCP Terraform as those identities (OIDC)
-    # and start on merge to main. First add the sensitive environment variable
-    # TF_VAR_onepassword_service_account_token to this workspace in the HCP UI.
+    # and start on merge to main.
     execution_mode: remote
     azure_oidc:
       from_workspace: 4esnok_su_entraid   # tenant and client IDs from this workspace's hcp_oidc output
     env_vars:
       TF_VAR_tenant_yaml_path: ../tenants/admin.4esnok.su-vs.yaml
+    secrets:  # sensitive environment variables, read from 1Password by tier 1 (vault azure_t1)
+      TF_VAR_onepassword_service_account_token: op://azure_t1/op_hcp_rw_t1/credential
     vcs:
       working_directory: bootstrap/Azure/terraform
       trigger_patterns: ["/bootstrap/Azure/terraform/**/*", "/bootstrap/Azure/tenants/admin.4esnok.su-vs.yaml"]

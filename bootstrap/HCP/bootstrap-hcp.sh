@@ -14,4 +14,8 @@ export TFE_TOKEN="$TOKEN"                   # tfe provider
 TF_VAR_github_token=$(op read "op://IT/hcp_terraform_tier1/credential")
 export TF_VAR_github_token
 
+# 1Password service account for tier 1 (vault azure_t1)
+TF_VAR_tier1_onepassword_token=$(op read "op://azure_t1/op_hcp_rw_t1/credential")
+export TF_VAR_tier1_onepassword_token
+
 terraform -chdir=./tier0 "$@"

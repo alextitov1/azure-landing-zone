@@ -49,7 +49,12 @@ modules/tfe-workspace/     project and workspaces, used by both tiers
    Save it in 1Password as `op://IT/hcp_terraform_tier1/credential`.
    If HCP cannot create webhooks with it, use a classic token with the `repo` and `admin:repo_hook` scopes instead.
 
-6. **Apply tier 0.**
+6. **Set up 1Password for tier 1.** Tier 1 reads workspace secrets from the vault `azure_t1`, so the items it passes
+   to workspaces must be there. Create a 1Password service account with read and write access to that vault only,
+   and save its token in the same vault as `op://azure_t1/op_hcp_rw_t1/credential`. Tier 1 uses it, and passes it
+   on to `4esnok_su_entraid`, which writes the passwords it generates to that vault.
+
+7. **Apply tier 0.**
    ```sh
    ./bootstrap-hcp.sh init
    ./bootstrap-hcp.sh apply
@@ -59,8 +64,9 @@ modules/tfe-workspace/     project and workspaces, used by both tiers
    - the `hcp` project
    - the `hcp-tier1` workspace, linked to this repository, with the token set as `TFE_TOKEN`
    - a GitHub OAuth connection, used by the pipeline workspaces that tier 1 creates
+   - the 1Password service account token on `hcp-tier1`, as `OP_SERVICE_ACCOUNT_TOKEN`
 
-7. **Check the pipeline.** Open `hcp-tier1` in the UI and check that its first run succeeds.
+8. **Check the pipeline.** Open `hcp-tier1` in the UI and check that its first run succeeds.
 
 ## Day-two operations
 Projects and workspaces are defined in `tier1/projects/*.yaml`, one file per project.
@@ -91,10 +97,18 @@ Optional workspace fields:
 | `vcs.trigger_patterns` | `/<working_directory>/**/*` (every file below it) |
 | `env_vars` | none; environment variables set on the workspace |
 | `azure_oidc` | none; Azure dynamic credentials, see below |
+| `secrets` | none; sensitive environment variables from 1Password, see below |
 
 `vcs` links the workspace to this repository through the GitHub OAuth connection created by tier 0.
 `azure_oidc` sets the `TFC_AZURE_*` variables. With `from_workspace: <name>`, the tenant and client IDs are read
 from the `hcp_oidc` output of that workspace; `tenant_id`, `plan_client_id` and `apply_client_id` can also be set directly.
+`secrets` maps environment variable names to 1Password references, `op://<vault>/<item>/<field>`, where the field is
+a built-in one (`credential`, `password`, ...) or `<section>/<field>`. Tier 1 reads them with its 1Password
+service account and stores them as sensitive variables, so the vault must be `azure_t1`:
+```yaml
+    secrets:
+      TF_VAR_onepassword_service_account_token: op://azure_t1/op_hcp_rw_t1/credential
+```
 
 ## Maintenance
 - **Pipeline token:** `hcp-tier1` uses this token (`TFE_TOKEN`) to manage projects and workspaces.
@@ -106,7 +120,7 @@ from the `hcp_oidc` output of that workspace; `tenant_id`, `plan_client_id` and 
   **GitHub → Settings → Applications → Installed GitHub Apps → Terraform Cloud → Configure**.
 
 ## Tokens
-Three tokens are used, each for a different identity.
+Four tokens are used, each for a different identity.
 
 The **user token** (step 4) acts as you. It is used only to run `hcp-tier0` locally.
 Tier 0 needs it, because only a user token can link workspaces through the GitHub App.
@@ -118,3 +132,8 @@ API call, such as creating projects, workspaces and variables. Tier 0 creates an
 The **GitHub token** (step 5) is not an HCP Terraform token. It lets HCP Terraform read this repository and create
 webhooks for the workspaces that tier 1 links through the GitHub OAuth connection. Tier 1 cannot use the GitHub App
 for that, because HCP Terraform does not allow team tokens to link workspaces through it.
+
+The **1Password token** (step 6) belongs to the service account `op_hcp_rw_t1`, which can only access the `azure_t1` vault. Tier 1 uses it to
+resolve `secrets:`. Anything in that vault can reach any workspace through a merged pull request. `azure_t1` also
+holds the passwords that bootstrap/Azure generates, including the break-glass accounts, so review `secrets:` changes
+carefully, and never store tier-0 credentials such as the HCP Terraform user token there.

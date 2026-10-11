@@ -1,6 +1,7 @@
 # Tier 1: all HCP Terraform projects and workspaces except tier 0 and tier 1.
 # One YAML file per project in ./projects. A workspace with a `vcs` block is a pipeline;
-# a workspace with an `azure_oidc` block signs in to Azure with dynamic credentials.
+# a workspace with an `azure_oidc` block signs in to Azure with dynamic credentials;
+# `secrets` sets sensitive environment variables from 1Password references (op://<vault>/<item>/<field>).
 
 locals {
   config = yamldecode(file("${path.module}/../config/organization.yaml"))
@@ -19,6 +20,47 @@ locals {
   ]))
 }
 
+# 1Password references from `secrets:`, parsed into vault, item and field
+locals {
+  secret_refs = {
+    for ref in distinct(flatten([
+      for p in values(local.projects) : [for ws in values(p.workspaces) : values(try(ws.secrets, {}))]
+    ])) :
+    ref => {
+      vault = regex("^op://([^/]+)/([^/]+)/(.+)$", ref)[0]
+      item  = regex("^op://([^/]+)/([^/]+)/(.+)$", ref)[1]
+      field = regex("^op://([^/]+)/([^/]+)/(.+)$", ref)[2] # built-in field (credential, password, ...) or <section>/<field>
+    }
+  }
+}
+
+data "onepassword_vault" "secrets" {
+  for_each = toset([for r in values(local.secret_refs) : r.vault])
+  name     = each.key
+}
+
+data "onepassword_item" "secrets" {
+  for_each = toset([for r in values(local.secret_refs) : "${r.vault}/${r.item}"])
+  vault    = data.onepassword_vault.secrets[split("/", each.key)[0]].uuid
+  title    = split("/", each.key)[1]
+}
+
+locals {
+  secret_values = {
+    for ref, r in local.secret_refs : ref => (
+      length(split("/", r.field)) == 2
+      # <section>/<field>: custom field in a named section
+      ? one(flatten([
+        for s in data.onepassword_item.secrets["${r.vault}/${r.item}"].section : [
+          for f in s.field : f.value if s.label == split("/", r.field)[0] && f.label == split("/", r.field)[1]
+        ]
+      ]))
+      # built-in field, e.g. credential or password
+      : data.onepassword_item.secrets["${r.vault}/${r.item}"][r.field]
+    )
+  }
+}
+
 # hcp_oidc output of bootstrap/Azure: { tenant_id, workspaces = { <name> = { plan, apply } } }
 data "tfe_outputs" "oidc" {
   for_each = local.oidc_source_workspaces
@@ -35,9 +77,15 @@ module "project" {
   project_name        = each.value.project
   project_description = try(each.value.description, null)
 
+  secret_env_vars = {
+    for name, ws in each.value.workspaces : name => {
+      for key, ref in ws.secrets : key => local.secret_values[ref]
+    } if try(ws.secrets, null) != null
+  }
+
   workspaces = {
     for name, ws in each.value.workspaces : name => merge(
-      { for k, v in ws : k => v if !contains(["vcs", "azure_oidc", "env_vars"], k) },
+      { for k, v in ws : k => v if !contains(["vcs", "azure_oidc", "env_vars", "secrets"], k) },
       {
         terraform_version = try(ws.terraform_version, local.config.terraform_version)
         env_vars = merge(

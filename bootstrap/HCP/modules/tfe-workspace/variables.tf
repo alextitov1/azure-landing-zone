@@ -14,6 +14,13 @@ variable "project_description" {
   default     = null
 }
 
+variable "secret_env_vars" {
+  description = "Sensitive environment variables per workspace: { <workspace> = { <key> = <value> } }."
+  type        = map(map(string))
+  sensitive   = true
+  default     = {}
+}
+
 variable "workspaces" {
   description = "Map of workspaces to create within the project. Key is the workspace name."
   type = map(object({
