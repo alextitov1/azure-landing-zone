@@ -17,11 +17,11 @@ users:
     store_password_in_key_vault: true
     key_vault_name: "azure_t1"
 
-  - user_principal_name: "developer@4esnok.su"
-    display_name: "(DEV) User"
-    department: "developers"
-    job_title: "developer"
-    mail_nickname: "developer1"
+  # - user_principal_name: "developer@4esnok.su"
+  #   display_name: "(DEV) User"
+  #   department: "developers"
+  #   job_title: "developer"
+  #   mail_nickname: "developer1"
 
   # Emergency access (break-glass) account: cloud-only, on the onmicrosoft.com domain, excluded from
   # Conditional Access. Register a FIDO2 key for it and test the sign-in regularly.
