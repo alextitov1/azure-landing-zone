@@ -5,14 +5,10 @@ variable "entraid_user" {
     department                  = string
     job_title                   = string
     mail_nickname               = string
+    account_enabled             = optional(bool, true)
+    usage_location              = optional(string) # two-letter country code, required for licence assignment
+    password_length             = optional(number, 15)
     store_password_in_key_vault = optional(bool)
     key_vault_name              = optional(string)
   })
-  default = {
-    user_principal_name = "adm_test@4esnok.su"
-    display_name        = ""
-    department          = ""
-    job_title           = ""
-    mail_nickname       = ""
-  }
 }

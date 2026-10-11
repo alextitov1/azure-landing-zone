@@ -2,7 +2,12 @@
 
 locals {
   # Determine principal ID based on assignment type
-  principal_id = var.role_assignment.assignment_type == "Group" ? var.group_ids[var.role_assignment.assignee_name] : var.user_ids[var.role_assignment.assignee_name]
+  principal_ids = {
+    Group            = var.group_ids
+    User             = var.user_ids
+    ServicePrincipal = var.service_principal_ids
+  }
+  principal_id = local.principal_ids[var.role_assignment.assignment_type][var.role_assignment.assignee_name]
 }
 
 # Create permanent role assignment (role is activated at root level)

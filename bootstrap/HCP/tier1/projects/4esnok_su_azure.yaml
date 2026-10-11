@@ -5,6 +5,13 @@ workspaces:
     description: Entra ID tier-0 settings
     execution_mode: local
     tags: { env: dev, cloud: azure }
+    # Dynamic Azure credentials (OIDC). Client IDs come from `terraform output applications`
+    # in bootstrap/Azure after the hcp-4esnok_su_entraid_bootstrap-plan/-apply applications exist.
+    # azure_oidc:
+    #   tenant_id: 05af71f4-43e2-4c1a-8917-3bf5cb165cfe
+    #   plan_client_id: 00000000-0000-0000-0000-000000000000
+    #   apply_client_id: 00000000-0000-0000-0000-000000000000
+    #   subscription_id: 00000000-0000-0000-0000-000000000000  # optional, needed by azurerm
   # 4esnok_su_subscriptions:
   #   description: Subscription management
   #   tags: { env: prod, cloud: azure }

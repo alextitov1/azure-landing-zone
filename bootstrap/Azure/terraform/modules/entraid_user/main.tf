@@ -1,7 +1,7 @@
 # create a user in EntraID
 
 resource "random_password" "this" {
-  length  = 15
+  length  = var.entraid_user.password_length
   special = true
   # Ensure password meets Azure AD complexity requirements
   min_lower   = 1
@@ -16,6 +16,8 @@ resource "azuread_user" "this" {
   mail_nickname       = var.entraid_user.mail_nickname
   department          = var.entraid_user.department
   job_title           = var.entraid_user.job_title
+  account_enabled     = var.entraid_user.account_enabled
+  usage_location      = var.entraid_user.usage_location
 
   password              = random_password.this.result
   force_password_change = var.entraid_user.store_password_in_key_vault == true ? false : true

@@ -3,13 +3,31 @@ variable "entraid_group" {
     display_name       = string
     mail_nickname      = optional(string)
     assignable_to_role = optional(bool, false)
+    security_enabled   = optional(bool, true)
     members            = optional(list(string), [])
+    dynamic_rule       = optional(string) # dynamic membership rule (Entra ID P1); members must then be empty
+    licenses = optional(list(object({     # group-based licensing (Entra ID P1)
+      sku            = string             # SKU part number, e.g. SPB (Microsoft 365 Business Premium)
+      disabled_plans = optional(list(string), [])
+    })), [])
   })
   description = "Entra ID group configuration"
 }
 
-variable "user_ids" {
+variable "member_ids" {
   type        = map(string)
-  description = "Map of user principal names to their object IDs"
+  description = "Map of member names (user principal names and application display names) to their object IDs"
+  default     = {}
+}
+
+variable "sku_ids" {
+  type        = map(string)
+  description = "Map of SKU part numbers to SKU IDs of the tenant's subscribed SKUs"
+  default     = {}
+}
+
+variable "service_plan_ids" {
+  type        = map(map(string))
+  description = "Map of SKU part numbers to a map of service plan names to service plan IDs"
   default     = {}
 }

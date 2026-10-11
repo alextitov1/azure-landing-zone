@@ -1,8 +1,8 @@
 variable "role_assignment" {
   type = object({
     role_name       = string
-    assignment_type = string # "Group" or "User"
-    assignee_name   = string # group display_name or user_principal_name
+    assignment_type = string # "Group", "User" or "ServicePrincipal"
+    assignee_name   = string # group display_name, user_principal_name or application display_name
   })
   description = "Entra ID directory role assignment configuration"
 }
@@ -21,5 +21,11 @@ variable "group_ids" {
 variable "user_ids" {
   type        = map(string)
   description = "Map of user principal names to their object IDs"
+  default     = {}
+}
+
+variable "service_principal_ids" {
+  type        = map(string)
+  description = "Map of application display names to their service principal object IDs"
   default     = {}
 }

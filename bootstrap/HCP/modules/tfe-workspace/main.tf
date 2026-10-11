@@ -34,3 +34,21 @@ resource "tfe_workspace_settings" "this" {
   workspace_id   = tfe_workspace.this[each.key].id
   execution_mode = each.value.execution_mode
 }
+
+resource "tfe_variable" "env" {
+  for_each = merge([
+    for ws_name, ws in var.workspaces : {
+      for key, value in ws.env_vars : "${ws_name}/${key}" => {
+        workspace = ws_name
+        key       = key
+        value     = value
+      }
+    }
+  ]...)
+
+  workspace_id = tfe_workspace.this[each.value.workspace].id
+  category     = "env"
+  key          = each.value.key
+  value        = each.value.value
+  description  = "managed by hcp-tier1"
+}
