@@ -1,12 +1,12 @@
 project: 4esnok_su_azure
 description: Azure tenant 4esnok.su
 workspaces:
-  4esnok_su_entraid_bootstrap:
+  4esnok_su_entraid:
     description: Entra ID tier-0 settings
     execution_mode: local
     tags: { env: dev, cloud: azure }
     # Dynamic Azure credentials (OIDC). Client IDs come from `terraform output applications`
-    # in bootstrap/Azure after the hcp-4esnok_su_entraid_bootstrap-plan/-apply applications exist.
+    # in bootstrap/Azure after the sp-t0-hcp-entraid-bootstrap-plan/-apply applications exist.
     # azure_oidc:
     #   tenant_id: 05af71f4-43e2-4c1a-8917-3bf5cb165cfe
     #   plan_client_id: 00000000-0000-0000-0000-000000000000
