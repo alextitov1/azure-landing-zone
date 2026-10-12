@@ -15,6 +15,7 @@ workspaces:
     # line above with the block below. Runs then execute in HCP Terraform as those identities (OIDC)
     # and start on merge to main.
     execution_mode: remote
+    auto_apply: true
     description: "Entra ID tier-1 remote (phase 2 of the azure bootstrap)"
     azure_oidc:
       apps_workspace: 4esnok_su_entraid_t0_t1            # workspace whose state holds the applications below
