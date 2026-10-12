@@ -12,11 +12,12 @@ resource "tfe_workspace" "this" {
   project_id   = tfe_project.this.id
   description  = each.value.description
 
-  terraform_version = each.value.terraform_version
-  auto_apply        = each.value.auto_apply
-  working_directory = each.value.working_directory
-  trigger_patterns  = each.value.trigger_patterns
-  tags              = each.value.tags
+  terraform_version      = each.value.terraform_version
+  auto_apply             = each.value.auto_apply
+  auto_apply_run_trigger = each.value.auto_apply_run_trigger
+  working_directory      = each.value.working_directory
+  trigger_patterns       = each.value.trigger_patterns
+  tags                   = each.value.tags
 
   dynamic "vcs_repo" {
     for_each = each.value.vcs_repo != null ? [each.value.vcs_repo] : []

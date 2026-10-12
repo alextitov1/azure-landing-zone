@@ -51,13 +51,14 @@ module "hcp" {
 
   workspaces = {
     "hcp-tier1" = {
-      description       = "Tier 1: manages all other HCP Terraform projects and workspaces"
-      execution_mode    = "remote"
-      terraform_version = local.config.terraform_version
-      auto_apply        = true # merge to main applies; review happens in the PR plan
-      working_directory = "bootstrap/HCP/tier1"
-      trigger_patterns  = ["/bootstrap/HCP/tier1/**/*", "/bootstrap/HCP/config/**/*", "/bootstrap/HCP/modules/**/*"]
-      tags              = { tier = "1" }
+      description            = "Tier 1: manages all other HCP Terraform projects and workspaces"
+      execution_mode         = "remote"
+      terraform_version      = local.config.terraform_version
+      auto_apply             = true # merge to main applies; review happens in the PR plan
+      auto_apply_run_trigger = true # runs started by tier-1 run triggers (azure_oidc apps workspaces) apply too
+      working_directory      = "bootstrap/HCP/tier1"
+      trigger_patterns       = ["/bootstrap/HCP/tier1/**/*", "/bootstrap/HCP/config/**/*", "/bootstrap/HCP/modules/**/*"]
+      tags                   = { tier = "1" }
       vcs_repo = {
         identifier                 = local.config.github.repo
         branch                     = "main"
