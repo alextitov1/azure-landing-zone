@@ -86,6 +86,27 @@ applications:  # app registrations and their enterprise applications (service pr
       - Policy.ReadWrite.ConditionalAccess  # security defaults (and Conditional Access)
       - Policy.ReadWrite.Authorization      # tenant_settings.authorization_policy
 
+  # HCP Terraform workspace 4esnok_su_subscriptions (Azure tier 1) signs in with OIDC. They need no Graph
+  # permissions; grant Azure RBAC on each managed subscription by hand: Reader to plan, Contributor
+  # (Owner if the workspace assigns roles) to apply.
+  - display_name: "sp-hcp-4esnok-su-subscriptions-t1-plan-r0"
+    description: "HCP Terraform plan runs of 4esnok/4esnok_su_azure/4esnok_su_subscriptions"
+    owners:
+      - sysadmin@4esnok.su
+    federated_credentials:
+      - name: "hcp-plan"
+        issuer: "https://app.terraform.io"
+        subject: "organization:4esnok:project:4esnok_su_azure:workspace:4esnok_su_subscriptions:run_phase:plan"
+
+  - display_name: "sp-hcp-4esnok-su-subscriptions-t1-apply-r0"
+    description: "HCP Terraform apply runs of 4esnok/4esnok_su_azure/4esnok_su_subscriptions"
+    owners:
+      - sysadmin@4esnok.su
+    federated_credentials:
+      - name: "hcp-apply"
+        issuer: "https://app.terraform.io"
+        subject: "organization:4esnok:project:4esnok_su_azure:workspace:4esnok_su_subscriptions:run_phase:apply"
+
   # Example: an application with a client secret stored in 1Password and a direct EntraID role,
   # used as a group member by display name.
   # - display_name: "sp-t1-example-directory-read"

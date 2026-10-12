@@ -69,20 +69,39 @@ data "tfe_outputs" "azure_apps" {
 }
 
 locals {
-  # <workspace name> => TFC_AZURE_* / ARM_* env vars, client IDs looked up by the application names in azure_oidc
-  azure_oidc_env_vars = merge([
-    for p in values(local.projects) : {
-      for name, ws in p.workspaces : name => {
-        for k, v in {
-          TFC_AZURE_PROVIDER_AUTH   = "true"
-          TFC_AZURE_PLAN_CLIENT_ID  = data.tfe_outputs.azure_apps[ws.azure_oidc.apps_workspace].nonsensitive_values.applications[ws.azure_oidc.plan_app].client_id
-          TFC_AZURE_APPLY_CLIENT_ID = data.tfe_outputs.azure_apps[ws.azure_oidc.apps_workspace].nonsensitive_values.applications[ws.azure_oidc.apply_app].client_id
-          ARM_TENANT_ID             = data.tfe_outputs.azure_apps[ws.azure_oidc.apps_workspace].nonsensitive_values.tenant_id
-          ARM_SUBSCRIPTION_ID       = try(ws.azure_oidc.subscription_id, null)
-        } : k => v if v != null
-      } if try(ws.azure_oidc, null) != null
-    }
+  azure_apps = { for name, o in data.tfe_outputs.azure_apps : name => o.nonsensitive_values }
+
+  azure_oidc_workspaces = merge([
+    for p in values(local.projects) : { for name, ws in p.workspaces : name => ws.azure_oidc if try(ws.azure_oidc, null) != null }
   ]...)
+
+  # Applications named in azure_oidc that apps_workspace has not created yet, e.g. when the same merge adds them
+  azure_oidc_missing_apps = {
+    for name, oidc in local.azure_oidc_workspaces : name => [
+      for app in [oidc.plan_app, oidc.apply_app] : app if !can(local.azure_apps[oidc.apps_workspace].applications[app].client_id)
+    ]
+  }
+
+  # <workspace name> => TFC_AZURE_* / ARM_* env vars, client IDs looked up by the application names in azure_oidc.
+  # A workspace gets them once both applications exist; the run trigger below re-runs tier 1 when they do.
+  azure_oidc_env_vars = {
+    for name, oidc in local.azure_oidc_workspaces : name => {
+      for k, v in {
+        TFC_AZURE_PROVIDER_AUTH   = "true"
+        TFC_AZURE_PLAN_CLIENT_ID  = local.azure_apps[oidc.apps_workspace].applications[oidc.plan_app].client_id
+        TFC_AZURE_APPLY_CLIENT_ID = local.azure_apps[oidc.apps_workspace].applications[oidc.apply_app].client_id
+        ARM_TENANT_ID             = local.azure_apps[oidc.apps_workspace].tenant_id
+        ARM_SUBSCRIPTION_ID       = try(oidc.subscription_id, null)
+      } : k => v if v != null
+    } if length(local.azure_oidc_missing_apps[name]) == 0
+  }
+}
+
+check "azure_oidc_applications" {
+  assert {
+    condition     = alltrue([for apps in values(local.azure_oidc_missing_apps) : length(apps) == 0])
+    error_message = "azure_oidc applications not found in their apps_workspace outputs (Azure credentials are not set until they exist): ${jsonencode({ for k, v in local.azure_oidc_missing_apps : k => v if length(v) > 0 })}"
+  }
 }
 
 module "project" {
@@ -115,4 +134,18 @@ module "project" {
       }
     )
   }
+}
+
+# Re-run tier 1 after each apply of a workspace that holds azure_oidc applications, so a workspace and its
+# applications can be added in one merge: that apply creates them, the triggered run sets the TFC_AZURE_* variables.
+data "tfe_workspace" "tier1" {
+  name         = "hcp-tier1"
+  organization = local.config.organization
+}
+
+resource "tfe_run_trigger" "azure_apps" {
+  for_each = local.azure_apps_workspaces
+
+  workspace_id  = data.tfe_workspace.tier1.id
+  sourceable_id = merge([for p in module.project : p.workspace_ids]...)[each.key]
 }

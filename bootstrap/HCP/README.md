@@ -117,6 +117,7 @@ Optional workspace fields:
 | `description` | none |
 | `execution_mode` | `remote` |
 | `auto_apply` | `false` |
+| `auto_apply_run_trigger` | `false`; also auto-apply runs started by run triggers |
 | `terraform_version` | the value in `config/organization.yaml` |
 | `tags` | none |
 | `vcs.branch` | `main` |
@@ -136,6 +137,10 @@ their client IDs and the tenant ID are read from the `applications` and `tenant_
       subscription_id: <optional, sets ARM_SUBSCRIPTION_ID>
 ```
 Each application needs a federated credential for this workspace and run phase (see `bootstrap/Azure/README.md`).
+A new workspace and its applications (in the tenant YAML) go in one pull request. Until `apps_workspace` has created
+the applications, tier 1 leaves out the workspace's `TFC_AZURE_*` variables and its plan shows a warning; each apply of
+`apps_workspace` re-runs `hcp-tier1` through a run trigger, which then sets them. Azure RBAC on subscriptions is granted
+outside Terraform.
 `secrets` maps environment variable names to 1Password references, `op://<vault>/<item>/<field>`, where the field is
 a built-in one (`credential`, `password`, ...) or `<section>/<field>`. Tier 1 reads them with its 1Password
 service account and stores them as sensitive variables, so the vault must be `azure_t1`:
