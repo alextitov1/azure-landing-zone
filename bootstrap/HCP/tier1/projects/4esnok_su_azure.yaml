@@ -29,8 +29,18 @@ workspaces:
       working_directory: bootstrap/Azure/terraform
       trigger_patterns: ["/bootstrap/Azure/terraform/**/*", "/bootstrap/Azure/tenants/admin.4esnok.su-vs.yaml"]
     # # End of the phase 2 block
-    
 
-  # 4esnok_su_subscriptions:
-  #   description: Subscription management
-  #   tags: { env: prod, cloud: azure }
+  4esnok_su_subscriptions:
+    description: "Azure tier-1: subscriptions and their resource groups"
+    tags: { env: prod, cloud: azure, project: 4esnok.su }
+    execution_mode: remote
+    vcs:
+      working_directory: ESLZ/subscriptions
+    # Step 2: once 4esnok_su_entraid_t0_t1 has applied and created sp-t1-hcp-subscriptions-plan/-apply
+    # (bootstrap/Azure/tenants/admin.4esnok.su-vs.yaml), and they have Azure RBAC on the subscriptions,
+    # uncomment the block below. Runs then sign in to Azure as those identities (OIDC).
+    # azure_oidc:
+    #   apps_workspace: 4esnok_su_entraid_t0_t1   # workspace whose state holds the applications below
+    #   plan_app: sp-t1-hcp-subscriptions-plan    # Reader on the subscriptions
+    #   apply_app: sp-t1-hcp-subscriptions-apply  # Contributor (or Owner, to assign roles) on the subscriptions
+    #   subscription_id: <default subscription, optional>
