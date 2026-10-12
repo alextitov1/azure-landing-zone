@@ -69,6 +69,25 @@ data "tfe_outputs" "oidc" {
   workspace    = each.key
 }
 
+locals {
+  hcp_oidc = { for ws, out in data.tfe_outputs.oidc : ws => out.nonsensitive_values.hcp_oidc }
+
+  # <workspace name> => TFC_AZURE_* / ARM_* env vars; explicit YAML values win over the source outputs
+  azure_oidc_env_vars = merge([
+    for p in values(local.projects) : {
+      for name, ws in p.workspaces : name => {
+        for k, v in {
+          TFC_AZURE_PROVIDER_AUTH   = "true"
+          TFC_AZURE_PLAN_CLIENT_ID  = try(ws.azure_oidc.plan_client_id, local.hcp_oidc[ws.azure_oidc.from_workspace].workspaces[name].plan)
+          TFC_AZURE_APPLY_CLIENT_ID = try(ws.azure_oidc.apply_client_id, local.hcp_oidc[ws.azure_oidc.from_workspace].workspaces[name].apply)
+          ARM_TENANT_ID             = try(ws.azure_oidc.tenant_id, local.hcp_oidc[ws.azure_oidc.from_workspace].tenant_id)
+          ARM_SUBSCRIPTION_ID       = try(ws.azure_oidc.subscription_id, null)
+        } : k => v if v != null
+      } if try(ws.azure_oidc, null) != null
+    }
+  ]...)
+}
+
 module "project" {
   source   = "../modules/tfe-workspace"
   for_each = local.projects
@@ -88,19 +107,7 @@ module "project" {
       { for k, v in ws : k => v if !contains(["vcs", "azure_oidc", "env_vars", "secrets"], k) },
       {
         terraform_version = try(ws.terraform_version, local.config.terraform_version)
-        env_vars = merge(
-          try(ws.env_vars, {}),
-          try(ws.azure_oidc, null) == null ? {} : {
-            for k, v in {
-              TFC_AZURE_PROVIDER_AUTH = "true"
-              # Explicit values in the YAML win over the source workspace's outputs
-              TFC_AZURE_PLAN_CLIENT_ID  = try(ws.azure_oidc.plan_client_id, data.tfe_outputs.oidc[ws.azure_oidc.from_workspace].nonsensitive_values.hcp_oidc.workspaces[name].plan)
-              TFC_AZURE_APPLY_CLIENT_ID = try(ws.azure_oidc.apply_client_id, data.tfe_outputs.oidc[ws.azure_oidc.from_workspace].nonsensitive_values.hcp_oidc.workspaces[name].apply)
-              ARM_TENANT_ID             = try(ws.azure_oidc.tenant_id, data.tfe_outputs.oidc[ws.azure_oidc.from_workspace].nonsensitive_values.hcp_oidc.tenant_id)
-              ARM_SUBSCRIPTION_ID       = try(ws.azure_oidc.subscription_id, null)
-            } : k => v if v != null
-          }
-        )
+        env_vars          = merge(try(ws.env_vars, {}), try(local.azure_oidc_env_vars[name], {}))
         working_directory = try(ws.vcs.working_directory, null)
         trigger_patterns  = try(ws.vcs.trigger_patterns, ["/${ws.vcs.working_directory}/**/*"], null)
         vcs_repo = try(ws.vcs, null) == null ? null : {
