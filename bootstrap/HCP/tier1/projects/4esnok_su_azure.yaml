@@ -2,12 +2,13 @@ project: 4esnok_su_azure
 description: Azure tenant 4esnok.su
 workspaces:
   4esnok_su_entraid:
-    description: Entra ID tier-0 settings
-    tags: { env: dev, cloud: azure }
+    # description: Entra ID tier-0 and tier-1 TODO - split them into separate workspaces
+    tags: { env: dev, cloud: azure, project: 4esnok.su }
 
     # Phase 1 (bootstrap): the pipeline identities do not exist yet, so this workspace only stores state.
     # Runs execute locally with ./bootstrap-azure-su.sh, signed in with `az login`.
     execution_mode: local
+    description: "Entra ID tier-0 local (phase 1 of the azure bootstrap)"
 
     # End of the phase 1 block
 
@@ -15,6 +16,7 @@ workspaces:
     # # line above with the block below. Runs then execute in HCP Terraform as those identities (OIDC)
     # # and start on merge to main.
     # execution_mode: remote
+    # description: "Entra ID tier-1 remote (phase 2 of the azure bootstrap)"
     # azure_oidc:
     #   from_workspace: 4esnok_su_entraid   # tenant and client IDs from this workspace's hcp_oidc output
     # env_vars:
