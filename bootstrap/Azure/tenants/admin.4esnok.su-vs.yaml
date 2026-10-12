@@ -53,7 +53,7 @@ groups:
 applications:  # app registrations and their enterprise applications (service principals)
   # HCP Terraform workspace 4esnok_su_entraid_t0_t1 (Azure tier 0) signs in with OIDC:
   # plan runs use the read-only identity, apply runs the privileged one.
-  - display_name: "sp-t0-hcp-entraid-bootstrap-plan"
+  - display_name: "sp-hcp-4esnok-su-entraid-t0_t1-plan-r3"
     description: "HCP Terraform plan runs of 4esnok/4esnok_su_azure/4esnok_su_entraid_t0_t1"
     owners:
       - sysadmin@4esnok.su
@@ -67,7 +67,7 @@ applications:  # app registrations and their enterprise applications (service pr
       - RoleManagement.Read.Directory
       - Policy.Read.All
 
-  - display_name: "sp-t0-hcp-entraid-bootstrap-apply"
+  - display_name: "sp-hcp-4esnok-su-entraid-t0_t1-apply-r0"
     description: "HCP Terraform apply runs of 4esnok/4esnok_su_azure/4esnok_su_entraid_t0_t1"
     owners:
       - sysadmin@4esnok.su

@@ -1,5 +1,13 @@
 # Bootstrap Azure (EntraID) Tenant.
 
+The bootstrap process for a newly created azure tenant creates admin users, and service accounts (aka service principals). User accounts are stored in 1Password, and service accounts are configured with OIDC federated credentials, so HCP Terraform runs can sing in to Azure without a client secret.
+
+The bootstraping requires configuring tenant/*.yaml files, and running the bootstrap-*.sh script. To apply configuration.
+
+The bootstrap process assumnd to be run only once for a newly created tenant. The later changes (Tier 1 and above) are done through the HCP Terraform pipeline.
+
+>NOTE: HCP workspace e.g. (`4esnok_su_entraid_t0_t1`) is set up in two phases
+
 Each tenant is described by a YAML file in `tenants/`. The Terraform configuration in `terraform/` (Azure tier 0) manages:
 
 - users, including break-glass accounts, and groups (static or dynamic, with group-based licensing)
@@ -26,9 +34,9 @@ Every section is optional. Features marked P1 or P2 need that Entra ID licence; 
 | Section | What it manages | Licence | Graph application permissions (tier-0 apply identity) |
 |---|---|---|---|
 | `users` | Users; `break_glass`, `password_length`, `account_enabled`, `usage_location`, `manager`, direct `entraid_role_names` | Free | `User.ReadWrite.All`, `RoleManagement.ReadWrite.Directory` |
-| `groups` | Security groups and members (users, applications, guests); `dynamic_rule`; `licenses` | Free; dynamic groups and licensing P1 | `Group.ReadWrite.All`; licensing `LicenseAssignment.ReadWrite.All`, `Organization.Read.All` |
+| `groups` | Security groups, `description` and members (users, applications, guests); `dynamic_rule`; `licenses` | Free; dynamic groups and licensing P1 | `Group.ReadWrite.All`; licensing `LicenseAssignment.ReadWrite.All`, `Organization.Read.All` |
 | `applications` | App registrations, see below | Free | `Application.ReadWrite.All`, `AppRoleAssignment.ReadWrite.All` |
-| `tenant_settings.security_defaults` | Security defaults on or off | Free | `Policy.Read.All`, `Policy.ReadWrite.ConditionalAccess` |
+| `tenant_settings.security_defaults` | Security defaults on or off; applied in remote runs only, because Azure CLI tokens lack `Policy.ReadWrite.ConditionalAccess` | Free | `Policy.Read.All`, `Policy.ReadWrite.ConditionalAccess` |
 | `tenant_settings.authorization_policy` | Default user and guest permissions (Graph property names) | Free | `Policy.ReadWrite.Authorization` |
 | `named_locations`, `authentication_strength_policies`, `conditional_access_policies` | Conditional Access | P1 | `Policy.Read.All`, `Policy.ReadWrite.ConditionalAccess` |
 | `pim_roles` | PIM eligible directory roles and their maximum activation `duration` | P2 | `RoleEligibilitySchedule.ReadWrite.Directory`, `RoleManagementPolicy.ReadWrite.Directory` |
@@ -42,6 +50,19 @@ Every section is optional. Features marked P1 or P2 need that Entra ID licence; 
 Add a permission to the tier-0 apply application only when the tenant uses that section. The plan application needs the read equivalents (`Directory.Read.All` and `Policy.Read.All` cover most of them).
 
 Settings that every tenant already has (`tenant_settings`, `cross_tenant_access.default`, PIM activation duration) are updated in place: taking them out of the YAML leaves the tenant as it is.
+
+### Naming
+
+Names are lowercase with hyphens and carry no tenant name. The tier follows the Microsoft Enterprise Access Model:
+`t0` control plane (Entra ID, root management group), `t1` management plane (subscriptions, platform), `t2` workloads and data.
+The plan fails on names that do not match.
+
+| Object | Pattern | Examples |
+|---|---|---|
+| Groups | `sg-<tier>-<target>-<scope>-<role>`; target is `entra` (directory roles), `az` (Azure RBAC), `app` (application access) or `org` (teams); `-dyn` for dynamic groups; `m365` instead of `sg` for Microsoft 365 groups | `sg-t0-entra-tenant-globaladmin`, `sg-t2-az-aks-admin`, `sg-t2-org-developers-dyn` |
+| Applications | `<type>-<tier>-<consumer>-<target>-<access>`; type is `sp` (automation), `app` (users sign in) or `mi` (managed identity) | `sp-t0-hcp-entraid-bootstrap-apply`, `sp-t1-gha-public-dns-deploy` |
+
+Groups and applications are keyed by display name, so renaming one recreates it with a new object ID.
 
 ### Break-glass accounts
 
@@ -102,10 +123,19 @@ The workspace's `TFC_AZURE_*` variables are set by `bootstrap/HCP/tier1` from th
 
 ### Moving this configuration (Azure tier 0) to remote runs
 
-1. Run `./bootstrap-azure-su.sh apply` locally, signed in with `az login` as a Global Administrator. This creates the `hcp-4esnok_su_entraid_bootstrap-plan` and `-apply` applications.
-2. Copy their client IDs from `terraform output applications` into the `azure_oidc` block of `4esnok_su_entraid_bootstrap` in `bootstrap/HCP/tier1/projects/4esnok_su_azure.yaml`, and apply tier 1.
-3. Move the state from the current workspace (`4esnok_su/entraid_bootstrap`) to `4esnok_su_azure/4esnok_su_entraid_bootstrap`, and point `bootstrap-azure-su.sh` at it.
-4. Add the remaining inputs to the workspace: `tenant_yaml_path` (Terraform variable) and `TF_VAR_onepassword_service_account_token` (sensitive environment variable). Set its working directory to `bootstrap/Azure/terraform`, so `../tenants` is uploaded with the configuration.
-5. Switch `execution_mode` to `remote` in the project YAML.
+The workspace `4esnok_su_entraid_t0_t1` is set up in two phases, controlled by its entry in `bootstrap/HCP/tier1/projects/4esnok_su_azure.yaml`.
+
+**Phase 1 (bootstrap).** The workspace has `execution_mode: local` and only stores state.
+Run `./bootstrap-azure-su.sh apply`, signed in with `az login` as a Global Administrator. This creates the
+`sp-t0-hcp-entraid-bootstrap-plan` and `-apply` applications; their client IDs are in the `applications` output.
+Security defaults are skipped in this phase.
+
+**Phase 2 (pipeline).**
+1. In the project YAML, replace `execution_mode: local` with the phase-2 block and merge.
+   Tier 1 reads the client IDs of the applications named in `azure_oidc` from the `applications` output, sets the `TFC_AZURE_*` variables, sets
+   `TF_VAR_onepassword_service_account_token` from 1Password (vault `azure_t1`), and links the
+   workspace to this repository with working directory `bootstrap/Azure/terraform`.
+2. Runs now execute in HCP Terraform as the OIDC applications and start on merge to `main`.
+   `./bootstrap-azure-su.sh plan` still works as a speculative plan; `apply` only runs through a merge.
 
 The tier-0 apply application can change users, groups, applications and directory roles, so it controls the tenant. Restrict who can queue applies on its workspace and keep a break-glass Global Administrator account that is not managed by Terraform.
