@@ -51,16 +51,16 @@ groups:
       - sysadmin@4esnok.su
 
 applications:  # app registrations and their enterprise applications (service principals)
-  # HCP Terraform workspace 4esnok_su_entraid (Azure tier 0) signs in with OIDC:
+  # HCP Terraform workspace 4esnok_su_entraid_t0_t1 (Azure tier 0) signs in with OIDC:
   # plan runs use the read-only identity, apply runs the privileged one.
   - display_name: "sp-t0-hcp-entraid-bootstrap-plan"
-    description: "HCP Terraform plan runs of 4esnok/4esnok_su_azure/4esnok_su_entraid"
+    description: "HCP Terraform plan runs of 4esnok/4esnok_su_azure/4esnok_su_entraid_t0_t1"
     owners:
       - sysadmin@4esnok.su
     federated_credentials:
       - name: "hcp-plan"
         issuer: "https://app.terraform.io"
-        subject: "organization:4esnok:project:4esnok_su_azure:workspace:4esnok_su_entraid:run_phase:plan"
+        subject: "organization:4esnok:project:4esnok_su_azure:workspace:4esnok_su_entraid_t0_t1:run_phase:plan"
     graph_app_roles:  # Microsoft Graph application permissions
       - Directory.Read.All
       - Application.Read.All
@@ -68,13 +68,13 @@ applications:  # app registrations and their enterprise applications (service pr
       - Policy.Read.All
 
   - display_name: "sp-t0-hcp-entraid-bootstrap-apply"
-    description: "HCP Terraform apply runs of 4esnok/4esnok_su_azure/4esnok_su_entraid"
+    description: "HCP Terraform apply runs of 4esnok/4esnok_su_azure/4esnok_su_entraid_t0_t1"
     owners:
       - sysadmin@4esnok.su
     federated_credentials:
       - name: "hcp-apply"
         issuer: "https://app.terraform.io"
-        subject: "organization:4esnok:project:4esnok_su_azure:workspace:4esnok_su_entraid:run_phase:apply"
+        subject: "organization:4esnok:project:4esnok_su_azure:workspace:4esnok_su_entraid_t0_t1:run_phase:apply"
     graph_app_roles:
       - User.ReadWrite.All
       - Group.ReadWrite.All

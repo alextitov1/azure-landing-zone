@@ -126,8 +126,16 @@ Optional workspace fields:
 | `secrets` | none; sensitive environment variables from 1Password, see below |
 
 `vcs` links the workspace to this repository through the GitHub OAuth connection created by tier 0.
-`azure_oidc` sets the `TFC_AZURE_*` variables. With `from_workspace: <name>`, the tenant and client IDs are read
-from the `hcp_oidc` output of that workspace; `tenant_id`, `plan_client_id` and `apply_client_id` can also be set directly.
+`azure_oidc` sets the `TFC_AZURE_*` variables. `plan_app` and `apply_app` are Entra ID application display names;
+their client IDs and the tenant ID are read from the `applications` and `tenant_id` outputs of `apps_workspace`:
+```yaml
+    azure_oidc:
+      apps_workspace: 4esnok_su_entraid_t0_t1
+      plan_app: sp-t0-hcp-entraid-bootstrap-plan
+      apply_app: sp-t0-hcp-entraid-bootstrap-apply
+      subscription_id: <optional, sets ARM_SUBSCRIPTION_ID>
+```
+Each application needs a federated credential for this workspace and run phase (see `bootstrap/Azure/README.md`).
 `secrets` maps environment variable names to 1Password references, `op://<vault>/<item>/<field>`, where the field is
 a built-in one (`credential`, `password`, ...) or `<section>/<field>`. Tier 1 reads them with its 1Password
 service account and stores them as sensitive variables, so the vault must be `azure_t1`:

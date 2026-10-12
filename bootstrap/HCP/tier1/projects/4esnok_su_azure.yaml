@@ -18,7 +18,9 @@ workspaces:
     # execution_mode: remote
     # description: "Entra ID tier-1 remote (phase 2 of the azure bootstrap)"
     # azure_oidc:
-    #   from_workspace: 4esnok_su_entraid   # tenant and client IDs from this workspace's hcp_oidc output
+    #   apps_workspace: 4esnok_su_entraid_t0_t1            # workspace whose state holds the applications below
+    #   plan_app: sp-t0-hcp-entraid-bootstrap-plan          # Entra ID application for plan runs (entraid bootstrap creates it)
+    #   apply_app: sp-t0-hcp-entraid-bootstrap-apply        # Entra ID application for apply runs
     # env_vars:
     #   TF_VAR_tenant_yaml_path: ../tenants/admin.4esnok.su-vs.yaml
     # secrets:  # sensitive environment variables, read from 1Password by tier 1 (vault azure_t1)

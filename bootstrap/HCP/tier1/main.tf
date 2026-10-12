@@ -11,11 +11,10 @@ locals {
     trimsuffix(f, ".yaml") => yamldecode(file("${path.module}/projects/${f}"))
   }
 
-  # Workspaces whose outputs provide Azure OIDC client IDs (azure_oidc.from_workspace)
-  oidc_source_workspaces = toset(flatten([
+  # Workspaces whose state holds the Entra ID applications named in azure_oidc (azure_oidc.apps_workspace)
+  azure_apps_workspaces = toset(flatten([
     for p in values(local.projects) : [
-      for ws in values(p.workspaces) : ws.azure_oidc.from_workspace
-      if try(ws.azure_oidc.from_workspace, null) != null
+      for ws in values(p.workspaces) : ws.azure_oidc.apps_workspace if try(ws.azure_oidc, null) != null
     ]
   ]))
 }
@@ -61,26 +60,24 @@ locals {
   }
 }
 
-# hcp_oidc output of bootstrap/Azure: { tenant_id, workspaces = { <name> = { plan, apply } } }
-data "tfe_outputs" "oidc" {
-  for_each = local.oidc_source_workspaces
+# Outputs of bootstrap/Azure: tenant_id and applications = { <display name> = { client_id, ... } }
+data "tfe_outputs" "azure_apps" {
+  for_each = local.azure_apps_workspaces
 
   organization = local.config.organization
   workspace    = each.key
 }
 
 locals {
-  hcp_oidc = { for ws, out in data.tfe_outputs.oidc : ws => out.nonsensitive_values.hcp_oidc }
-
-  # <workspace name> => TFC_AZURE_* / ARM_* env vars; explicit YAML values win over the source outputs
+  # <workspace name> => TFC_AZURE_* / ARM_* env vars, client IDs looked up by the application names in azure_oidc
   azure_oidc_env_vars = merge([
     for p in values(local.projects) : {
       for name, ws in p.workspaces : name => {
         for k, v in {
           TFC_AZURE_PROVIDER_AUTH   = "true"
-          TFC_AZURE_PLAN_CLIENT_ID  = try(ws.azure_oidc.plan_client_id, local.hcp_oidc[ws.azure_oidc.from_workspace].workspaces[name].plan)
-          TFC_AZURE_APPLY_CLIENT_ID = try(ws.azure_oidc.apply_client_id, local.hcp_oidc[ws.azure_oidc.from_workspace].workspaces[name].apply)
-          ARM_TENANT_ID             = try(ws.azure_oidc.tenant_id, local.hcp_oidc[ws.azure_oidc.from_workspace].tenant_id)
+          TFC_AZURE_PLAN_CLIENT_ID  = data.tfe_outputs.azure_apps[ws.azure_oidc.apps_workspace].nonsensitive_values.applications[ws.azure_oidc.plan_app].client_id
+          TFC_AZURE_APPLY_CLIENT_ID = data.tfe_outputs.azure_apps[ws.azure_oidc.apps_workspace].nonsensitive_values.applications[ws.azure_oidc.apply_app].client_id
+          ARM_TENANT_ID             = data.tfe_outputs.azure_apps[ws.azure_oidc.apps_workspace].nonsensitive_values.tenant_id
           ARM_SUBSCRIPTION_ID       = try(ws.azure_oidc.subscription_id, null)
         } : k => v if v != null
       } if try(ws.azure_oidc, null) != null

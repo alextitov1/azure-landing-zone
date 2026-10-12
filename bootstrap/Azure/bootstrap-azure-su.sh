@@ -3,9 +3,10 @@
 # This script runs terraform <command> with submitted secrets from onepassword
 
 # Terraform cloud organization, project and workspace https://app.terraform.io/app/4esnok/workspaces
+# see HCP/tier1/projects/4esnok_su_azure.yaml
 export TF_CLOUD_ORGANIZATION="4esnok"
-export TF_CLOUD_PROJECT="4esnok_su"
-export TF_WORKSPACE="entraid_bootstrap"
+export TF_CLOUD_PROJECT="4esnok_su_azure"
+export TF_WORKSPACE="4esnok_su_entraid_t0_t1"
 
 export TF_VAR_tenant_yaml_path="../tenants/admin.4esnok.su-vs.yaml"
 

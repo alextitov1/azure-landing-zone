@@ -18,28 +18,7 @@ output "break_glass_users" {
   description = "Emergency access accounts, excluded from Conditional Access"
 }
 
-# Read by bootstrap/HCP/tier1 (azure_oidc.from_workspace) to set TFC_AZURE_* on each workspace.
-# Derived from federated credential subjects: ...:workspace:<name>:run_phase:<plan|apply>
-locals {
-  hcp_oidc_credentials = flatten([
-    for app in try(local.tenant_config.applications, []) : [
-      for cred in try(app.federated_credentials, []) : {
-        workspace = regex(":workspace:([^:]+):run_phase:(plan|apply)$", cred.subject)[0]
-        phase     = regex(":workspace:([^:]+):run_phase:(plan|apply)$", cred.subject)[1]
-        client_id = module.entraid_application[app.display_name].client_id
-      } if cred.issuer == "https://app.terraform.io" && can(regex(":workspace:([^:]+):run_phase:(plan|apply)$", cred.subject))
-    ]
-  ])
-}
-
-output "hcp_oidc" {
-  value = {
-    tenant_id = data.azuread_client_config.current.tenant_id
-    workspaces = {
-      for ws in distinct([for c in local.hcp_oidc_credentials : c.workspace]) : ws => {
-        for c in local.hcp_oidc_credentials : c.phase => c.client_id if c.workspace == ws
-      }
-    }
-  }
-  description = "Tenant ID and HCP Terraform OIDC client IDs (plan, apply) per workspace"
+output "tenant_id" {
+  value       = data.azuread_client_config.current.tenant_id
+  description = "Entra ID tenant ID, read by bootstrap/HCP/tier1 together with `applications` (azure_oidc)"
 }
