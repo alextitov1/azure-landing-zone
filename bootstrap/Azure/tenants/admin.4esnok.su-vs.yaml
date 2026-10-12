@@ -89,7 +89,7 @@ applications:  # app registrations and their enterprise applications (service pr
   # HCP Terraform workspace 4esnok_su_subscriptions (Azure tier 1) signs in with OIDC. They need no Graph
   # permissions; grant Azure RBAC on each managed subscription by hand: Reader to plan, Contributor
   # (Owner if the workspace assigns roles) to apply.
-  - display_name: "sp-t1-hcp-subscriptions-plan"
+  - display_name: "sp-hcp-4esnok-su-subscriptions-t1-plan-r0"
     description: "HCP Terraform plan runs of 4esnok/4esnok_su_azure/4esnok_su_subscriptions"
     owners:
       - sysadmin@4esnok.su
@@ -98,7 +98,7 @@ applications:  # app registrations and their enterprise applications (service pr
         issuer: "https://app.terraform.io"
         subject: "organization:4esnok:project:4esnok_su_azure:workspace:4esnok_su_subscriptions:run_phase:plan"
 
-  - display_name: "sp-t1-hcp-subscriptions-apply"
+  - display_name: "sp-hcp-4esnok-su-subscriptions-t1-apply-r0"
     description: "HCP Terraform apply runs of 4esnok/4esnok_su_azure/4esnok_su_subscriptions"
     owners:
       - sysadmin@4esnok.su
