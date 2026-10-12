@@ -1,7 +1,7 @@
 project: 4esnok_su_azure
 description: Azure tenant 4esnok.su
 workspaces:
-  4esnok_su_entraid:
+  4esnok_su_entraid_t0_t1:
     # description: Entra ID tier-0 and tier-1 TODO - split them into separate workspaces
     tags: { env: dev, cloud: azure, project: 4esnok.su }
 
