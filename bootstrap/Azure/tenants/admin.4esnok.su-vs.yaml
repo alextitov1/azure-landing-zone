@@ -50,6 +50,26 @@ groups:
     members:  # user principal names or application display names
       - sysadmin@4esnok.su
 
+  # Azure RBAC on the Visual Studio subscription (44b9d159-d353-477f-b94f-5ce0f3bd33f1), separate groups for
+  # users and for applications. The user groups' roles are assigned by ESLZ/subscriptions; the application
+  # groups' roles are assigned once by hand (see ESLZ/subscriptions/README.md), as the pipeline cannot grant
+  # itself access.
+  - display_name: "sg-t1-az-sub-vs-contributor"
+    description: "Users: Contributor on the Visual Studio subscription"
+    members:
+      - sysadmin@4esnok.su
+  - display_name: "sg-t1-az-sub-vs-reader"
+    description: "Users: Reader on the Visual Studio subscription"
+    members: []
+  - display_name: "sg-t1-az-sub-vs-apps-contributor"
+    description: "Applications: Contributor and constrained RBAC Administrator on the Visual Studio subscription"
+    members:
+      - sp-hcp-4esnok-su-subscriptions-t1-apply-r0
+  - display_name: "sg-t1-az-sub-vs-apps-reader"
+    description: "Applications: Reader on the Visual Studio subscription"
+    members:
+      - sp-hcp-4esnok-su-subscriptions-t1-plan-r0
+
 applications:  # app registrations and their enterprise applications (service principals)
   # HCP Terraform workspace 4esnok_su_entraid_t0_t1 (Azure tier 0) signs in with OIDC:
   # plan runs use the read-only identity, apply runs the privileged one.
@@ -87,8 +107,8 @@ applications:  # app registrations and their enterprise applications (service pr
       - Policy.ReadWrite.Authorization      # tenant_settings.authorization_policy
 
   # HCP Terraform workspace 4esnok_su_subscriptions (Azure tier 1, ESLZ/subscriptions) signs in with OIDC.
-  # Directory.Read.All resolves the principal names in its role assignments. Grant Azure RBAC on each
-  # managed subscription by hand: Reader to plan, Owner to apply.
+  # Directory.Read.All resolves the principal names in its role assignments. Azure RBAC comes from group
+  # membership: sg-t1-az-sub-vs-apps-reader (plan) and sg-t1-az-sub-vs-apps-contributor (apply).
   - display_name: "sp-hcp-4esnok-su-subscriptions-t1-plan-r0"
     description: "HCP Terraform plan runs of 4esnok/4esnok_su_azure/4esnok_su_subscriptions"
     owners:

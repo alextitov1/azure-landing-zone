@@ -11,10 +11,39 @@ a pull request shows the plan, and a merge to `main` queues a run that needs to 
 
 ## Adding a subscription
 
-1. Grant the workspace's applications Azure RBAC on the subscription:
-   - `sp-hcp-4esnok-su-subscriptions-t1-plan-r0`: **Reader**
-   - `sp-hcp-4esnok-su-subscriptions-t1-apply-r0`: **Owner** (role assignments need it)
-   - for `management_group_id`, also **Management Group Contributor** on the target management group
+1. Grant the workspace access through groups. Two groups per subscription hold the workspace's applications
+   (in `bootstrap/Azure/tenants/<tenant>.yaml`), and get their roles once by hand, as the workspace cannot grant
+   itself access:
+   - `sg-t1-az-<name>-apps-reader` (member `sp-hcp-4esnok-su-subscriptions-t1-plan-r0`): **Reader**
+   - `sg-t1-az-<name>-apps-contributor` (member `sp-hcp-4esnok-su-subscriptions-t1-apply-r0`): **Contributor**,
+     and **Role Based Access Control Administrator** with a condition that blocks assigning or removing
+     Owner, User Access Administrator and Role Based Access Control Administrator. The workspace can manage
+     every other role assignment, but cannot make anyone, itself included, an owner.
+   - for `management_group_id`, the contributor group also needs **Management Group Contributor** on the target
+     management group
+
+   Signed in with `az login` as an Owner of the subscription:
+   ```sh
+   sub=<subscription ID>
+   name=<group name part, e.g. sub-vs>
+   group_id() { az ad group show --group "$1" --query id -o tsv; }
+
+   # Owner, User Access Administrator, Role Based Access Control Administrator
+   condition=$(cat <<'EOF'
+   ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})) OR (@Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAllValues:GuidNotEquals {8e3af657-a8ff-443c-a75c-2fe8c4bcb635, 18d7d88d-d35e-4fb5-a5c3-7773c20a72d9, f58310d9-a9f6-439a-9e8d-f62e7b41a168})) AND ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})) OR (@Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAllValues:GuidNotEquals {8e3af657-a8ff-443c-a75c-2fe8c4bcb635, 18d7d88d-d35e-4fb5-a5c3-7773c20a72d9, f58310d9-a9f6-439a-9e8d-f62e7b41a168}))
+   EOF
+   )
+
+   az role assignment create --scope /subscriptions/$sub --role Reader \
+     --assignee-object-id "$(group_id sg-t1-az-$name-apps-reader)" --assignee-principal-type Group
+   az role assignment create --scope /subscriptions/$sub --role Contributor \
+     --assignee-object-id "$(group_id sg-t1-az-$name-apps-contributor)" --assignee-principal-type Group
+   az role assignment create --scope /subscriptions/$sub --role "Role Based Access Control Administrator" \
+     --assignee-object-id "$(group_id sg-t1-az-$name-apps-contributor)" --assignee-principal-type Group \
+     --condition-version 2.0 --condition "$condition"
+   ```
+   Users get access through separate groups (`sg-t1-az-<name>-contributor`, `-reader`), whose roles are declared
+   in the subscription's YAML like any other role assignment. Owner stays outside Terraform.
 2. Add `config/<name>.yaml` with at least `subscription_id`. The plan's `subscriptions` output shows the current
    name and the resource groups that are not declared yet.
 3. Declare what to manage. Existing resource groups and budgets are imported, so declaring one that exists
