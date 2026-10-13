@@ -54,15 +54,15 @@ groups:
   # users and for applications. The user groups' roles are assigned by ESLZ/subscriptions; the application
   # groups' roles are assigned once by hand (see ESLZ/subscriptions/README.md), as the pipeline cannot grant
   # itself access.
-  - display_name: "sg-t1-az-sub-vs-owner"
-    description: "Users: Owner on the Visual Studio subscription"
+  - display_name: "sg-t1-az-sub-vs-contributor"
+    description: "Users: Contributor on the Visual Studio subscription"
     members:
       - sysadmin@4esnok.su
   - display_name: "sg-t1-az-sub-vs-reader"
     description: "Users: Reader on the Visual Studio subscription"
     members: []
-  - display_name: "sg-t1-az-sub-vs-apps-owner"
-    description: "Applications: Owner on the Visual Studio subscription"
+  - display_name: "sg-t1-az-sub-vs-apps-contributor"
+    description: "Applications: Contributor and constrained RBAC Administrator on the Visual Studio subscription"
     members:
       - sp-hcp-4esnok-su-subscriptions-t1-apply-r0
   - display_name: "sg-t1-az-sub-vs-apps-reader"
@@ -108,7 +108,7 @@ applications:  # app registrations and their enterprise applications (service pr
 
   # HCP Terraform workspace 4esnok_su_subscriptions (Azure tier 1, ESLZ/subscriptions) signs in with OIDC.
   # Directory.Read.All resolves the principal names in its role assignments. Azure RBAC comes from group
-  # membership: sg-t1-az-sub-vs-apps-reader (plan) and sg-t1-az-sub-vs-apps-owner (apply).
+  # membership: sg-t1-az-sub-vs-apps-reader (plan) and sg-t1-az-sub-vs-apps-contributor (apply).
   - display_name: "sp-hcp-4esnok-su-subscriptions-t1-plan-r0"
     description: "HCP Terraform plan runs of 4esnok/4esnok_su_azure/4esnok_su_subscriptions"
     owners:
