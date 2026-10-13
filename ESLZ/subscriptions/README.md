@@ -11,10 +11,23 @@ a pull request shows the plan, and a merge to `main` queues a run that needs to 
 
 ## Adding a subscription
 
-1. Grant the workspace's applications Azure RBAC on the subscription:
-   - `sp-hcp-4esnok-su-subscriptions-t1-plan-r0`: **Reader**
-   - `sp-hcp-4esnok-su-subscriptions-t1-apply-r0`: **Owner** (role assignments need it)
-   - for `management_group_id`, also **Management Group Contributor** on the target management group
+1. Grant the workspace access through groups. Two groups per subscription hold the workspace's applications
+   (in `bootstrap/Azure/tenants/<tenant>.yaml`), and get their roles once by hand, as the workspace cannot grant
+   itself access:
+   - `sg-t1-az-<scope>-apps-reader` (member `sp-hcp-4esnok-su-subscriptions-t1-plan-r0`): **Reader**
+   - `sg-t1-az-<scope>-apps-owner` (member `sp-hcp-4esnok-su-subscriptions-t1-apply-r0`): **Owner** (role assignments need it)
+   - for `management_group_id`, the owner group also needs **Management Group Contributor** on the target management group
+
+   ```sh
+   sub=<subscription ID>
+   for role in Reader Owner; do
+     group=sg-t1-az-<scope>-apps-$(echo $role | tr A-Z a-z)
+     az role assignment create --scope /subscriptions/$sub --role $role \
+       --assignee-object-id "$(az ad group show --group $group --query id -o tsv)" --assignee-principal-type Group
+   done
+   ```
+   Users get access through separate groups (`sg-t1-az-<scope>-owner`, `-reader`), whose roles are declared in
+   the subscription's YAML like any other role assignment.
 2. Add `config/<name>.yaml` with at least `subscription_id`. The plan's `subscriptions` output shows the current
    name and the resource groups that are not declared yet.
 3. Declare what to manage. Existing resource groups and budgets are imported, so declaring one that exists
