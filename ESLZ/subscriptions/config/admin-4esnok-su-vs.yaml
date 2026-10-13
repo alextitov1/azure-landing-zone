@@ -1,0 +1,51 @@
+# Visual Studio subscription of the admin.4esnok.su tenant (bootstrap/Azure/tenants/admin.4esnok.su-vs.yaml).
+# Resource groups and budgets declared here that already exist are imported. The plan's `subscriptions` output
+# shows the current name and the resource groups that exist but are not declared yet.
+subscription_id: 44b9d159-d353-477f-b94f-5ce0f3bd33f1
+location: australiaeast  # default for resource groups without a location
+
+# Renames the subscription when it differs. Needed for `tags` too.
+# display_name: "<subscription name>"
+
+# Added to the subscription's tags; tags removed here stay on the subscription.
+# tags:
+#   env: dev
+
+# Management group ID (not display name); leave out to keep the subscription where it is.
+# management_group_id: mg-4esnok-platform
+
+# Namespaces to register, each with its preview features. Removing one does not unregister it.
+# resource_providers:
+#   Microsoft.Compute: [EncryptionAtHost]
+#   Microsoft.Network:
+#   Microsoft.Storage:
+
+# budgets:
+#   monthly:
+#     amount: 150
+#     start_date: "2026-10-01"   # first day of a month; end_date defaults to 10 years later
+#     notifications:
+#       - threshold: 80
+#         contact_emails: [sysadmin@4esnok.su]
+#       - threshold: 100
+#         threshold_type: Forecasted
+
+# Role assignments at subscription scope. The principal is one of group (display name), user (user principal
+# name), service_principal (display name), or principal_id with principal_type (User, Group or ServicePrincipal).
+# Do not declare the pipeline's own Reader and Owner assignments (sp-hcp-4esnok-su-subscriptions-t1-*):
+# they are granted outside Terraform, and removing them here would lock the workspace out.
+# role_assignments:
+#   - role: Reader
+#     group: sg-t2-az-aks-admin
+
+# Resource groups and their role assignments. Removing a resource group deletes it and everything in it,
+# unless `lock: true` (a CanNotDelete lock) makes the delete fail.
+# resource_groups:
+#   NetworkWatcherRG:          # created by Azure; declaring it imports it
+#     lock: true
+#   rg-t2-aks-dev:
+#     location: australiaeast
+#     tags: { env: dev }
+#     role_assignments:
+#       - role: Azure Kubernetes Service Cluster Admin Role
+#         group: sg-t2-az-aks-admin
