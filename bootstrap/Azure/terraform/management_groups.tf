@@ -40,12 +40,15 @@ module "azure_role_definitions" {
   enable_telemetry      = false
 }
 
-resource "azapi_resource" "management_group" {
+# Created with a PUT action rather than azapi_resource, so that plan runs never read the group: the plan application
+# can read it only once this configuration has given it Reader. PUT is create-or-update, so a group that already
+# exists (e.g. created by a run that failed afterwards) is adopted. Changes made outside Terraform are not detected.
+resource "azapi_resource_action" "management_group" {
   for_each = local.management_groups
 
-  type      = "Microsoft.Management/managementGroups@2023-04-01"
-  parent_id = "/"
-  name      = each.key
+  type        = "Microsoft.Management/managementGroups@2023-04-01"
+  resource_id = "/providers/Microsoft.Management/managementGroups/${each.key}"
+  method      = "PUT"
   body = {
     properties = {
       displayName = try(each.value.display_name, each.key)
@@ -57,13 +60,28 @@ resource "azapi_resource" "management_group" {
       }
     }
   }
+
+  # The creator's Owner role on a new management group takes a moment to become effective
+  retry = {
+    error_message_regex = ["AuthorizationFailed"]
+  }
+}
+
+# Deletes a management group removed from the YAML (Azure refuses while it still contains subscriptions or groups)
+resource "azapi_resource_action" "management_group_delete" {
+  for_each = local.management_groups
+
+  type        = "Microsoft.Management/managementGroups@2023-04-01"
+  resource_id = "/providers/Microsoft.Management/managementGroups/${each.key}"
+  method      = "DELETE"
+  when        = "destroy"
 }
 
 resource "azapi_resource" "management_group_role_assignment" {
   for_each = local.management_group_role_assignments
 
   type      = "Microsoft.Authorization/roleAssignments@2022-04-01"
-  parent_id = azapi_resource.management_group[each.value.management_group].id
+  parent_id = "/providers/Microsoft.Management/managementGroups/${each.value.management_group}"
   name      = uuidv5("url", each.key) # stable: derived from the YAML, not from object IDs
   body = {
     properties = merge(
@@ -81,6 +99,9 @@ resource "azapi_resource" "management_group_role_assignment" {
   retry = {
     error_message_regex = ["AuthorizationFailed"]
   }
+
+  # Created after the group, and destroyed before it is deleted
+  depends_on = [azapi_resource_action.management_group, azapi_resource_action.management_group_delete]
 
   lifecycle {
     precondition {
