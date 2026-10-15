@@ -34,6 +34,7 @@ workspaces:
     description: "Azure tier-1: subscriptions and their resource groups"
     tags: { env: prod, cloud: azure, project: 4esnok.su }
     execution_mode: remote
+    auto_apply: true
     azure_oidc:  # applications in bootstrap/Azure/tenants/admin.4esnok.su-vs.yaml, created by the same merge
       apps_workspace: 4esnok_su_entraid_t0_t1              # workspace whose state holds the applications below
       plan_app: sp-hcp-4esnok-su-subscriptions-t1-plan-r0   # Reader on the subscriptions
