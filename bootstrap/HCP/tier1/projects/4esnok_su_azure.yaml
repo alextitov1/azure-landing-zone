@@ -42,3 +42,16 @@ workspaces:
       # subscription_id: <default subscription, optional>
     vcs:
       working_directory: ESLZ/subscriptions
+
+  4esnok_su_connectivity:
+    description: "Azure tier-1: lab hub-and-spoke network"
+    tags: { env: dev, cloud: azure, project: 4esnok.su }
+    execution_mode: remote
+    auto_apply: true
+    azure_oidc:  # applications in bootstrap/Azure/tenants/admin.4esnok.su-vs.yaml
+      apps_workspace: 4esnok_su_entraid_t0_t1
+      plan_app: sp-hcp-4esnok-su-connectivity-t1-plan-r0
+      apply_app: sp-hcp-4esnok-su-connectivity-t1-apply-r0
+    vcs:
+      working_directory: ESLZ/connectivity/terraform
+      trigger_patterns: ["/ESLZ/connectivity/**/*"]
