@@ -25,8 +25,7 @@ a pull request shows the plan, and a merge to `main` queues a run that needs to 
 
    Users get access through separate groups (`sg-t1-az-sub-vs-contributor`, `-reader`), whose roles are declared
    in the subscription's YAML like any other role assignment. Owner stays outside Terraform.
-2. Add `config/<name>.yaml` with at least `subscription_id`. The plan's `subscriptions` output shows the current
-   name.
+2. Add `config/<name>.yaml` with at least `subscription_id`.
 3. Declare what to manage.
 
 ## YAML
