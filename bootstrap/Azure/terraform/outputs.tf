@@ -24,6 +24,6 @@ output "tenant_id" {
 }
 
 output "management_group_ids" {
-  value       = { for name, mg in azapi_resource_action.management_group : name => mg.resource_id }
+  value       = try(module.management_groups[0].management_group_resource_ids, {})
   description = "Resource IDs of the management groups from the YAML"
 }

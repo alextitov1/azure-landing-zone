@@ -1,13 +1,12 @@
-# Management groups and Azure RBAC on them (tenant YAML `management_groups`).
-# A management group's creator becomes its Owner, so the identity that applies this configuration can assign
-# roles on the groups it creates without any prior Azure RBAC, as long as the tenant's hierarchy setting
-# "Require write permissions for creating new management groups" is off (the default).
+# Management groups and Azure RBAC on them, with the Azure Verified Module for Azure Landing Zones.
+# The hierarchy is an architecture definition in ./lib, chosen by the tenant YAML (management_groups.architecture);
+# the role assignments are in the tenant YAML. A management group's creator becomes its Owner, so the identity that
+# applies this configuration can assign roles on the groups it creates without any prior Azure RBAC, as long as the
+# tenant's hierarchy setting "Require write permissions for creating new management groups" is off (the default).
 # Subscriptions are not moved here: that needs Owner on the subscription itself.
 
 locals {
-  tenant_root_management_group_id = "/providers/Microsoft.Management/managementGroups/${local.tenant_config.entraid_tenant_id}"
-
-  management_groups = { for mg in try(local.tenant_config.management_groups, []) : mg.name => mg }
+  management_groups_config = try(local.tenant_config.management_groups, null)
 
   # Principals named in role assignments: group or application (display names in this YAML), user (UPN),
   # or principal_id with principal_type for principals outside the YAML
@@ -17,96 +16,60 @@ locals {
     { for upn, u in module.entraid_user : "user/${upn}" => { id = u.user_id, type = "User" } },
   )
 
-  # "<management group>|<role>|<group|application|user>/<name>" => role assignment
-  management_group_role_assignments = merge([
-    for mg_name, mg in local.management_groups : {
-      for ra in try(mg.role_assignments, []) :
-      "${mg_name}|${ra.role}|${try("group/${ra.group}", "application/${ra.application}", "user/${ra.user}", "id/${ra.principal_id}")}" => merge(ra, {
-        management_group = mg_name
-        principal        = try("group/${ra.group}", "application/${ra.application}", "user/${ra.user}", "id/${ra.principal_id}")
-      })
-    }
-  ]...)
-}
-
-# Built-in role names to role definition IDs, from the module's cached data (no API calls)
-module "azure_role_definitions" {
-  source  = "Azure/avm-utl-roledefinitions/azure"
-  version = "0.1.0"
-  count   = length(local.management_groups) > 0 ? 1 : 0
-
-  role_definition_scope = local.tenant_root_management_group_id
-  use_cached_data       = true
-  enable_telemetry      = false
-}
-
-# Created with a PUT action rather than azapi_resource, so that plan runs never read the group: the plan application
-# can read it only once this configuration has given it Reader. PUT is create-or-update, so a group that already
-# exists (e.g. created by a run that failed afterwards) is adopted. Changes made outside Terraform are not detected.
-resource "azapi_resource_action" "management_group" {
-  for_each = local.management_groups
-
-  type        = "Microsoft.Management/managementGroups@2023-04-01"
-  resource_id = "/providers/Microsoft.Management/managementGroups/${each.key}"
-  method      = "PUT"
-  body = {
-    properties = {
-      displayName = try(each.value.display_name, each.key)
-      details = {
-        parent = {
-          # another management group from this YAML, or the tenant root group
-          id = try(each.value.parent, null) == null ? local.tenant_root_management_group_id : "/providers/Microsoft.Management/managementGroups/${each.value.parent}"
-        }
-      }
-    }
-  }
-
-  # The creator's Owner role on a new management group takes a moment to become effective
-  retry = {
-    error_message_regex = ["AuthorizationFailed"]
-  }
-}
-
-# Deletes a management group removed from the YAML (Azure refuses while it still contains subscriptions or groups)
-resource "azapi_resource_action" "management_group_delete" {
-  for_each = local.management_groups
-
-  type        = "Microsoft.Management/managementGroups@2023-04-01"
-  resource_id = "/providers/Microsoft.Management/managementGroups/${each.key}"
-  method      = "DELETE"
-  when        = "destroy"
-}
-
-resource "azapi_resource" "management_group_role_assignment" {
-  for_each = local.management_group_role_assignments
-
-  type      = "Microsoft.Authorization/roleAssignments@2022-04-01"
-  parent_id = "/providers/Microsoft.Management/managementGroups/${each.value.management_group}"
-  name      = uuidv5("url", each.key) # stable: derived from the YAML, not from object IDs
-  body = {
-    properties = merge(
-      {
-        roleDefinitionId = try(module.azure_role_definitions[0].role_definition_rolename_to_resource_id[each.value.role], null)
-        principalId      = try(local.azure_rbac_principals[each.value.principal].id, each.value.principal_id)
-        principalType    = try(local.azure_rbac_principals[each.value.principal].type, each.value.principal_type)
-      },
+  # "<management group>|<role>|<group|application|user|id>/<name>" => module input
+  management_group_role_assignments = {
+    for ra in try(local.management_groups_config.role_assignments, []) :
+    "${ra.management_group}|${ra.role}|${try("group/${ra.group}", "application/${ra.application}", "user/${ra.user}", "id/${ra.principal_id}")}" => {
+      management_group_name      = ra.management_group
+      role_definition_id_or_name = ra.role # built-in role name, looked up by the module at the group's scope
+      principal_id               = try(local.azure_rbac_principals[try("group/${ra.group}", "application/${ra.application}", "user/${ra.user}")].id, ra.principal_id)
+      principal_type             = try(local.azure_rbac_principals[try("group/${ra.group}", "application/${ra.application}", "user/${ra.user}")].type, ra.principal_type)
       # ABAC condition, e.g. to stop Role Based Access Control Administrator from assigning privileged roles
-      try(each.value.condition, null) == null ? {} : { condition = trimspace(each.value.condition), conditionVersion = "2.0" },
-    )
-  }
-
-  # The creator's Owner role on a new management group takes a moment to become effective
-  retry = {
-    error_message_regex = ["AuthorizationFailed"]
-  }
-
-  # Created after the group, and destroyed before it is deleted
-  depends_on = [azapi_resource_action.management_group, azapi_resource_action.management_group_delete]
-
-  lifecycle {
-    precondition {
-      condition     = try(module.azure_role_definitions[0].role_definition_rolename_to_resource_id[each.value.role], null) != null
-      error_message = "\"${each.value.role}\" is not a built-in Azure role."
+      condition         = try(trimspace(ra.condition), null)
+      condition_version = try(ra.condition, null) == null ? null : "2.0"
     }
   }
+}
+
+module "management_groups" {
+  source  = "Azure/avm-ptn-alz/azurerm"
+  version = "0.22.0"
+  count   = local.management_groups_config == null ? 0 : 1
+
+  architecture_name  = local.management_groups_config.architecture
+  parent_resource_id = local.tenant_config.entraid_tenant_id # the tenant root group
+  location           = try(local.management_groups_config.location, "australiaeast")
+  enable_telemetry   = false
+
+  management_group_role_assignments = local.management_group_role_assignments
+}
+
+# --- Migration from the azapi-based management groups (#8, #9). Remove once it has been applied. -------------
+
+# mg-landingzones was created by a PUT action; adopt it. The tier-0 plan application can read it (Reader, from #9).
+import {
+  for_each = local.management_groups_config == null ? toset([]) : toset(["mg-landingzones"])
+  to       = module.management_groups[0].azapi_resource.management_groups_level_0[each.key]
+  id       = "/providers/Microsoft.Management/managementGroups/${each.key}"
+}
+
+# Forget the actions without running them: the destroy-time action would delete the management group.
+removed {
+  from = azapi_resource_action.management_group
+  lifecycle {
+    destroy = false
+  }
+}
+
+removed {
+  from = azapi_resource_action.management_group_delete
+  lifecycle {
+    destroy = false
+  }
+}
+
+# Same keys as before. The module names role assignments differently, so these are replaced (deleted and created).
+moved {
+  from = azapi_resource.management_group_role_assignment
+  to   = module.management_groups[0].azapi_resource.management_group_role_assignments
 }

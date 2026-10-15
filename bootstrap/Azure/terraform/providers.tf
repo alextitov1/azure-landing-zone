@@ -24,6 +24,10 @@ terraform {
       source  = "Azure/azapi"
       version = "~> 2.13"
     }
+    alz = {
+      source  = "Azure/alz"
+      version = "~> 0.22"
+    }
   }
 }
 
@@ -44,6 +48,17 @@ provider "msgraph" {
 
 # Management groups and their Azure RBAC (management_groups.tf), signed in like msgraph
 provider "azapi" {
+  use_cli              = var.tfc_azure_dynamic_credentials == null
+  use_oidc             = var.tfc_azure_dynamic_credentials != null
+  client_id_file_path  = try(var.tfc_azure_dynamic_credentials.default.client_id_file_path, null)
+  oidc_token_file_path = try(var.tfc_azure_dynamic_credentials.default.oidc_token_file_path, null)
+}
+
+# Reads the management group hierarchy (architecture definitions) in ./lib for Azure/avm-ptn-alz.
+# Signs in like azapi; with no policies in the library it makes no Azure calls of its own.
+provider "alz" {
+  library_references = [{ custom_url = "${path.root}/lib" }]
+
   use_cli              = var.tfc_azure_dynamic_credentials == null
   use_oidc             = var.tfc_azure_dynamic_credentials != null
   client_id_file_path  = try(var.tfc_azure_dynamic_credentials.default.client_id_file_path, null)
