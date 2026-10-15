@@ -7,7 +7,7 @@
 
 ## Naming
 
-`<type>-<workload>-<env>-<region>-<nn>`, lowercase, e.g. `rg-connectivity-dev-nzn-01`. Types follow the Cloud Adoption Framework abbreviations.
+`<type>-<workload>-<env>-<region>-<nn>`, lowercase, e.g. `rg-connectivity-dev-nzn-01`. Names come from the [Azure Verified Naming Utility](https://registry.terraform.io/modules/Azure/avm-utl-naming/azure/latest) (`Azure/avm-utl-naming/azure`): `suffix = [workload, env, region]`, `instance` formatted as `%02d`, no random part. The type is the Cloud Adoption Framework abbreviation from its catalog; corrections go in a `naming-overrides.json` next to the configuration (see `connectivity/terraform/naming-overrides.json`: dashes for network managers, and IPAM pools, which the catalog lacks).
 
 | Part | Values |
 |---|---|

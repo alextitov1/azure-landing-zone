@@ -6,7 +6,7 @@ location: newzealandnorth
 # Names: <type>-<workload>-<environment>-<region_code>-<instance> (ESLZ/README.md)
 environment: dev
 region_code: nzn
-instance: "01"
+instance: 1
 
 ipam:
   root: 10.200.0.0/16
