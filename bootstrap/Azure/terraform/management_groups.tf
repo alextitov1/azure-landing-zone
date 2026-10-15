@@ -43,27 +43,3 @@ module "management_groups" {
 
   management_group_role_assignments = local.management_group_role_assignments
 }
-
-# --- Migration: mg-landingzones moves under mg-4esnok. Remove once it has been applied. -----------------------
-# A group's parent is a replace trigger in the module, and moving the group to the next level changes its address.
-# A moved block would keep the old trigger value and recreate the group (Azure refuses while it holds
-# subscriptions), so the old address is forgotten without destroying anything, and the group is imported at the
-# new one. The import records no trigger value, so the new parent is applied as an update (a PUT).
-
-moved {
-  from = module.management_groups[0].azapi_resource.management_groups_level_0["mg-landingzones"]
-  to   = azapi_resource.migrated_mg_landingzones
-}
-
-removed {
-  from = azapi_resource.migrated_mg_landingzones
-  lifecycle {
-    destroy = false
-  }
-}
-
-import {
-  for_each = local.management_groups_config == null ? toset([]) : toset(["mg-landingzones"])
-  to       = module.management_groups[0].azapi_resource.management_groups_level_1[each.key]
-  id       = "/providers/Microsoft.Management/managementGroups/${each.key}"
-}
