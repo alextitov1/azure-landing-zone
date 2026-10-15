@@ -22,3 +22,8 @@ output "tenant_id" {
   value       = data.azuread_client_config.current.tenant_id
   description = "Entra ID tenant ID, read by bootstrap/HCP/tier1 together with `applications` (azure_oidc)"
 }
+
+output "management_group_ids" {
+  value       = { for name, mg in azapi_resource.management_group : name => mg.id }
+  description = "Resource IDs of the management groups from the YAML"
+}

@@ -20,6 +20,10 @@ terraform {
       source  = "microsoft/msgraph"
       version = "~> 0.6"
     }
+    azapi = {
+      source  = "Azure/azapi"
+      version = "~> 2.13"
+    }
   }
 }
 
@@ -32,6 +36,14 @@ provider "onepassword" {
 # Tenant settings that the azuread provider does not cover. Locally it uses the Azure CLI login;
 # in HCP Terraform remote runs it uses the workspace's dynamic credentials (OIDC).
 provider "msgraph" {
+  use_cli              = var.tfc_azure_dynamic_credentials == null
+  use_oidc             = var.tfc_azure_dynamic_credentials != null
+  client_id_file_path  = try(var.tfc_azure_dynamic_credentials.default.client_id_file_path, null)
+  oidc_token_file_path = try(var.tfc_azure_dynamic_credentials.default.oidc_token_file_path, null)
+}
+
+# Management groups and their Azure RBAC (management_groups.tf), signed in like msgraph
+provider "azapi" {
   use_cli              = var.tfc_azure_dynamic_credentials == null
   use_oidc             = var.tfc_azure_dynamic_credentials != null
   client_id_file_path  = try(var.tfc_azure_dynamic_credentials.default.client_id_file_path, null)
