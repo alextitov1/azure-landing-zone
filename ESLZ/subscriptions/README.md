@@ -27,8 +27,7 @@ a pull request shows the plan, and a merge to `main` queues a run that needs to 
    in the subscription's YAML like any other role assignment. Owner stays outside Terraform.
 2. Add `config/<name>.yaml` with at least `subscription_id`. The plan's `subscriptions` output shows the current
    name.
-3. Declare what to manage. Existing resource groups and budgets are imported, so declaring one that exists
-   does not recreate it.
+3. Declare what to manage.
 
 ## YAML
 
@@ -52,8 +51,9 @@ which needs `Directory.Read.All` on both applications (granted in the tenant YAM
 
 - **Deletes:** removing a resource group from the YAML deletes it and everything in it, unless it has `lock: true`.
   Removing a role assignment deletes it.
-- **Existing role assignments** are not imported: the module names assignments by a GUID derived from scope,
-  principal and role, so one created outside Terraform conflicts (`RoleAssignmentExists`). Delete it before
-  declaring it, or leave it undeclared.
+- **Existing objects are not imported:** declaring a resource group or budget that already exists fails with
+  "already exists", and a role assignment created outside Terraform conflicts (`RoleAssignmentExists`, as the
+  module names assignments by a GUID derived from scope, principal and role). Import it, delete it first, or
+  leave it undeclared.
 - **Renames outside Terraform** are not detected; the rename runs again only when `display_name` changes.
 - **Telemetry** of the module is off (`enable_telemetry = false`).
