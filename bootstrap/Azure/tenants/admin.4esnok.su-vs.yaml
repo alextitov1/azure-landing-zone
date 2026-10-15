@@ -148,11 +148,11 @@ applications:  # app registrations and their enterprise applications (service pr
 # Azure RBAC. Subscriptions are moved in by their Owner:
 # az account management-group subscription add --name <group> --subscription <id>
 management_groups:
-  architecture: landingzones
+  architecture: 4esnok  # mg-4esnok > mg-platform, mg-landingzones, mg-sandbox
   location: australiaeast  # for policy managed identities
   role_assignments:  # management_group, role (built-in name), and group, application, user or principal_id + principal_type
-    - management_group: mg-landingzones
-      role: Reader  # plan runs of this workspace read the group and its role assignments
+    - management_group: mg-4esnok
+      role: Reader  # plan runs of this workspace read the groups and their role assignments
       application: sp-hcp-4esnok-su-entraid-t0_t1-plan-r3
     # Pipeline of ESLZ/subscriptions, for every subscription in this group
     - management_group: mg-landingzones
@@ -173,8 +173,8 @@ management_groups:
         (@Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAllValues:GuidNotEquals
         {8e3af657-a8ff-443c-a75c-2fe8c4bcb635, 18d7d88d-d35e-4fb5-a5c3-7773c20a72d9, f58310d9-a9f6-439a-9e8d-f62e7b41a168}))
     # Account owner of the Visual Studio subscription (live.com#admin@4esnok.su, outside this YAML),
-    # to move subscriptions into the group
-    - management_group: mg-landingzones
+    # to move subscriptions into any of the groups
+    - management_group: mg-4esnok
       role: Management Group Contributor
       principal_id: f49d01c8-f39d-43d0-bd83-b57cd145e2b1
       principal_type: User
