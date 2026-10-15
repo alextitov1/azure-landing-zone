@@ -1,6 +1,5 @@
 # Reads each subscription (Reader is enough), to adopt resource groups and budgets that the YAML declares
-# and that already exist, and to list what exists but is not declared yet (outputs.tf). Import blocks for
-# objects already in the state are skipped, so these stay in place.
+# and that already exist. Import blocks for objects already in the state are skipped, so these stay in place.
 
 data "azapi_resource" "subscription" {
   for_each = local.config
