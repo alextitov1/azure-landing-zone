@@ -6,15 +6,36 @@ locals {
   subscription_id = "/subscriptions/${local.config.subscription_id}"
   location        = local.config.location
 
-  # <type>-<workload>-<env>-<region>-<nn>, see ESLZ/README.md
-  suffix = "${local.config.environment}-${local.config.region_code}-${local.config.instance}"
+  # "<spoke>/<subnet>" => NSG workload, e.g. "workload/snet-app" => "workload-app"
+  spoke_subnets = merge([
+    for spoke, s in local.config.spokes : {
+      for subnet in keys(s.subnets) : "${spoke}/${subnet}" => "${spoke}-${trimprefix(subnet, "snet-")}"
+    }
+  ]...)
+
+  # The workload part of each name
+  workloads = toset(concat(["connectivity", "hub", "root", "spokes"], keys(local.config.spokes), values(local.spoke_subnets)))
+}
+
+# Names: <type>-<workload>-<env>-<region>-<nn>, see ESLZ/README.md. The type is the CAF abbreviation from
+# the naming catalog, with the corrections in naming-overrides.json.
+module "naming" {
+  source   = "Azure/avm-utl-naming/azure"
+  version  = "0.2.0"
+  for_each = local.workloads
+
+  suffix               = [each.key, local.config.environment, local.config.region_code]
+  instance             = local.config.instance
+  instance_format      = "%02d"
+  unique_length        = 0
+  custom_override_file = "${path.module}/naming-overrides.json"
 }
 
 module "resource_group" {
   source  = "Azure/avm-res-resources-resourcegroup/azurerm"
   version = "0.4.0"
 
-  name             = "rg-connectivity-${local.suffix}"
+  name             = module.naming["connectivity"].names.resource_group.name
   location         = local.location
   enable_telemetry = false
 }
@@ -25,7 +46,7 @@ module "network_manager" {
   source  = "Azure/avm-res-network-networkmanager/azurerm"
   version = "0.3.0"
 
-  name                           = "vnm-connectivity-${local.suffix}"
+  name                           = module.naming["connectivity"].names.network_manager.name
   resource_group_name            = module.resource_group.name
   location                       = local.location
   network_manager_scope          = { subscription_ids = [local.subscription_id] }
@@ -36,7 +57,7 @@ module "network_manager" {
 resource "azapi_resource" "ipam_root" {
   type      = "Microsoft.Network/networkManagers/ipamPools@2024-07-01"
   parent_id = module.network_manager.resource_id
-  name      = "ipam-root-${local.suffix}"
+  name      = module.naming["root"].names.network_manager_ipam_pool.name
   location  = local.location
   body = {
     properties = {
@@ -56,7 +77,7 @@ resource "azapi_resource" "ipam" {
 
   type      = "Microsoft.Network/networkManagers/ipamPools@2024-07-01"
   parent_id = module.network_manager.resource_id
-  name      = "ipam-${each.key}-${local.suffix}"
+  name      = module.naming[each.key].names.network_manager_ipam_pool.name
   location  = local.location
   body = {
     properties = {
@@ -75,7 +96,7 @@ module "hub" {
   source  = "Azure/avm-res-network-virtualnetwork/azurerm"
   version = "0.22.3"
 
-  name             = "vnet-hub-${local.suffix}"
+  name             = module.naming["hub"].names.virtual_network.name
   parent_id        = module.resource_group.resource_id
   location         = local.location
   enable_telemetry = false
@@ -89,21 +110,12 @@ module "hub" {
   }
 }
 
-locals {
-  # "<spoke>/<subnet>" => NSG name
-  spoke_subnets = merge([
-    for spoke, s in local.config.spokes : {
-      for subnet in keys(s.subnets) : "${spoke}/${subnet}" => "nsg-${spoke}-${trimprefix(subnet, "snet-")}-${local.suffix}"
-    }
-  ]...)
-}
-
 module "nsg" {
   source   = "Azure/avm-res-network-networksecuritygroup/azurerm"
   version  = "0.6.0"
   for_each = local.spoke_subnets
 
-  name             = each.value
+  name             = module.naming[each.value].names.network_security_group.name
   parent_id        = module.resource_group.resource_id
   location         = local.location
   enable_telemetry = false
@@ -114,7 +126,7 @@ module "spoke" {
   version  = "0.22.3"
   for_each = local.config.spokes
 
-  name             = "vnet-${each.key}-${local.suffix}"
+  name             = module.naming[each.key].names.virtual_network.name
   parent_id        = module.resource_group.resource_id
   location         = local.location
   enable_telemetry = false

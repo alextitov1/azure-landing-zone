@@ -1,0 +1,24 @@
+{
+  "schema_version": 2,
+  "resources": {
+    "network_manager": {
+      "dashes": true,
+      "min_length": 1,
+      "max_length": 64,
+      "scope": "resource group",
+      "override_reason": "The catalog has no naming rule for network managers and drops the dashes; keep <type>-<workload>-<env>-<region>-<nn>.",
+      "override_source": "ESLZ/README.md"
+    },
+    "network_manager_ipam_pool": {
+      "resource_type": "Microsoft.Network/networkManagers/ipamPools",
+      "slug": "ipam",
+      "min_length": 1,
+      "max_length": 64,
+      "scope": "parent",
+      "dashes": true,
+      "lowercase": true,
+      "override_reason": "IPAM pools are not in the catalog.",
+      "override_source": "ESLZ/README.md"
+    }
+  }
+}
