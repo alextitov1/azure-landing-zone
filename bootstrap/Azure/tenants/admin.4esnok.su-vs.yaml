@@ -65,10 +65,12 @@ groups:
     description: "Applications: Contributor and constrained RBAC Administrator on the Visual Studio subscription"
     members:
       - sp-hcp-4esnok-su-subscriptions-t1-apply-r0
+      - sp-hcp-4esnok-su-connectivity-t1-apply-r0
   - display_name: "sg-t1-az-sub-vs-apps-reader"
     description: "Applications: Reader on the Visual Studio subscription"
     members:
       - sp-hcp-4esnok-su-subscriptions-t1-plan-r0
+      - sp-hcp-4esnok-su-connectivity-t1-plan-r0
 
 applications:  # app registrations and their enterprise applications (service principals)
   # HCP Terraform workspace 4esnok_su_entraid_t0_t1 (Azure tier 0) signs in with OIDC:
@@ -131,6 +133,26 @@ applications:  # app registrations and their enterprise applications (service pr
     graph_app_roles:
       - Directory.Read.All
 
+  # HCP Terraform workspace 4esnok_su_connectivity (Azure tier 1, ESLZ/connectivity) signs in with OIDC.
+  # Azure RBAC comes from group membership: sg-t1-az-sub-vs-apps-reader (plan) and sg-t1-az-sub-vs-apps-contributor (apply).
+  - display_name: "sp-hcp-4esnok-su-connectivity-t1-plan-r0"
+    description: "HCP Terraform plan runs of 4esnok/4esnok_su_azure/4esnok_su_connectivity"
+    owners:
+      - sysadmin@4esnok.su
+    federated_credentials:
+      - name: "hcp-plan"
+        issuer: "https://app.terraform.io"
+        subject: "organization:4esnok:project:4esnok_su_azure:workspace:4esnok_su_connectivity:run_phase:plan"
+
+  - display_name: "sp-hcp-4esnok-su-connectivity-t1-apply-r0"
+    description: "HCP Terraform apply runs of 4esnok/4esnok_su_azure/4esnok_su_connectivity"
+    owners:
+      - sysadmin@4esnok.su
+    federated_credentials:
+      - name: "hcp-apply"
+        issuer: "https://app.terraform.io"
+        subject: "organization:4esnok:project:4esnok_su_azure:workspace:4esnok_su_connectivity:run_phase:apply"
+
   # Example: an application with a client secret stored in 1Password and a direct EntraID role,
   # used as a group member by display name.
   # - display_name: "sp-t1-example-directory-read"
@@ -154,7 +176,7 @@ management_groups:
     - management_group: mg-4esnok
       role: Reader  # plan runs of this workspace read the groups and their role assignments
       application: sp-hcp-4esnok-su-entraid-t0_t1-plan-r3
-    # Pipeline of ESLZ/subscriptions, for every subscription in this group
+    # Pipelines of ESLZ/subscriptions and ESLZ/connectivity, for every subscription in this group
     - management_group: mg-landingzones
       role: Reader
       group: sg-t1-az-sub-vs-apps-reader
