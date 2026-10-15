@@ -1,32 +1,23 @@
-## Project directory structure
-```sh
-├── pipelines # pipeline yml files
-│   └── templates # pipeline templates
-└── terraform # terraform code
-    ├── development # dev branch
-    │   ├── launchpad # tf backend infra - level 0 (GitOps) 
-    │   └── network 
-    │       ├── firewall # level 1
-    │       └── firewallpolicycollection # level 2
-    ├── modules # terraform modules
-    └── production # prod branch 
-        ├── australiaeast
-        ├── launchpad
-        └── nznorth
-```
+# ESLZ
 
-## Terraform deployments hierarchy
+| Directory | Contents | HCP Terraform workspace |
+|---|---|---|
+| `subscriptions/` | Subscriptions, resource groups, role assignments | `4esnok_su_subscriptions` |
+| `connectivity/` | Hub-and-spoke network, IPAM | `4esnok_su_connectivity` |
 
-```sh
-┌────────────┐ # a.k.a "launchpad" manages backends (storage accounts)
-│  Level 0   │ # all higher-level module exports backed config(s) from level0 
-└────────────┘ # ?? can we keep level 0 statefile in git?
-      ╪
-┌────────────┐ # doesn't have dependable resources
-│  Level 1   │ # keep state file in a storage account
-└────────────┘ # pull storage account config from level 0
-      ╪
-┌────────────┐ # has dependencies from other modules 
-│  Level n   │ # gets its state file and state files to ...
-└────────────┘ # ... resolve dependencies from level 0
-```
+## Naming
+
+`<type>-<workload>-<env>-<region>-<nn>`, lowercase, e.g. `rg-connectivity-dev-nzn-01`. Types follow the Cloud Adoption Framework abbreviations.
+
+| Part | Values |
+|---|---|
+| type | `rg` resource group, `vnm` network manager, `ipam` IPAM pool, `vnet` virtual network, `snet` subnet, `nsg` network security group, `rt` route table, `peer` peering, `pip` public IP, `vgw` VPN gateway, `lgw` local network gateway, `afw` firewall, `bas` Bastion, `kv` key vault, `st` storage account, `log` Log Analytics workspace, `vm` virtual machine |
+| workload | `connectivity`, `hub`, `workload`, … |
+| env | `dev`, `tst`, `prd` |
+| region | `nzn` newzealandnorth, `aue` australiaeast, `ase` australiasoutheast |
+| nn | `01`, `02`, … |
+
+Exceptions:
+- Child resources take only type and purpose: subnets `snet-<purpose>`, peerings `peer-<from>-to-<to>`.
+- Names fixed by Azure stay as they are: `GatewaySubnet`, `AzureFirewallSubnet`, `AzureBastionSubnet`.
+- Storage accounts have no hyphens: `st<workload><env><region><nn>`.

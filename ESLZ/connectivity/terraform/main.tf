@@ -5,13 +5,16 @@ locals {
   config          = yamldecode(file("${path.module}/../config/network.yaml"))
   subscription_id = "/subscriptions/${local.config.subscription_id}"
   location        = local.config.location
+
+  # <type>-<workload>-<env>-<region>-<nn>, see ESLZ/README.md
+  suffix = "${local.config.environment}-${local.config.region_code}-${local.config.instance}"
 }
 
 module "resource_group" {
   source  = "Azure/avm-res-resources-resourcegroup/azurerm"
   version = "0.4.0"
 
-  name             = local.config.resource_group
+  name             = "rg-connectivity-${local.suffix}"
   location         = local.location
   enable_telemetry = false
 }
@@ -22,7 +25,7 @@ module "network_manager" {
   source  = "Azure/avm-res-network-networkmanager/azurerm"
   version = "0.3.0"
 
-  name                           = local.config.network_manager
+  name                           = "vnm-connectivity-${local.suffix}"
   resource_group_name            = module.resource_group.name
   location                       = local.location
   network_manager_scope          = { subscription_ids = [local.subscription_id] }
@@ -33,12 +36,12 @@ module "network_manager" {
 resource "azapi_resource" "ipam_root" {
   type      = "Microsoft.Network/networkManagers/ipamPools@2024-07-01"
   parent_id = module.network_manager.resource_id
-  name      = "ipam-lab"
+  name      = "ipam-root-${local.suffix}"
   location  = local.location
   body = {
     properties = {
       addressPrefixes = [local.config.ipam.root]
-      displayName     = "Lab"
+      displayName     = "Root"
     }
   }
 
@@ -53,7 +56,7 @@ resource "azapi_resource" "ipam" {
 
   type      = "Microsoft.Network/networkManagers/ipamPools@2024-07-01"
   parent_id = module.network_manager.resource_id
-  name      = "ipam-${each.key}"
+  name      = "ipam-${each.key}-${local.suffix}"
   location  = local.location
   body = {
     properties = {
@@ -72,7 +75,7 @@ module "hub" {
   source  = "Azure/avm-res-network-virtualnetwork/azurerm"
   version = "0.22.3"
 
-  name             = local.config.hub.name
+  name             = "vnet-hub-${local.suffix}"
   parent_id        = module.resource_group.resource_id
   location         = local.location
   enable_telemetry = false
@@ -89,7 +92,9 @@ module "hub" {
 locals {
   # "<spoke>/<subnet>" => NSG name
   spoke_subnets = merge([
-    for spoke, s in local.config.spokes : { for subnet in keys(s.subnets) : "${spoke}/${subnet}" => "nsg-${spoke}-${subnet}" }
+    for spoke, s in local.config.spokes : {
+      for subnet in keys(s.subnets) : "${spoke}/${subnet}" => "nsg-${spoke}-${trimprefix(subnet, "snet-")}-${local.suffix}"
+    }
   ]...)
 }
 
@@ -109,7 +114,7 @@ module "spoke" {
   version  = "0.22.3"
   for_each = local.config.spokes
 
-  name             = "vnet-spoke-${each.key}-nzn"
+  name             = "vnet-${each.key}-${local.suffix}"
   parent_id        = module.resource_group.resource_id
   location         = local.location
   enable_telemetry = false
