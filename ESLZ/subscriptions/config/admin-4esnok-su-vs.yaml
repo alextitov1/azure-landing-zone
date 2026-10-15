@@ -33,8 +33,8 @@ location: australiaeast  # default for resource groups without a location
 # Role assignments at subscription scope. The principal is one of group (display name), user (user principal
 # name), service_principal (display name), or principal_id with principal_type (User, Group or ServicePrincipal).
 # Access goes through groups (bootstrap/Azure/tenants/admin.4esnok.su-vs.yaml): members change there, not here.
-# Do not declare the application groups (sg-t1-az-sub-vs-apps-*): their roles are assigned by hand, and
-# removing them here would lock the workspace out. The workspace cannot assign Owner, User Access
+# Do not declare the application groups (sg-t1-az-sub-vs-apps-*): their roles come from management group
+# mg-landingzones (bootstrap/Azure), and declaring them here would conflict with or lock out the workspace. The workspace cannot assign Owner, User Access
 # Administrator or Role Based Access Control Administrator (see README.md).
 role_assignments:
   - role: Contributor
