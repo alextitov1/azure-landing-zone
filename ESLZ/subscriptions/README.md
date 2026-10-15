@@ -33,7 +33,7 @@ a pull request shows the plan, and a merge to `main` queues a run that needs to 
 | Key | Purpose |
 |-----|---------|
 | `subscription_id` | Required, lowercase GUID |
-| `location` | Default location for resource groups; default `australiaeast` |
+| `location` | Default location for resource groups; default `newzealandnorth` |
 | `display_name` | Renames the subscription; also required for `tags` |
 | `tags` | Merged into the subscription's tags; tags removed from the YAML stay |
 | `management_group_id` | Management group ID to move the subscription to |

@@ -11,7 +11,7 @@ locals {
   config = {
     for sub, s in local.subscriptions : sub => {
       subscription_id     = s.subscription_id
-      location            = try(s.location, "australiaeast")
+      location            = try(s.location, "newzealandnorth")
       display_name        = try(s.display_name, null)
       tags                = try({ for k, v in s.tags : k => v }, {})
       management_group_id = try(s.management_group_id, null)
