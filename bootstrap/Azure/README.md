@@ -45,7 +45,7 @@ Every section is optional. Features marked P1 or P2 need that Entra ID licence; 
 | `guests` | B2B guest invitations | Free | `User.Invite.All` |
 | `cross_tenant_access` | Cross-tenant access default and partners (Graph property names) | Free | `Policy.ReadWrite.CrossTenantAccess` |
 | `domains` | Additional custom domains and their verification | Free | `Domain.ReadWrite.All` |
-| `management_groups` | Management groups and Azure RBAC on them | Free | Azure: none, the creator becomes Owner of each group (see [Management groups](#management-groups)) |
+| `management_groups` | Management groups (Azure/avm-ptn-alz) and Azure RBAC on them | Free | Azure: none, the creator becomes Owner of each group (see [Management groups](#management-groups)) |
 | `monitoring` | Used by `monitoring/` only | Sign-in logs P1 | Azure RBAC on the subscription; Global or Security Administrator for the Entra ID diagnostic setting |
 
 Add a permission to the tier-0 apply application only when the tenant uses that section. The plan application needs the read equivalents (`Directory.Read.All` and `Policy.Read.All` cover most of them).
@@ -83,10 +83,16 @@ Users register their own MFA methods at first sign-in; Terraform cannot do this 
 
 ### Management groups
 
-`management_groups` creates management groups (`name`, `display_name`, optional `parent`, default the tenant
-root group) and Azure role assignments on them: `role` (a built-in role name), the principal (`group` or
-`application` by display name, `user` by user principal name, or `principal_id` with `principal_type`) and an
-optional ABAC `condition`. Subscriptions below a group inherit its role assignments.
+`management_groups` is applied with the Azure Verified Module for Azure Landing Zones
+([`Azure/avm-ptn-alz`](https://registry.terraform.io/modules/Azure/avm-ptn-alz/azurerm)):
+
+- `architecture`: the hierarchy, an architecture definition in `terraform/lib/<architecture>.alz_architecture_definition.yaml`
+  (management group `id`, `display_name`, `parent_id`, `null` for the tenant root group, and `archetypes`;
+  the built-in `empty` archetype has no policies). Policies can be added later as archetypes in `terraform/lib`.
+- `location`: default location for policy managed identities.
+- `role_assignments`: `management_group`, `role` (a built-in role name), the principal (`group` or `application`
+  by display name, `user` by user principal name, or `principal_id` with `principal_type`) and an optional ABAC
+  `condition`. Subscriptions below a group inherit its role assignments.
 
 No Azure RBAC is needed up front: the identity that creates a management group becomes its Owner, as long as the
 tenant's hierarchy setting "Require write permissions for creating new management groups" is off (the default).

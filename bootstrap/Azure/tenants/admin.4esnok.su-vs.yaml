@@ -142,36 +142,42 @@ applications:  # app registrations and their enterprise applications (service pr
   #     - Directory Readers
   # (and under groups: members: [sp-t1-example-directory-read])
 
-# Management groups (bootstrap/Azure/terraform/management_groups.tf). The identity that applies this file
-# creates them and so becomes their Owner, which lets it assign the roles below with no prior Azure RBAC.
-# Subscriptions are moved in by their Owner: az account management-group subscription add --name <group> --subscription <id>
+# Management groups (bootstrap/Azure/terraform/management_groups.tf, Azure/avm-ptn-alz). The hierarchy is the
+# architecture definition terraform/lib/<architecture>.alz_architecture_definition.yaml. The identity that applies
+# this file creates the groups and so becomes their Owner, which lets it assign the roles below with no prior
+# Azure RBAC. Subscriptions are moved in by their Owner:
+# az account management-group subscription add --name <group> --subscription <id>
 management_groups:
-  - name: mg-landingzones
-    display_name: "Landing zones"
-    # parent: <management group name>  # default: the tenant root group
-    role_assignments:  # role (built-in name) and group, application, user or principal_id + principal_type
-      - role: Reader  # plan runs of this workspace read the group and its role assignments
-        application: sp-hcp-4esnok-su-entraid-t0_t1-plan-r3
-      # Pipeline of ESLZ/subscriptions, for every subscription in this group
-      - role: Reader
-        group: sg-t1-az-sub-vs-apps-reader
-      - role: Contributor
-        group: sg-t1-az-sub-vs-apps-contributor
-      - role: Role Based Access Control Administrator
-        group: sg-t1-az-sub-vs-apps-contributor
-        # cannot assign or remove Owner, User Access Administrator or Role Based Access Control Administrator
-        condition: >-
-          ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})) OR
-          (@Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAllValues:GuidNotEquals
-          {8e3af657-a8ff-443c-a75c-2fe8c4bcb635, 18d7d88d-d35e-4fb5-a5c3-7773c20a72d9, f58310d9-a9f6-439a-9e8d-f62e7b41a168}))
-          AND ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})) OR
-          (@Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAllValues:GuidNotEquals
-          {8e3af657-a8ff-443c-a75c-2fe8c4bcb635, 18d7d88d-d35e-4fb5-a5c3-7773c20a72d9, f58310d9-a9f6-439a-9e8d-f62e7b41a168}))
-      # Account owner of the Visual Studio subscription (live.com#admin@4esnok.su, outside this YAML),
-      # to move subscriptions into the group
-      - role: Management Group Contributor
-        principal_id: f49d01c8-f39d-43d0-bd83-b57cd145e2b1
-        principal_type: User
+  architecture: landingzones
+  location: australiaeast  # for policy managed identities
+  role_assignments:  # management_group, role (built-in name), and group, application, user or principal_id + principal_type
+    - management_group: mg-landingzones
+      role: Reader  # plan runs of this workspace read the group and its role assignments
+      application: sp-hcp-4esnok-su-entraid-t0_t1-plan-r3
+    # Pipeline of ESLZ/subscriptions, for every subscription in this group
+    - management_group: mg-landingzones
+      role: Reader
+      group: sg-t1-az-sub-vs-apps-reader
+    - management_group: mg-landingzones
+      role: Contributor
+      group: sg-t1-az-sub-vs-apps-contributor
+    - management_group: mg-landingzones
+      role: Role Based Access Control Administrator
+      group: sg-t1-az-sub-vs-apps-contributor
+      # cannot assign or remove Owner, User Access Administrator or Role Based Access Control Administrator
+      condition: >-
+        ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})) OR
+        (@Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAllValues:GuidNotEquals
+        {8e3af657-a8ff-443c-a75c-2fe8c4bcb635, 18d7d88d-d35e-4fb5-a5c3-7773c20a72d9, f58310d9-a9f6-439a-9e8d-f62e7b41a168}))
+        AND ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})) OR
+        (@Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAllValues:GuidNotEquals
+        {8e3af657-a8ff-443c-a75c-2fe8c4bcb635, 18d7d88d-d35e-4fb5-a5c3-7773c20a72d9, f58310d9-a9f6-439a-9e8d-f62e7b41a168}))
+    # Account owner of the Visual Studio subscription (live.com#admin@4esnok.su, outside this YAML),
+    # to move subscriptions into the group
+    - management_group: mg-landingzones
+      role: Management Group Contributor
+      principal_id: f49d01c8-f39d-43d0-bd83-b57cd145e2b1
+      principal_type: User
 
 # PIM needs Entra ID P2, which this tenant does not have (see the example below)
 # pim_roles:
