@@ -52,6 +52,20 @@ workspaces:
       apps_workspace: 4esnok_su_entraid_t0_t1
       plan_app: sp-hcp-4esnok-su-connectivity-t1-plan-r0
       apply_app: sp-hcp-4esnok-su-connectivity-t1-apply-r0
+    remote_state_consumers: [4esnok_su_cortex]  # workspaces that read the VNet and subnet IDs (tfe_outputs)
     vcs:
       working_directory: ESLZ/connectivity/terraform
       trigger_patterns: ["/ESLZ/connectivity/**/*"]
+
+  4esnok_su_cortex:
+    description: "Azure tier-2: workload cortex"
+    tags: { env: dev, cloud: azure, project: 4esnok.su }
+    execution_mode: remote
+    auto_apply: true
+    azure_oidc:  # applications in bootstrap/Azure/tenants/admin.4esnok.su-vs.yaml; RBAC on rg-cortex-dev-nzn-01 only
+      apps_workspace: 4esnok_su_entraid_t0_t1
+      plan_app: sp-hcp-4esnok-su-cortex-t2-plan-r0
+      apply_app: sp-hcp-4esnok-su-cortex-t2-apply-r0
+    vcs:
+      working_directory: ESLZ/workloads/cortex/terraform
+      trigger_patterns: ["/ESLZ/workloads/cortex/**/*"]
