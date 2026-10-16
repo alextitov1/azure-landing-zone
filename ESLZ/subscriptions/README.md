@@ -3,8 +3,8 @@
 Manages the existing subscriptions of the 4esnok.su tenant with the Azure Verified Module
 [`Azure/avm-ptn-alz-sub-vending`](https://registry.terraform.io/modules/Azure/avm-ptn-alz-sub-vending/azure):
 name, tags, management group, resource providers and preview features, budgets, resource groups (optionally
-locked), and role assignments at subscription and resource group scope. Subscriptions are never created or
-cancelled here.
+locked), user-assigned managed identities for workloads, and role assignments at subscription, resource group
+and resource scope. Subscriptions are never created or cancelled here.
 
 Runs in the HCP Terraform workspace `4esnok_su_subscriptions` (`bootstrap/HCP/tier1/projects/4esnok_su_azure.yaml`):
 a pull request shows the plan, and a merge to `main` queues a run that needs to be confirmed (`auto_apply` is off).
@@ -39,17 +39,24 @@ a pull request shows the plan, and a merge to `main` queues a run that needs to 
 | `management_group_id` | Management group ID to move the subscription to |
 | `resource_providers` | `{ <namespace>: [<feature>, ...] }`; registered, never unregistered |
 | `budgets` | `{ <name>: { amount, start_date, end_date?, time_grain?, notifications: [{ threshold, threshold_type?, operator?, contact_emails?, contact_roles? }] } }` |
-| `role_assignments` | `[{ role, <principal> }]` at subscription scope |
+| `role_assignments` | `[{ role, <principal>, scope? }]` at subscription scope, or at the resource `scope` (ID relative to the subscription, `/resourceGroups/...`) |
 | `resource_groups` | `{ <name>: { location?, tags?, lock?, role_assignments? } }` |
+| `managed_identities` | `{ <name>: { resource_group, role_assignments?: [{ role, resource_group? \| scope? }] } }`: user-assigned managed identities in a resource group of this file, with their role assignments |
 
 A role assignment names its principal by `group` (display name), `user` (user principal name),
 `service_principal` (display name), or `principal_id` with `principal_type`. Names are looked up in Entra ID,
 which needs `Directory.Read.All` on both applications (granted in the tenant YAML).
 
+**Managed identities for workloads.** A workload pipeline has Contributor on its resource group and cannot
+assign roles. Identities that need roles (for example the AKS control plane and kubelet identities of
+`ESLZ/workloads/cortex`) are created here with their role assignments, and the workload looks them up by name.
+A role assignment on a resource of another workspace (`scope`) needs that resource first: apply that workspace
+before this one.
+
 ## Caveats
 
 - **Deletes:** removing a resource group from the YAML deletes it and everything in it, unless it has `lock: true`.
-  Removing a role assignment deletes it.
+  Removing a role assignment or a managed identity deletes it.
 - **Existing objects are not imported:** declaring a resource group or budget that already exists fails with
   "already exists", and a role assignment created outside Terraform conflicts (`RoleAssignmentExists`, as the
   module names assignments by a GUID derived from scope, principal and role). Import it, delete it first, or

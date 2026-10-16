@@ -13,6 +13,11 @@ output "subnets" {
   )
 }
 
+output "reservations" {
+  description = "Address prefixes reserved in IPAM by \"<spoke>/<name>\", e.g. \"cortex/aks-services\"."
+  value       = { for k, r in azapi_resource.reservation : k => r.output.properties.addressPrefixes[0] }
+}
+
 output "vnets" {
   description = "VNet IDs and the address space IPAM allocated to them."
   value = merge(

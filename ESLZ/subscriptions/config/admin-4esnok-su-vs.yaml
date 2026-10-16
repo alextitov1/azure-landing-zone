@@ -28,7 +28,8 @@ location: newzealandnorth  # default for resource groups without a location
 #       - threshold: 100
 #         threshold_type: Forecasted
 
-# Role assignments at subscription scope. The principal is one of group (display name), user (user principal
+# Role assignments at subscription scope, or at a resource with `scope` (its ID relative to the subscription,
+# starting with /resourceGroups/). The principal is one of group (display name), user (user principal
 # name), service_principal (display name), or principal_id with principal_type (User, Group or ServicePrincipal).
 # Access goes through groups (bootstrap/Azure/tenants/admin.4esnok.su-vs.yaml): members change there, not here.
 # Do not declare the application groups (sg-t1-az-sub-vs-apps-*): their roles come from management group
@@ -39,6 +40,11 @@ role_assignments:
     group: sg-t1-az-sub-vs-contributor
   - role: Reader
     group: sg-t1-az-sub-vs-reader
+  # The cortex pipeline puts the AKS nodes in this subnet (subnets/join/action). The subnet is created by
+  # ESLZ/connectivity, which must be applied first.
+  - role: Network Contributor
+    service_principal: sp-hcp-4esnok-su-cortex-t2-apply-r0
+    scope: /resourceGroups/rg-connectivity-dev-nzn-01/providers/Microsoft.Network/virtualNetworks/vnet-cortex-dev-nzn-01/subnets/snet-aks
 
 # Resource groups and their role assignments. Removing a resource group deletes it and everything in it,
 # unless `lock: true` (a CanNotDelete lock) makes the delete fail.
@@ -59,3 +65,23 @@ resource_groups:
 #     role_assignments:
 #       - role: Azure Kubernetes Service Cluster Admin Role
 #         group: sg-t2-az-aks-admin
+
+# User-assigned managed identities for workloads, created here because a workload pipeline (Contributor) cannot
+# assign roles. Each one goes in a resource group above; a role assignment is scoped to one of those resource
+# groups (resource_group), a resource (scope, as above) or, with neither, the subscription.
+managed_identities:
+  # AKS control plane of ESLZ/workloads/cortex: manages the node NICs and internal load balancers in its subnet,
+  # and assigns the kubelet identity to the nodes
+  id-cortex-aks-dev-nzn-01:
+    resource_group: rg-cortex-dev-nzn-01
+    role_assignments:
+      - role: Network Contributor
+        scope: /resourceGroups/rg-connectivity-dev-nzn-01/providers/Microsoft.Network/virtualNetworks/vnet-cortex-dev-nzn-01/subnets/snet-aks
+      - role: Managed Identity Operator
+        scope: /resourceGroups/rg-cortex-dev-nzn-01/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-cortex-kubelet-dev-nzn-01
+  # AKS nodes (kubelet) of ESLZ/workloads/cortex: pull images from the registries in the cortex resource group
+  id-cortex-kubelet-dev-nzn-01:
+    resource_group: rg-cortex-dev-nzn-01
+    role_assignments:
+      - role: AcrPull
+        resource_group: rg-cortex-dev-nzn-01

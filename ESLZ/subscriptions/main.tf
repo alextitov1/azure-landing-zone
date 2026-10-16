@@ -26,14 +26,21 @@ locals {
           role_assignments = try([for a in rg.role_assignments : a], [])
         }
       }, {})
+      managed_identities = try({
+        for name, mi in s.managed_identities : name => {
+          resource_group   = mi.resource_group
+          role_assignments = try([for a in mi.role_assignments : a], [])
+        }
+      }, {})
     }
   }
 
-  # Every role assignment in the YAML files, at subscription scope (resource_group = null) and per resource group
+  # Every role assignment in the YAML files, at subscription scope (resource_group = null), at a resource
+  # (scope, relative to the subscription) and per resource group
   role_assignments = {
     for sub, c in local.config : sub => concat(
-      [for a in c.role_assignments : merge(a, { resource_group = null })],
-      flatten([for rg_name, rg in c.resource_groups : [for a in rg.role_assignments : merge(a, { resource_group = rg_name })]]),
+      [for a in c.role_assignments : merge(a, { resource_group = null, scope = try(a.scope, null) })],
+      flatten([for rg_name, rg in c.resource_groups : [for a in rg.role_assignments : merge(a, { resource_group = rg_name, scope = null })]]),
     )
   }
   all_role_assignments = flatten(values(local.role_assignments))
@@ -67,16 +74,17 @@ locals {
     { for name, sp in data.azuread_service_principal.this : "service_principal/${name}" => { id = sp.object_id, type = "ServicePrincipal" } },
   )
 
-  # <subscription> => { "<resource group or subscription>|<role>|<principal>" => sub-vending role assignment }
+  # <subscription> => { "<resource group, scope or subscription>|<role>|<principal>" => sub-vending role assignment }
   vending_role_assignments = {
     for sub, assignments in local.role_assignments : sub => {
       for a in assignments : join("|", [
-        coalesce(a.resource_group, "subscription"),
+        coalesce(a.resource_group, a.scope, "subscription"),
         a.role,
         try("group/${a.group}", "user/${a.user}", "service_principal/${a.service_principal}", a.principal_id),
         ]) => {
         definition               = a.role
         resource_group_scope_key = a.resource_group
+        relative_scope           = a.scope != null ? a.scope : ""
         principal_id = try(
           local.principals["group/${a.group}"].id, local.principals["user/${a.user}"].id,
           local.principals["service_principal/${a.service_principal}"].id, a.principal_id,
@@ -124,6 +132,24 @@ module "subscription" {
 
   role_assignment_enabled = length(local.vending_role_assignments[each.key]) > 0
   role_assignments        = local.vending_role_assignments[each.key]
+
+  # User-assigned managed identities with their role assignments, for workloads whose pipelines cannot assign
+  # roles. Each assignment is scoped to a resource group of this file, a resource (scope) or the subscription.
+  umi_enabled = length(each.value.managed_identities) > 0
+  user_managed_identities = {
+    for name, mi in each.value.managed_identities : name => {
+      name               = name
+      resource_group_key = mi.resource_group
+      role_assignments = {
+        for a in mi.role_assignments : "${coalesce(try(a.resource_group, null), try(a.scope, null), "subscription")}|${a.role}" => {
+          definition               = a.role
+          resource_group_scope_key = try(a.resource_group, null)
+          relative_scope           = try(a.scope, "")
+          principal_type           = "ServicePrincipal" # the new identity may not have replicated to Entra ID yet
+        }
+      }
+    }
+  }
 
   budget_enabled = length(each.value.budgets) > 0
   budgets = {
