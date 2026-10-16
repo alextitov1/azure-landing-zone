@@ -19,7 +19,11 @@ hub:
     GatewaySubnet: 27  # reserved for a VPN gateway
     snet-shared: 24
 
-spokes:  # name: VNet prefix length and subnets (name: prefix length), one NSG per subnet
+# name: VNet prefix length and subnets, one NSG per subnet. A subnet is its prefix length, or prefix_length and
+# consumers: principals that may join the subnet (NICs, private endpoints), with role Windows 365 Network User
+# (read and subnets/join/action) on that subnet only. A consumer is group (display name), user (user principal
+# name), service_principal (display name), or principal_id with principal_type, as in ESLZ/subscriptions.
+spokes:
   workload:
     prefix_length: 24
     subnets:
@@ -27,4 +31,7 @@ spokes:  # name: VNet prefix length and subnets (name: prefix length), one NSG p
   cortex:  # ESLZ/workloads/cortex
     prefix_length: 24
     subnets:
-      snet-app: 26
+      snet-app:
+        prefix_length: 26
+        consumers:
+          - service_principal: sp-hcp-4esnok-su-cortex-t2-apply-r0

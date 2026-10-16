@@ -14,6 +14,10 @@ terraform {
       source  = "Azure/azapi"
       version = "~> 2.13"
     }
+    azuread = {
+      source  = "hashicorp/azuread"
+      version = "~> 3.10"
+    }
     azurerm = {
       source  = "hashicorp/azurerm"
       version = "~> 4.0"
@@ -37,3 +41,6 @@ provider "azurerm" {
   subscription_id                 = local.config.subscription_id
   resource_provider_registrations = "none"
 }
+
+# Resolves the group, user and service_principal names in subnet consumers (needs Directory.Read.All).
+provider "azuread" {}

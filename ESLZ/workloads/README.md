@@ -34,11 +34,11 @@ share their state with the workloads listed in `remote_state_consumers`
 | 1 | `bootstrap/Azure/tenants/admin.4esnok.su-vs.yaml` | Applications `sp-hcp-4esnok-su-<workload>-t2-plan-r0` / `-apply-r0` (federated credentials for the workspace), user group `sg-t2-az-<workload>-contributor` |
 | 2 | `bootstrap/HCP/tier1/projects/4esnok_su_azure.yaml` | Workspace `4esnok_su_<workload>`, and the workload in `remote_state_consumers` of the platform workspaces it reads |
 | 3 | `ESLZ/subscriptions/config/admin-4esnok-su-vs.yaml` | Resource group `rg-<workload>-<env>-<region>-01`: Reader for the plan application, Contributor for the apply application and the user group |
-| 4 | `ESLZ/connectivity/config/network.yaml` | A spoke for the workload, if it needs a network |
+| 4 | `ESLZ/connectivity/config/network.yaml` | A spoke for the workload, if it needs a network, with the apply application in `consumers` of each subnet it attaches NICs or private endpoints to (see `ESLZ/connectivity/README.md`) |
 | 5 | `ESLZ/workloads/<workload>/` | Copy `cortex/` and rename |
 
 **Merge order.** Steps 1 and 2 can go in one merge: tier 1 runs again after the Entra ID workspace has created
-the applications. Merge step 3 (and 4) after that, because role assignments name the applications. Merge step
+the applications. Merge step 3 (and 4) after that, because role assignments and subnet consumers name the applications. Merge step
 5 last. Its first plan needs the resource group, its role assignments and the connectivity outputs.
 
 Keep the applications out of `sg-t1-az-sub-vs-apps-*`. Those groups give subscription-wide rights to the
