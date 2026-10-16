@@ -35,3 +35,14 @@ spokes:
         prefix_length: 26
         consumers:
           - service_principal: sp-hcp-4esnok-su-cortex-t2-apply-r0
+      snet-aks:  # AKS nodes (Azure CNI Overlay: pods get IPs outside the VNet)
+        prefix_length: 26
+        consumers:
+          - service_principal: sp-hcp-4esnok-su-cortex-t2-apply-r0  # creates the cluster in the subnet
+          # AKS control plane identity (created by ESLZ/subscriptions, which must be applied first): node NICs
+          # and internal load balancers
+          - service_principal: id-cortex-aks-dev-nzn-01
+    # Ranges used outside the VNet (name: prefix length): IPAM static CIDRs in the spokes pool, so no VNet is
+    # ever allocated an overlapping range
+    reservations:
+      aks-services: 24  # Kubernetes service CIDR of the AKS cluster

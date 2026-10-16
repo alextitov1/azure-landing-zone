@@ -59,3 +59,22 @@ resource_groups:
 #     role_assignments:
 #       - role: Azure Kubernetes Service Cluster Admin Role
 #         group: sg-t2-az-aks-admin
+
+# User-assigned managed identities for workloads, created here because a workload pipeline (Contributor) cannot
+# assign roles. Each one goes in a resource group above; a role assignment is scoped to one of those resource
+# groups (resource_group), a resource (scope: its ID relative to the subscription, starting with /resourceGroups/)
+# or, with neither, the subscription. To join a subnet, an identity is a consumer of it in ESLZ/connectivity.
+managed_identities:
+  # AKS control plane of ESLZ/workloads/cortex: assigns the kubelet identity to the nodes. It joins the node
+  # subnet as a consumer of cortex/snet-aks (ESLZ/connectivity), so apply this first.
+  id-cortex-aks-dev-nzn-01:
+    resource_group: rg-cortex-dev-nzn-01
+    role_assignments:
+      - role: Managed Identity Operator
+        scope: /resourceGroups/rg-cortex-dev-nzn-01/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-cortex-kubelet-dev-nzn-01
+  # AKS nodes (kubelet) of ESLZ/workloads/cortex: pull images from the registries in the cortex resource group
+  id-cortex-kubelet-dev-nzn-01:
+    resource_group: rg-cortex-dev-nzn-01
+    role_assignments:
+      - role: AcrPull
+        resource_group: rg-cortex-dev-nzn-01

@@ -26,6 +26,12 @@ locals {
           role_assignments = try([for a in rg.role_assignments : a], [])
         }
       }, {})
+      managed_identities = try({
+        for name, mi in s.managed_identities : name => {
+          resource_group   = mi.resource_group
+          role_assignments = try([for a in mi.role_assignments : a], [])
+        }
+      }, {})
     }
   }
 
@@ -124,6 +130,24 @@ module "subscription" {
 
   role_assignment_enabled = length(local.vending_role_assignments[each.key]) > 0
   role_assignments        = local.vending_role_assignments[each.key]
+
+  # User-assigned managed identities with their role assignments, for workloads whose pipelines cannot assign
+  # roles. Each assignment is scoped to a resource group of this file, a resource (scope) or the subscription.
+  umi_enabled = length(each.value.managed_identities) > 0
+  user_managed_identities = {
+    for name, mi in each.value.managed_identities : name => {
+      name               = name
+      resource_group_key = mi.resource_group
+      role_assignments = {
+        for a in mi.role_assignments : "${coalesce(try(a.resource_group, null), try(a.scope, null), "subscription")}|${a.role}" => {
+          definition               = a.role
+          resource_group_scope_key = try(a.resource_group, null)
+          relative_scope           = try(a.scope, "")
+          principal_type           = "ServicePrincipal" # the new identity may not have replicated to Entra ID yet
+        }
+      }
+    }
+  }
 
   budget_enabled = length(each.value.budgets) > 0
   budgets = {
