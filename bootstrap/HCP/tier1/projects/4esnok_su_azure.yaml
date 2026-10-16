@@ -59,7 +59,8 @@ workspaces:
 
   4esnok_su_cortex:
     description: "Azure tier-2: workload cortex"
-    tags: { env: dev, cloud: azure, project: 4esnok.su }
+    # auto_destroy_after: hcp-autodestroyer destroys the AKS cluster and registry 3 hours after the last apply
+    tags: { env: dev, cloud: azure, project: 4esnok.su, auto_destroy_after: 3h }
     execution_mode: remote
     auto_apply: true
     azure_oidc:  # applications in bootstrap/Azure/tenants/admin.4esnok.su-vs.yaml; RBAC on rg-cortex-dev-nzn-01 only
