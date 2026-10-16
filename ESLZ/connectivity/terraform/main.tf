@@ -13,6 +13,24 @@ locals {
     }
   ]...)
 
+  # A spoke subnet is a prefix length, or an object with prefix_length and consumers (principals that may join it)
+  spokes = {
+    for spoke, s in local.config.spokes : spoke => merge(s, {
+      subnets = {
+        for name, v in s.subnets : name => {
+          prefix_length = try(v.prefix_length, v)
+          consumers     = try([for c in v.consumers : c], [])
+        }
+      }
+    })
+  }
+  consumers = flatten([for spoke, s in local.spokes : [for subnet in values(s.subnets) : subnet.consumers]])
+
+  # Windows 365 Network User: the narrowest built-in role with Microsoft.Network/virtualNetworks/subnets/join/action
+  # (virtualNetworks/read, subnets/read, usages/read and subnets/join/action, nothing else). Connectivity cannot
+  # create a custom role: Contributor and RBAC Administrator have no roleDefinitions/write.
+  subnet_join_role = "${local.subscription_id}/providers/Microsoft.Authorization/roleDefinitions/7eabc9a4-85f7-4f71-b8ab-75daaccc1033"
+
   # The workload part of each name
   workloads = toset(concat(["connectivity", "hub", "root", "spokes"], keys(local.config.spokes), values(local.spoke_subnets)))
 }
@@ -121,10 +139,39 @@ module "nsg" {
   enable_telemetry = false
 }
 
+# Principals named in subnet consumers, as in ESLZ/subscriptions: group (display name), user (user principal
+# name) or service_principal (display name). principal_id with principal_type skips the lookup.
+data "azuread_group" "this" {
+  for_each = toset([for c in local.consumers : c.group if try(c.group, null) != null])
+
+  display_name     = each.key
+  security_enabled = true
+}
+
+data "azuread_user" "this" {
+  for_each = toset([for c in local.consumers : c.user if try(c.user, null) != null])
+
+  user_principal_name = each.key
+}
+
+data "azuread_service_principal" "this" {
+  for_each = toset([for c in local.consumers : c.service_principal if try(c.service_principal, null) != null])
+
+  display_name = each.key
+}
+
+locals {
+  principals = merge(
+    { for name, g in data.azuread_group.this : "group/${name}" => { id = g.object_id, type = "Group" } },
+    { for upn, u in data.azuread_user.this : "user/${upn}" => { id = u.object_id, type = "User" } },
+    { for name, sp in data.azuread_service_principal.this : "service_principal/${name}" => { id = sp.object_id, type = "ServicePrincipal" } },
+  )
+}
+
 module "spoke" {
   source   = "Azure/avm-res-network-virtualnetwork/azurerm"
   version  = "0.22.3"
-  for_each = local.config.spokes
+  for_each = local.spokes
 
   name             = module.naming[each.key].names.virtual_network.name
   parent_id        = module.resource_group.resource_id
@@ -133,10 +180,25 @@ module "spoke" {
 
   ipam_pools = [{ id = azapi_resource.ipam["spokes"].id, prefix_length = each.value.prefix_length }]
   subnets = {
-    for name, prefix_length in each.value.subnets : name => {
+    for name, subnet in each.value.subnets : name => {
       name                   = name
-      ipam_pools             = [{ pool_id = azapi_resource.ipam["spokes"].id, prefix_length = prefix_length }]
+      ipam_pools             = [{ pool_id = azapi_resource.ipam["spokes"].id, prefix_length = subnet.prefix_length }]
       network_security_group = { id = module.nsg["${each.key}/${name}"].resource_id }
+
+      # Join (NICs, private endpoints) for each consumer, on this subnet only
+      role_assignments = {
+        for c in subnet.consumers : try("group/${c.group}", "user/${c.user}", "service_principal/${c.service_principal}", c.principal_id) => {
+          role_definition_id_or_name = local.subnet_join_role
+          principal_id = try(
+            local.principals["group/${c.group}"].id, local.principals["user/${c.user}"].id,
+            local.principals["service_principal/${c.service_principal}"].id, c.principal_id,
+          )
+          principal_type = try(
+            local.principals["group/${c.group}"].type, local.principals["user/${c.user}"].type,
+            local.principals["service_principal/${c.service_principal}"].type, c.principal_type,
+          )
+        }
+      }
     }
   }
 

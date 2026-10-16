@@ -6,10 +6,9 @@ deploys nothing and only reads its resource group and subnet, which proves the p
 - Resource group `rg-cortex-dev-nzn-01`, created by `ESLZ/subscriptions`. The pipeline gets Reader (plan) and
   Contributor (apply) on it, and the group `sg-t2-az-cortex-contributor` gets Contributor.
 - Spoke `vnet-cortex-dev-nzn-01` with subnet `snet-app`, created by `ESLZ/connectivity`. The subnet ID comes
-  from that workspace's `subnets` output.
+  from that workspace's `subnets` output. The apply application is a consumer of the subnet, so it can attach
+  NICs and private endpoints to it.
 
 Configuration: `config/dev.yaml`. Terraform: `terraform/`.
 
 **Add a resource:** add an Azure Verified Module to `terraform/main.tf` with `parent_id = local.resource_group_id`.
-To attach anything to the subnet (NICs, private endpoints), the apply application also needs
-`Microsoft.Network/virtualNetworks/subnets/join/action` on `cortex/snet-app`. It does not have that yet.
