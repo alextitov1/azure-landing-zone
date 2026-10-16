@@ -1,8 +1,9 @@
 # Workloads
 
 Tier-2 workloads: the applications that run in the landing zone. Each workload has its own directory, HCP
-Terraform workspace and OIDC identities. Its pipeline has **Contributor on its own resource group only**. It
-cannot change the subscription, the network or other workloads.
+Terraform workspace and OIDC identities. Its pipeline has **Contributor on its own resource group only** (and,
+where a workload needs it, the right to join its own subnet). It cannot assign roles or change the subscription,
+the network or other workloads.
 
 | Directory | HCP Terraform workspace | Resource group |
 |---|---|---|
@@ -25,7 +26,7 @@ share their state with the workloads listed in `remote_state_consumers`
 
 | Workspace | Outputs |
 |---|---|
-| `4esnok_su_connectivity` | `subnets` (`"<vnet>/<subnet>"` => ID), `vnets`, `resource_group_id` |
+| `4esnok_su_connectivity` | `subnets` (`"<vnet>/<subnet>"` => ID), `reservations` (`"<spoke>/<name>"` => address prefix reserved in IPAM), `vnets`, `resource_group_id` |
 
 ## Adding a workload
 
@@ -34,7 +35,8 @@ share their state with the workloads listed in `remote_state_consumers`
 | 1 | `bootstrap/Azure/tenants/admin.4esnok.su-vs.yaml` | Applications `sp-hcp-4esnok-su-<workload>-t2-plan-r0` / `-apply-r0` (federated credentials for the workspace), user group `sg-t2-az-<workload>-contributor` |
 | 2 | `bootstrap/HCP/tier1/projects/4esnok_su_azure.yaml` | Workspace `4esnok_su_<workload>`, and the workload in `remote_state_consumers` of the platform workspaces it reads |
 | 3 | `ESLZ/subscriptions/config/admin-4esnok-su-vs.yaml` | Resource group `rg-<workload>-<env>-<region>-01`: Reader for the plan application, Contributor for the apply application and the user group |
-| 4 | `ESLZ/connectivity/config/network.yaml` | A spoke for the workload, if it needs a network |
+| 4 | `ESLZ/connectivity/config/network.yaml` | A spoke for the workload, if it needs a network, with `reservations` for ranges it uses outside the VNet |
+| 4a | `ESLZ/subscriptions/config/admin-4esnok-su-vs.yaml` | If the workload needs role assignments (its pipeline cannot assign roles): `managed_identities` with their roles, and roles on its subnet with `scope`. Apply after step 4 |
 | 5 | `ESLZ/workloads/<workload>/` | Copy `cortex/` and rename |
 
 **Merge order.** Steps 1 and 2 can go in one merge: tier 1 runs again after the Entra ID workspace has created

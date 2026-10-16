@@ -28,3 +28,8 @@ spokes:  # name: VNet prefix length and subnets (name: prefix length), one NSG p
     prefix_length: 24
     subnets:
       snet-app: 26
+      snet-aks: 26  # AKS nodes (Azure CNI Overlay: pods get IPs outside the VNet)
+    # Ranges used outside the VNet (name: prefix length): IPAM static CIDRs in the spokes pool, so no VNet is
+    # ever allocated an overlapping range
+    reservations:
+      aks-services: 24  # Kubernetes service CIDR of the AKS cluster
