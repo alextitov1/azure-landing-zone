@@ -1,40 +1,17 @@
-This repository contains examples and PoCs for configuring Azure and other cloud environments using Infrastructure as Code (IaC) tools such as Bicep, Terraform and Ansible.
+
+## About
+
+This repository is a multi-cloud landing zone, modelled on a mid-size organization.
+
+In a real company, cloud infrastructure is made of many connected parts. Different teams own different parts, and each comes with its own guardrails. Rebuilding even a small piece of this by hand is slow and hard.
+
+I use this repository to prototype and test new ideas. The code is split the way a real organization splits ownership and duties, so experiments stay close to reality. The code lets me rebuild the environment quickly and with little effort.
+
+Everything is written in Terraform. State lives in HCP Terraform, and its VCS integration deploys changes automatically.
 
 
-- [Azure tenant bootstrap](./bootstrap/Azure/README.md)
+## Links
+
 - [HCP Terraform bootstrap](./bootstrap/HCP/README.md)
 
-### TBD
-
-Create a resourceGroup and deployes two ACRs
-
-```sh
-az deployment sub create --template-file main.bicep --location "Australia East"
-```
-
-Create service principals
-
-```sh
-az ad app create --display-name sp-lz-terraform-01
-```
-
-Deployment stacks
-
-```sh
-az stack sub create --name lz-sa-terraform-state --template-file main.bicep -l australiaeast --dm None --subscription b63ed8a5-399c-4375-9365-9c5edb7deab7
-```
-
-# Known issue
-
-* role assignment isn't working
-
-
-* command below throwns an error
-```
-az stack sub create --name lz-sa-terraform-state --template-file main.bicep -l australiaeast --dm denyDelete --subscription b63ed8a5-399c-4375-9365-9c5edb7deab7
-```
-probles with 
-```
---dm denyDelete
---action-on-unmanage deleteAll
-```
+- [Azure tenant bootstrap](./bootstrap/Azure/README.md)
