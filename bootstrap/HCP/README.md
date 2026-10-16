@@ -116,8 +116,7 @@ Optional workspace fields:
 |-------|---------|
 | `description` | none |
 | `execution_mode` | `remote` |
-| `auto_apply` | `false` |
-| `auto_apply_run_trigger` | `false`; also auto-apply runs started by run triggers |
+| `auto_apply` | `false`; applies to API, UI and VCS runs and to runs started by run triggers |
 | `terraform_version` | the value in `config/organization.yaml` |
 | `tags` | none |
 | `vcs.branch` | `main` |
@@ -125,6 +124,7 @@ Optional workspace fields:
 | `env_vars` | none; environment variables set on the workspace |
 | `azure_oidc` | none; Azure dynamic credentials, see below |
 | `secrets` | none; sensitive environment variables from 1Password, see below |
+| `auto_destroy` | none; scheduled destroy run, see below |
 
 `vcs` links the workspace to this repository through the GitHub OAuth connection created by tier 0.
 `azure_oidc` sets the `TFC_AZURE_*` variables. `plan_app` and `apply_app` are Entra ID application display names;
@@ -148,6 +148,15 @@ service account and stores them as sensitive variables, so the vault must be `az
     secrets:
       TF_VAR_onepassword_service_account_token: op://azure_t1/op_hcp_rw_t1/credential
 ```
+`auto_destroy` makes HCP Terraform queue a destroy run for the workspace, either at a fixed time or after a period
+without runs. Set exactly one of the two fields. Use it for sandbox and test workspaces only: it is refused on a
+workspace with `remote_state_consumers`, because destroying it would break the workspaces that read its outputs.
+```yaml
+    auto_destroy:
+      after_inactivity: 3d            # <number>d or <number>h after the last run
+      # at: "2026-10-31T18:00:00Z"   # or a fixed RFC3339 time
+```
+To cancel it, remove the block. A workspace without `auto_destroy` inherits the project's auto-destroy setting, if any.
 
 ## Maintenance
 - **Pipeline token:** `hcp-tier1` uses this token (`TFE_TOKEN`) to manage projects and workspaces.

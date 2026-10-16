@@ -66,6 +66,8 @@ workspaces:
       apps_workspace: 4esnok_su_entraid_t0_t1
       plan_app: sp-hcp-4esnok-su-cortex-t2-plan-r0
       apply_app: sp-hcp-4esnok-su-cortex-t2-apply-r0
+    auto_destroy:
+      after_inactivity: 3h  # dev lab: destroy the AKS cluster and registry 3 hours after the last run
     vcs:
       working_directory: ESLZ/workloads/cortex/terraform
       trigger_patterns: ["/ESLZ/workloads/cortex/**/*"]
