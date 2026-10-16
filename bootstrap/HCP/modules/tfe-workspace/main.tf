@@ -19,6 +19,9 @@ resource "tfe_workspace" "this" {
   trigger_patterns       = each.value.trigger_patterns
   tags                   = each.value.tags
 
+  auto_destroy_at                = try(each.value.auto_destroy.at, null)
+  auto_destroy_activity_duration = try(each.value.auto_destroy.after_inactivity, null)
+
   dynamic "vcs_repo" {
     for_each = each.value.vcs_repo != null ? [each.value.vcs_repo] : []
     content {
