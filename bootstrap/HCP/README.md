@@ -9,7 +9,7 @@ Where it's possible, HPC workspaces are integrated with GitHub, 1Password and Az
 
 ## Prerequisites
 
-- HCP (Free Tier is sufficient)
+- HCP (Free Tier is sufficient, except for `auto_destroy`, which needs Standard or Plus)
 - 1Password for storing secrets
 
 
@@ -157,6 +157,10 @@ workspace with `remote_state_consumers`, because destroying it would break the w
       # at: "2026-10-31T18:00:00Z"   # or a fixed RFC3339 time
 ```
 To cancel it, remove the block. A workspace without `auto_destroy` inherits the project's auto-destroy setting, if any.
+
+> [!WARNING]
+> `auto_destroy` needs an HCP Terraform **Standard or Plus** organization. On the Free plan, HCP accepts the setting
+> without an error but does not store it, so nothing is destroyed and every `hcp-tier1` plan shows the same update again.
 
 ## Maintenance
 - **Pipeline token:** `hcp-tier1` uses this token (`TFE_TOKEN`) to manage projects and workspaces.
