@@ -32,7 +32,8 @@ variable "workspaces" {
     working_directory      = optional(string)
     trigger_patterns       = optional(list(string))
     tags                   = optional(map(string), {})
-    env_vars               = optional(map(string), {}) # environment variables, e.g. TFC_AZURE_* for dynamic credentials
+    env_vars               = optional(map(string), {})  # environment variables, e.g. TFC_AZURE_* for dynamic credentials
+    remote_state_consumers = optional(list(string), []) # workspaces of this project that may read this workspace's outputs
     vcs_repo = optional(object({
       identifier                 = string
       branch                     = optional(string)

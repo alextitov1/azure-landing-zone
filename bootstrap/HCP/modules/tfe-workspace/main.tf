@@ -35,6 +35,10 @@ resource "tfe_workspace_settings" "this" {
 
   workspace_id   = tfe_workspace.this[each.key].id
   execution_mode = each.value.execution_mode
+
+  # State is shared only with the named workspaces, which read it with `data "tfe_outputs"`
+  global_remote_state       = false
+  remote_state_consumer_ids = [for c in each.value.remote_state_consumers : tfe_workspace.this[c].id]
 }
 
 resource "tfe_variable" "env" {

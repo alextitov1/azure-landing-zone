@@ -72,6 +72,13 @@ groups:
       - sp-hcp-4esnok-su-subscriptions-t1-plan-r0
       - sp-hcp-4esnok-su-connectivity-t1-plan-r0
 
+  # Tier-2 workload cortex (ESLZ/workloads/cortex): Contributor on its resource group rg-cortex-dev-nzn-01,
+  # assigned by ESLZ/subscriptions.
+  - display_name: "sg-t2-az-cortex-contributor"
+    description: "Users: Contributor on the cortex resource group"
+    members:
+      - sysadmin@4esnok.su
+
 applications:  # app registrations and their enterprise applications (service principals)
   # HCP Terraform workspace 4esnok_su_entraid_t0_t1 (Azure tier 0) signs in with OIDC:
   # plan runs use the read-only identity, apply runs the privileged one.
@@ -152,6 +159,27 @@ applications:  # app registrations and their enterprise applications (service pr
       - name: "hcp-apply"
         issuer: "https://app.terraform.io"
         subject: "organization:4esnok:project:4esnok_su_azure:workspace:4esnok_su_connectivity:run_phase:apply"
+
+  # HCP Terraform workspace 4esnok_su_cortex (Azure tier 2, ESLZ/workloads/cortex) signs in with OIDC.
+  # No subscription-wide rights: ESLZ/subscriptions assigns Reader (plan) and Contributor (apply) on
+  # resource group rg-cortex-dev-nzn-01 only.
+  - display_name: "sp-hcp-4esnok-su-cortex-t2-plan-r0"
+    description: "HCP Terraform plan runs of 4esnok/4esnok_su_azure/4esnok_su_cortex"
+    owners:
+      - sysadmin@4esnok.su
+    federated_credentials:
+      - name: "hcp-plan"
+        issuer: "https://app.terraform.io"
+        subject: "organization:4esnok:project:4esnok_su_azure:workspace:4esnok_su_cortex:run_phase:plan"
+
+  - display_name: "sp-hcp-4esnok-su-cortex-t2-apply-r0"
+    description: "HCP Terraform apply runs of 4esnok/4esnok_su_azure/4esnok_su_cortex"
+    owners:
+      - sysadmin@4esnok.su
+    federated_credentials:
+      - name: "hcp-apply"
+        issuer: "https://app.terraform.io"
+        subject: "organization:4esnok:project:4esnok_su_azure:workspace:4esnok_su_cortex:run_phase:apply"
 
   # Example: an application with a client secret stored in 1Password and a direct EntraID role,
   # used as a group member by display name.
