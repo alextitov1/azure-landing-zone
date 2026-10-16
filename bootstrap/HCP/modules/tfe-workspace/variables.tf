@@ -27,8 +27,7 @@ variable "workspaces" {
     description            = optional(string)
     execution_mode         = optional(string, "remote") # remote, local or agent
     terraform_version      = optional(string)           # version or constraint, e.g. "~> 1.16"
-    auto_apply             = optional(bool, false)
-    auto_apply_run_trigger = optional(bool, false) # also auto-apply runs started by run triggers
+    auto_apply             = optional(bool, false)      # API, UI and VCS runs, and runs started by run triggers
     working_directory      = optional(string)
     trigger_patterns       = optional(list(string))
     tags                   = optional(map(string), {})

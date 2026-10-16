@@ -116,8 +116,7 @@ Optional workspace fields:
 |-------|---------|
 | `description` | none |
 | `execution_mode` | `remote` |
-| `auto_apply` | `false` |
-| `auto_apply_run_trigger` | `false`; also auto-apply runs started by run triggers |
+| `auto_apply` | `false`; applies to API, UI and VCS runs and to runs started by run triggers |
 | `terraform_version` | the value in `config/organization.yaml` |
 | `tags` | none |
 | `vcs.branch` | `main` |

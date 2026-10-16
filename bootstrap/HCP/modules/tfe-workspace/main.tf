@@ -14,7 +14,7 @@ resource "tfe_workspace" "this" {
 
   terraform_version      = each.value.terraform_version
   auto_apply             = each.value.auto_apply
-  auto_apply_run_trigger = each.value.auto_apply_run_trigger
+  auto_apply_run_trigger = each.value.auto_apply # runs started by run triggers follow auto_apply
   working_directory      = each.value.working_directory
   trigger_patterns       = each.value.trigger_patterns
   tags                   = each.value.tags
