@@ -24,3 +24,7 @@ spokes:  # name: VNet prefix length and subnets (name: prefix length), one NSG p
     prefix_length: 24
     subnets:
       snet-app: 26
+  cortex:  # ESLZ/workloads/cortex
+    prefix_length: 24
+    subnets:
+      snet-app: 26

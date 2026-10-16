@@ -42,7 +42,17 @@ role_assignments:
 
 # Resource groups and their role assignments. Removing a resource group deletes it and everything in it,
 # unless `lock: true` (a CanNotDelete lock) makes the delete fail.
-# resource_groups:
+resource_groups:
+  # Tier-2 workload cortex (ESLZ/workloads/cortex): its pipeline and users get access to this group only
+  rg-cortex-dev-nzn-01:
+    tags: { env: dev, workload: cortex }
+    role_assignments:
+      - role: Reader
+        service_principal: sp-hcp-4esnok-su-cortex-t2-plan-r0
+      - role: Contributor
+        service_principal: sp-hcp-4esnok-su-cortex-t2-apply-r0
+      - role: Contributor
+        group: sg-t2-az-cortex-contributor
 #   rg-t2-aks-dev:
 #     location: newzealandnorth
 #     tags: { env: dev }
