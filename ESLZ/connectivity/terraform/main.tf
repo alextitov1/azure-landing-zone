@@ -31,6 +31,13 @@ locals {
   # create a custom role: Contributor and RBAC Administrator have no roleDefinitions/write.
   subnet_join_role = "${local.subscription_id}/providers/Microsoft.Authorization/roleDefinitions/7eabc9a4-85f7-4f71-b8ab-75daaccc1033"
 
+  # "<spoke>/<reservation>" => prefix length, e.g. "cortex/aks-services" => 24
+  spoke_reservations = merge([
+    for spoke, s in local.config.spokes : {
+      for name, prefix_length in try(s.reservations, {}) : "${spoke}/${name}" => prefix_length
+    }
+  ]...)
+
   # The workload part of each name
   workloads = toset(concat(["connectivity", "hub", "root", "spokes"], keys(local.config.spokes), values(local.spoke_subnets)))
 }
@@ -108,6 +115,23 @@ resource "azapi_resource" "ipam" {
   retry = {
     error_message_regex = ["BadRequest", "Ipam pool.*has Azure resources associated"]
   }
+}
+
+# Ranges a spoke uses outside its VNet, such as the service CIDR of an AKS cluster with Azure CNI Overlay.
+# IPAM allocates them like a VNet, so VNets never overlap them.
+resource "azapi_resource" "reservation" {
+  for_each = local.spoke_reservations
+
+  type      = "Microsoft.Network/networkManagers/ipamPools/staticCidrs@2024-07-01"
+  parent_id = azapi_resource.ipam["spokes"].id
+  name      = replace(each.key, "/", "-")
+  body = {
+    properties = {
+      numberOfIPAddressesToAllocate = tostring(pow(2, 32 - each.value))
+      description                   = "Reserved for ${each.key}, used outside its VNet"
+    }
+  }
+  response_export_values = ["properties.addressPrefixes"]
 }
 
 module "hub" {

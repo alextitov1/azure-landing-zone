@@ -1,4 +1,4 @@
-# Workload cortex, environment dev. Everything cortex does not own (VNets, subnets) comes from the
+# Workload cortex, environment dev. Everything cortex does not own (VNets, subnets, reserved ranges) comes from the
 # outputs of the platform workspaces, never from IDs written here.
 subscription_id: 44b9d159-d353-477f-b94f-5ce0f3bd33f1
 location: newzealandnorth
@@ -9,8 +9,132 @@ environment: dev
 region_code: nzn
 instance: 1
 
+tags:
+  env: dev
+  workload: cortex
+
 # Created by ESLZ/subscriptions (config/admin-4esnok-su-vs.yaml), which also grants this workspace access to it
 resource_group: rg-cortex-dev-nzn-01
 
 # Spoke and subnet in ESLZ/connectivity (config/network.yaml): key of its `subnets` output
 subnet: cortex/snet-app
+
+# Container registry crcortexdevnzn01 (Azure/avm-res-containerregistry-registry). The AKS nodes pull from it with
+# the kubelet identity (AcrPull on the resource group, assigned by ESLZ/subscriptions).
+registry:
+  sku: Basic                    # Basic, Standard or Premium (private endpoints, network rules, retention, zones)
+  public_network_access: true   # false needs Premium and a private endpoint
+  zone_redundancy: false        # Premium only; changing it replaces the registry
+  retention_days: 7             # days to keep untagged manifests; Premium only, ignored otherwise
+  admin_user: false             # true adds a static username and password; keep Entra ID only
+  anonymous_pull: false         # Standard or Premium only
+
+# AKS cluster aks-cortex-dev-nzn-01 (Azure/avm-res-containerservice-managedcluster), Dev/Test preset
+aks:
+  # --- Basics ---
+  kubernetes_version: "1.35"         # <major>.<minor> takes the latest patch. Upgrade one minor version at a time.
+  sku_tier: Free                     # Free (no SLA), Standard (uptime SLA) or Premium (Standard + long-term support)
+  support_plan: KubernetesOfficial   # KubernetesOfficial, or AKSLongTermSupport (needs Premium)
+  auto_upgrade:
+    channel: none                    # cluster: none, patch, stable, rapid or node-image
+    node_os_channel: NodeImage       # node OS: None, Unmanaged, SecurityPatch or NodeImage
+  # Planned maintenance for both auto-upgrade channels. Without it, upgrades can start at any time.
+  # maintenance_window:
+  #   day_of_week: Sunday
+  #   start_time: "02:00"
+  #   duration_hours: 4              # at least 4
+  #   utc_offset: "+13:00"
+
+  # Control plane and kubelet identities, created by ESLZ/subscriptions (managed_identities) with their role
+  # assignments, because this pipeline cannot assign roles
+  identities:
+    control_plane: id-cortex-aks-dev-nzn-01  # Managed Identity Operator on the kubelet identity; consumer of the node subnet
+    kubelet: id-cortex-kubelet-dev-nzn-01    # AcrPull on the resource group
+
+  # --- Authentication and authorization: Entra ID sign-in, Kubernetes RBAC ---
+  entra:
+    admin_group_object_ids:          # cluster-admin
+      - 07b726f8-cb4b-4f1b-94ed-571b6e0ab74f  # sg-t2-az-aks-admin (bootstrap/Azure/tenants/admin.4esnok.su-vs.yaml)
+    azure_rbac: false                # true: authorize with Azure RBAC instead of Kubernetes RBAC
+    disable_local_accounts: true     # no static admin kubeconfig: sign-in with Entra ID only
+
+  # --- Node pools (Azure Linux, cluster autoscaler) ---
+  # Changing vm_size, os_disk_* or zones replaces the nodes. Name: lowercase letters and digits, at most 12.
+  system_pool:
+    name: system
+    vm_size: Standard_D2ds_v5        # 2 vCPU, 8 GiB, 75 GiB temporary disk
+    os_sku: AzureLinux               # AzureLinux, AzureLinux3, Ubuntu, Ubuntu2204, Ubuntu2404
+    os_disk_type: Ephemeral          # Ephemeral (on the temporary disk: faster, no disk cost) or Managed
+    os_disk_size_gb: 64              # Ephemeral: at most the temporary disk of the VM size
+    min_count: 1
+    max_count: 2
+    max_pods: 110                    # per node; Azure CNI Overlay allows up to 250
+    zones: []                        # availability zones, e.g. ["1", "2", "3"]
+    only_critical_addons: true       # taint CriticalAddonsOnly=true:NoSchedule: application pods go to user pools
+    encryption_at_host: false        # needs the Microsoft.Compute/EncryptionAtHost feature on the subscription
+  user_pools:                        # name: pool
+    user:
+      vm_size: Standard_D2ds_v5
+      os_sku: AzureLinux
+      os_disk_type: Ephemeral
+      os_disk_size_gb: 64
+      min_count: 1
+      max_count: 2
+      max_pods: 110
+      zones: []
+      encryption_at_host: false
+      node_labels: {}                # e.g. { workload: general }
+      node_taints: []                # e.g. ["dedicated=batch:NoSchedule"]
+  # Cluster autoscaler profile (module variable auto_scaler_profile, same attribute names). Default: AKS defaults.
+  # autoscaler_profile:
+  #   expander: least-waste
+  #   scale_down_unneeded_time: 10m
+
+  # --- Networking: Azure CNI Overlay in the spoke vnet-cortex-dev-nzn-01 ---
+  network:
+    subnet: cortex/snet-aks          # nodes: key of the connectivity `subnets` output (snet-aks, created there)
+    service_cidr: cortex/aks-services  # Kubernetes services: key of the connectivity `reservations` output (IPAM)
+    dns_service_ip_host: 10          # Kubernetes DNS service IP: this host of the service CIDR (x.x.x.10)
+    pod_cidr: 10.244.0.0/16          # Overlay pod range: not routable outside the cluster, must not overlap the VNets
+    dataplane: azure                 # azure, or cilium (Cilium network policies, ACNS network security)
+    network_policy: none             # none, azure or calico (azure dataplane), cilium (cilium dataplane)
+    outbound_type: loadBalancer      # loadBalancer, managedNATGateway or userDefinedRouting; creation only
+    private_cluster: false           # API server only on a private endpoint; creation only
+    authorized_ip_ranges: []         # public API server: CIDRs allowed to reach it; empty: any address
+    # dns_prefix: aks-cortex-dev-nzn-01  # API server FQDN prefix; default the cluster name; creation only
+
+  # --- Integrations and add-ons ---
+  features:
+    azure_policy: false              # Azure Policy add-on (Gatekeeper)
+    app_routing: false               # application routing add-on: managed NGINX ingress
+    keda: false                      # event-driven autoscaling
+    vertical_pod_autoscaler: false
+    cost_analysis: false             # Kubernetes costs in Cost Management; needs sku_tier Standard or Premium
+  storage:                           # CSI drivers
+    disk_csi_driver: true
+    file_csi_driver: true
+    blob_csi_driver: false
+    snapshot_controller: true
+
+  # --- Monitoring: off until shared services provide the workspaces ---
+  monitoring:
+    # Container logs (Container Insights, Log Analytics) and managed Prometheus (Azure Monitor workspace, read by
+    # Managed Grafana), with their data collection rules. The module onboards both together.
+    enabled: false
+    # log_analytics_workspace_id: <from the shared services outputs>
+    # azure_monitor_workspace_id: <from the shared services outputs>
+    network_observability: false     # ACNS container network metrics and flow logs (paid)
+    # alert_email: <address>         # recommended metric alerts (node CPU and memory)
+
+  # --- Security ---
+  security:
+    workload_identity: true          # pods sign in to Entra ID with federated credentials; needs oidc_issuer
+    oidc_issuer: true
+    image_cleaner: true              # removes unused images, including vulnerable ones, from the nodes
+    image_cleaner_interval_hours: 168
+    secret_store_csi_driver: false   # Key Vault secrets as volumes
+    network_security: false          # ACNS FQDN and L7 network policies; needs dataplane cilium
+    disable_run_command: false       # true blocks `az aks command invoke`
+    # Infrastructure (node) resource group rg-cortex-aksnodes-dev-nzn-01, created by AKS. ReadOnly: only AKS can
+    # change what is in it.
+    node_resource_group_lockdown: true
