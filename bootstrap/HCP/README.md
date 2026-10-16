@@ -162,6 +162,17 @@ To cancel it, remove the block. A workspace without `auto_destroy` inherits the 
 > `auto_destroy` needs an HCP Terraform **Standard or Plus** organization. On the Free plan, HCP accepts the setting
 > without an error but does not store it, so nothing is destroyed and every `hcp-tier1` plan shows the same update again.
 
+On the Free plan, use the `auto_destroy_after` tag instead. The
+[hcp-autodestroyer](https://github.com/alextitov1/hcp-autodestroyer) job runs on a schedule. It queues an auto-applied
+destroy run once a tagged workspace's last apply is older than the tag value, which uses the same `<number>d` or
+`<number>h` format. It skips workspaces that have `remote_state_consumers`, a run in progress, or no resources.
+```yaml
+    tags: { env: dev, auto_destroy_after: 3h }
+```
+The job authenticates with the `autodestroyer_token` output of tier 0 (`terraform output -raw autodestroyer_token`).
+That token rotates like the pipeline token, so copy the new value into the job's secret store after a tier-0 apply
+replaces it.
+
 ## Maintenance
 - **Pipeline token:** `hcp-tier1` uses this token (`TFE_TOKEN`) to manage projects and workspaces.
   It rotates every 180 days, and the old one stays valid for 30 more days.
