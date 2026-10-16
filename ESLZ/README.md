@@ -10,6 +10,7 @@ Resources are deployed with [Azure Verified Modules](https://azure.github.io/Azu
 |---|---|---|
 | `subscriptions/` | Subscriptions, resource groups, role assignments | `4esnok_su_subscriptions` |
 | `connectivity/` | Hub-and-spoke network, IPAM | `4esnok_su_connectivity` |
+| `workloads/cortex/` | Tier-2 workload cortex ([workloads](./workloads/README.md)) | `4esnok_su_cortex` |
 
 ## Naming
 
@@ -22,7 +23,7 @@ Example: `rg-connectivity-prod-nzn-001`
 | Part | Description | Values |
 |---|---|---|
 | resource type | CAF abbreviation for the resource type | `rg` resource group, `vnet` virtual network, `snet` subnet, `nsg` network security group, `rt` route table, `peer` peering, `pip` public IP, `vgw` VPN gateway, `lgw` local network gateway, `afw` firewall, `bas` Bastion, `kv` key vault, `st` storage account, `log` Log Analytics workspace, `vm` virtual machine |
-| workload | Application, workload or service | `connectivity`, `hub`, `identity`, `mgmt`, … |
+| workload | Application, workload or service | `connectivity`, `hub`, `identity`, `mgmt`, `cortex`, … |
 | environment | Deployment stage | `prod`, `dev`, `test`, `qa`, `stage` |
 | region | Short region code | `nzn` newzealandnorth, `aue` australiaeast, `ase` australiasoutheast |
 | instance | Three-digit instance number | `001`, `002`, … |
