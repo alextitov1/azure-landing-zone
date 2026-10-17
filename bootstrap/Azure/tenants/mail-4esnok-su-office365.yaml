@@ -188,14 +188,3 @@ conditional_access_policies:
 # domains:
 #   - name: "example.4esnok.su"
 #     verify: false
-
-# Entra ID logs in Log Analytics and a break-glass alert: applied by bootstrap/Azure/monitoring,
-# a separate configuration because it needs a subscription
-# monitoring:
-#   subscription_id: "00000000-0000-0000-0000-000000000000"
-#   location: "australiaeast"
-#   resource_group_name: "rg-entraid-monitoring"
-#   log_analytics_workspace_name: "law-entraid-mail4esnoksu"
-#   retention_in_days: 90
-#   log_categories: [AuditLogs, SignInLogs, NonInteractiveUserSignInLogs, ServicePrincipalSignInLogs]
-#   alert_email: "admin@example.com"

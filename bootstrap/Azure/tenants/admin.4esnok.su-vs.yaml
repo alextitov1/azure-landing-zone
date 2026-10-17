@@ -66,11 +66,13 @@ groups:
     members:
       - sp-hcp-4esnok-su-subscriptions-t1-apply-r0
       - sp-hcp-4esnok-su-connectivity-t1-apply-r0
+      - sp-hcp-4esnok-su-management-t1-apply-r0
   - display_name: "sg-t1-az-sub-vs-apps-reader"
     description: "Applications: Reader on the Visual Studio subscription"
     members:
       - sp-hcp-4esnok-su-subscriptions-t1-plan-r0
       - sp-hcp-4esnok-su-connectivity-t1-plan-r0
+      - sp-hcp-4esnok-su-management-t1-plan-r0
 
   # Tier-2 workload cortex (ESLZ/workloads/cortex): Contributor on its resource group rg-cortex-dev-nzn-01,
   # assigned by ESLZ/subscriptions.
@@ -164,6 +166,27 @@ applications:  # app registrations and their enterprise applications (service pr
         subject: "organization:4esnok:project:4esnok_su_azure:workspace:4esnok_su_connectivity:run_phase:apply"
     graph_app_roles:
       - Directory.Read.All
+
+  # HCP Terraform workspace 4esnok_su_management (Azure tier 1, ESLZ/management: Log Analytics) signs in with
+  # OIDC. Azure RBAC comes from group membership: sg-t1-az-sub-vs-apps-reader (plan) and
+  # sg-t1-az-sub-vs-apps-contributor (apply).
+  - display_name: "sp-hcp-4esnok-su-management-t1-plan-r0"
+    description: "HCP Terraform plan runs of 4esnok/4esnok_su_azure/4esnok_su_management"
+    owners:
+      - sysadmin@4esnok.su
+    federated_credentials:
+      - name: "hcp-plan"
+        issuer: "https://app.terraform.io"
+        subject: "organization:4esnok:project:4esnok_su_azure:workspace:4esnok_su_management:run_phase:plan"
+
+  - display_name: "sp-hcp-4esnok-su-management-t1-apply-r0"
+    description: "HCP Terraform apply runs of 4esnok/4esnok_su_azure/4esnok_su_management"
+    owners:
+      - sysadmin@4esnok.su
+    federated_credentials:
+      - name: "hcp-apply"
+        issuer: "https://app.terraform.io"
+        subject: "organization:4esnok:project:4esnok_su_azure:workspace:4esnok_su_management:run_phase:apply"
 
   # HCP Terraform workspace 4esnok_su_cortex (Azure tier 2, ESLZ/workloads/cortex) signs in with OIDC.
   # No subscription-wide rights: ESLZ/subscriptions assigns Reader (plan) and Contributor (apply) on
@@ -331,14 +354,3 @@ tenant_settings:
 # domains:
 #   - name: "example.4esnok.su"
 #     verify: false
-
-# Entra ID logs in Log Analytics and a break-glass alert: applied by bootstrap/Azure/monitoring,
-# a separate configuration because it needs a subscription
-# monitoring:
-#   subscription_id: "00000000-0000-0000-0000-000000000000"
-#   location: "australiaeast"
-#   resource_group_name: "rg-entraid-monitoring"
-#   log_analytics_workspace_name: "law-entraid-4esnoksu"
-#   retention_in_days: 90
-#   log_categories: [AuditLogs]  # sign-in logs need P1
-#   alert_email: "admin@example.com"
