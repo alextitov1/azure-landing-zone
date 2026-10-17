@@ -127,7 +127,7 @@ module "project" {
         working_directory = try(ws.vcs.working_directory, null)
         trigger_patterns  = try(ws.vcs.trigger_patterns, ["/${ws.vcs.working_directory}/**/*"], null)
         vcs_repo = try(ws.vcs, null) == null ? null : {
-          identifier     = local.config.github.repo
+          identifier     = try(ws.vcs.repo, local.config.github.repo) # a workload can live in its own repository
           branch         = try(ws.vcs.branch, "main")
           oauth_token_id = var.github_oauth_token_id
         }

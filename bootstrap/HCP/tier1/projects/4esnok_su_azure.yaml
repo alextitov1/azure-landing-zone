@@ -69,3 +69,17 @@ workspaces:
     vcs:
       working_directory: ESLZ/workloads/cortex/terraform
       trigger_patterns: ["/ESLZ/workloads/cortex/**/*"]
+
+  4esnok_su_destroyer:
+    description: "Azure tier-2: workload destroyer (alextitov1/hcp-autodestroyer)"
+    tags: { env: dev, cloud: azure, project: 4esnok.su }  # never auto_destroy_after on landing zone workspaces
+    execution_mode: remote
+    auto_apply: true
+    azure_oidc:  # applications in bootstrap/Azure/tenants/admin.4esnok.su-vs.yaml; RBAC on rg-destroyer-dev-nzn-01 only
+      apps_workspace: 4esnok_su_entraid_t0_t1
+      plan_app: sp-hcp-4esnok-su-destroyer-t2-plan-r0
+      apply_app: sp-hcp-4esnok-su-destroyer-t2-apply-r0
+    vcs:
+      repo: alextitov1/hcp-autodestroyer  # the workload's own repository, not this one
+      working_directory: infra/terraform
+      trigger_patterns: ["/infra/**/*"]

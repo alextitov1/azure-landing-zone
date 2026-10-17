@@ -53,6 +53,27 @@ resource_groups:
         service_principal: sp-hcp-4esnok-su-cortex-t2-apply-r0
       - role: Contributor
         group: sg-t2-az-cortex-contributor
+
+  # Tier-2 workload destroyer (infra/ of alextitov1/hcp-autodestroyer): an Azure Functions app that destroys idle
+  # HCP Terraform workspaces. Users also get the app's data roles, to run it locally (az login) and set the HCP
+  # token in Key Vault.
+  rg-destroyer-dev-nzn-01:
+    tags: { env: dev, workload: destroyer }
+    role_assignments:
+      - role: Reader
+        service_principal: sp-hcp-4esnok-su-destroyer-t2-plan-r0
+      - role: Contributor
+        service_principal: sp-hcp-4esnok-su-destroyer-t2-apply-r0
+      - role: Contributor
+        group: sg-t2-az-destroyer-contributor
+      - role: Azure Service Bus Data Sender
+        group: sg-t2-az-destroyer-contributor
+      - role: Azure Service Bus Data Receiver
+        group: sg-t2-az-destroyer-contributor
+      - role: Storage Blob Data Owner
+        group: sg-t2-az-destroyer-contributor
+      - role: Key Vault Secrets Officer
+        group: sg-t2-az-destroyer-contributor
 #   rg-t2-aks-dev:
 #     location: newzealandnorth
 #     tags: { env: dev }
@@ -78,3 +99,16 @@ managed_identities:
     role_assignments:
       - role: AcrPull
         resource_group: rg-cortex-dev-nzn-01
+  # Function app of the destroyer workload: schedules and receives checks on Service Bus, uses its storage account
+  # for the Functions host and the app package, and reads the HCP token from Key Vault
+  id-destroyer-dev-nzn-01:
+    resource_group: rg-destroyer-dev-nzn-01
+    role_assignments:
+      - role: Azure Service Bus Data Sender
+        resource_group: rg-destroyer-dev-nzn-01
+      - role: Azure Service Bus Data Receiver
+        resource_group: rg-destroyer-dev-nzn-01
+      - role: Storage Blob Data Owner
+        resource_group: rg-destroyer-dev-nzn-01
+      - role: Key Vault Secrets User
+        resource_group: rg-destroyer-dev-nzn-01
