@@ -24,7 +24,7 @@ Example: `rg-connectivity-prod-nzn-001`
 |---|---|---|
 | resource type | CAF abbreviation for the resource type | `rg` resource group, `vnet` virtual network, `snet` subnet, `nsg` network security group, `rt` route table, `peer` peering, `pip` public IP, `vgw` VPN gateway, `lgw` local network gateway, `afw` firewall, `bas` Bastion, `kv` key vault, `st` storage account, `log` Log Analytics workspace, `vm` virtual machine, `aks` AKS cluster, `cr` container registry (no dashes), `id` managed identity, `ipam` IPAM pool |
 | workload | Application, workload or service | `connectivity`, `hub`, `identity`, `mgmt`, `cortex`, … |
-| environment | Deployment stage | `prod`, `dev`, `test`, `qa`, `stage` |
+| environment | Deployment stage | `prod`, `dev`, `qa`, `mgmt` |
 | region | Short region code | `nzn` newzealandnorth, `aue` australiaeast, `ase` australiasoutheast |
-| instance | Three-digit instance number | `001`, `002`, … |
+| instance | Three-digit instance number | `01`, `02`, … |
 
