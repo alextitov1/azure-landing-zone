@@ -8,6 +8,7 @@ the network or other workloads.
 | Directory | HCP Terraform workspace | Resource group |
 |---|---|---|
 | `cortex/` | `4esnok_su_cortex` | `rg-cortex-dev-nzn-01` |
+| [`alextitov1/hcp-autodestroyer`](https://github.com/alextitov1/hcp-autodestroyer) `infra/` (its own repository) | `4esnok_su_destroyer` | `rg-destroyer-dev-nzn-01` |
 
 ## Layout
 
