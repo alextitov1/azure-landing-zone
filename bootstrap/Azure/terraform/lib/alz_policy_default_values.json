@@ -1,0 +1,17 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Azure/Azure-Landing-Zones-Library/main/schemas/default_policy_values.json",
+  "defaults": [
+    {
+      "default_name": "log_analytics_workspace_id",
+      "description": "Resource ID of the central Log Analytics workspace (ESLZ/management).",
+      "policy_assignments": [
+        {
+          "parameter_names": [
+            "logAnalytics"
+          ],
+          "policy_assignment_name": "Deploy-AKS-Diag-LAW"
+        }
+      ]
+    }
+  ]
+}

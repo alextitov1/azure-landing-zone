@@ -42,4 +42,11 @@ module "management_groups" {
   enable_telemetry   = false
 
   management_group_role_assignments = local.management_group_role_assignments
+
+  # Values for policy assignment parameters, by the default names in lib/alz_policy_default_values.json,
+  # e.g. log_analytics_workspace_id. The module grants each assignment's identity the roles its definition
+  # needs, on the management group and on resources passed in parameters marked assignPermissions.
+  policy_default_values = {
+    for name, value in try(local.management_groups_config.policy_default_values, {}) : name => jsonencode({ value = value })
+  }
 }
