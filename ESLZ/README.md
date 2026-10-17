@@ -10,6 +10,7 @@ Resources are deployed with [Azure Verified Modules](https://azure.github.io/Azu
 |---|---|---|
 | `subscriptions/` | Subscriptions, resource groups, role assignments | `4esnok_su_subscriptions` |
 | `connectivity/` | Hub-and-spoke network, IPAM | `4esnok_su_connectivity` |
+| `management/` | Central Log Analytics workspace ([management design](./management_design.md)) | `4esnok_su_management` |
 | `workloads/cortex/` | Tier-2 workload cortex ([workloads](./workloads/README.md)) | `4esnok_su_cortex` |
 
 ## Naming
