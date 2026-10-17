@@ -15,8 +15,6 @@ Each tenant is described by a YAML file in `tenants/`. The Terraform configurati
 - directory roles, PIM eligible roles, administrative units and access packages
 - tenant settings: security defaults, Conditional Access, authorization policy, cross-tenant access, custom domains and B2B guests
 
-`monitoring/` is a separate configuration that sends Entra ID logs to Log Analytics and alerts on break-glass use.
-
 ## How it works
 
 The bootstrap process creates admin users, groups and service principals in the EntraID. These identities are used to manage azure resources and other less privileged users. Since these are the first identities created in the tenant, before any CI/CD pipelines or other automation is in place, the bootstrap process in done manually by executing a shell script.
@@ -46,7 +44,6 @@ Every section is optional. Features marked P1 or P2 need that Entra ID licence; 
 | `cross_tenant_access` | Cross-tenant access default and partners (Graph property names) | Free | `Policy.ReadWrite.CrossTenantAccess` |
 | `domains` | Additional custom domains and their verification | Free | `Domain.ReadWrite.All` |
 | `management_groups` | Management groups (Azure/avm-ptn-alz) and Azure RBAC on them | Free | Azure: none, the creator becomes Owner of each group (see [Management groups](#management-groups)) |
-| `monitoring` | Used by `monitoring/` only | Sign-in logs P1 | Azure RBAC on the subscription; Global or Security Administrator for the Entra ID diagnostic setting |
 
 Add a permission to the tier-0 apply application only when the tenant uses that section. The plan application needs the read equivalents (`Directory.Read.All` and `Policy.Read.All` cover most of them).
 
@@ -67,7 +64,7 @@ Groups and applications are keyed by display name, so renaming one recreates it 
 
 ### Break-glass accounts
 
-A user with `break_glass: true` is an emergency access account. Each tenant has two, cloud-only on its `onmicrosoft.com` domain, with a permanent Global Administrator role and a 64-character password stored in 1Password (the plan fails if `store_password_in_key_vault` is not set). They are excluded from every Conditional Access policy automatically, and `monitoring/` alerts on any sign-in or change they make.
+A user with `break_glass: true` is an emergency access account. Each tenant has two, cloud-only on its `onmicrosoft.com` domain, with a permanent Global Administrator role and a 64-character password stored in 1Password (the plan fails if `store_password_in_key_vault` is not set). They are excluded from every Conditional Access policy automatically. An alert on their sign-ins is still to do (see the TODO list in [ESLZ/management_design.md](../../ESLZ/management_design.md)).
 
 After the first apply:
 
@@ -101,21 +98,6 @@ Assign Reader on each group to the tier-0 plan application, so plan runs can rea
 Moving a subscription into a group needs Owner on the subscription and write access on the group, so it is done
 by the subscription's Owner (`az account management-group subscription add`), given Management Group Contributor
 on the group in the YAML.
-
-### Monitoring
-
-`monitoring/` reads the same tenant YAML. To enable it:
-
-1. Uncomment and fill in the tenant's `monitoring` section: subscription, resource group, workspace, alert email. Keep `log_categories` to `AuditLogs` in a tenant without P1.
-2. Add an HCP Terraform workspace for it in `bootstrap/HCP/tier1` with `execution_mode: local`.
-3. Run it locally as a Global Administrator (`az login`):
-
-```sh
-export TF_CLOUD_ORGANIZATION=4esnok TF_CLOUD_PROJECT=<project> TF_WORKSPACE=<monitoring workspace>
-export TF_TOKEN_app_terraform_io=$(op read "op://IT/terraform_hcp_4esnok_tier0/credential")
-terraform -chdir=monitoring init
-terraform -chdir=monitoring apply -var tenant_yaml_path=../tenants/<tenant>.yaml
-```
 
 ## Applications
 
