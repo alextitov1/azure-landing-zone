@@ -8,19 +8,19 @@ The management components that CAF and Azure Landing Zones (ALZ) expect, and whe
 
 | Component | What CAF expects | Status in this repo |
 |---|---|---|
-| Management subscription and management group | A dedicated subscription for platform management, under `Platform → Management` | Not started; `mg-platform` has no management child |
-| Central Log Analytics workspace | One platform workspace, owned by the platform team | Partly done: [bootstrap/Azure/monitoring](../bootstrap/Azure/monitoring/main.tf) holds a workspace for Entra ID logs only |
-| Entra ID diagnostic setting | Sign-in and audit logs in the central workspace | Done (AuditLogs; SignInLogs needs Entra ID P1) |
+| Management subscription and management group | A dedicated subscription for platform management, under `Platform → Management` | Resource group `rg-mgmt-dev-nzn-01` in the shared Visual Studio subscription; `mg-platform` has no management child |
+| Central Log Analytics workspace | One platform workspace, owned by the platform team | Done: `log-mgmt-dev-nzn-01` ([ESLZ/management](./management/README.md)) |
+| Entra ID diagnostic setting | Sign-in and audit logs in the central workspace | Not started (SignInLogs needs Entra ID P1; AuditLogs is free) |
 | Activity Log collection | `DeployIfNotExists` policy at management group scope sends every subscription's Activity Log to the workspace | Not started |
 | Resource diagnostic settings | Policy-driven diagnostic settings on platform resources (firewall, VPN gateway, Key Vault, AKS, …) | Not started |
 | Azure Monitor Agent and Data Collection Rules | AMA with a user-assigned managed identity; DCRs for VM Insights, Change Tracking, Defender for SQL | Not started |
 | Microsoft Defender for Cloud | Plans enabled per subscription by policy, connected to the central workspace | Not started |
 | Microsoft Sentinel | Optional SIEM on the central workspace | Not started |
-| Alerting | Azure Monitor Baseline Alerts (AMBA), Service Health alerts, action groups | Partly done: break-glass sign-in alert and action group in `bootstrap/Azure/monitoring` |
+| Alerting | Azure Monitor Baseline Alerts (AMBA), Service Health alerts, action groups | Not started |
 | Update and change management | Azure Update Manager, Change Tracking through AMA | Not started |
 | Backup and recovery | Recovery Services or Backup vaults, backup policy | Not started |
 | Network monitoring | Network Watcher per region, VNet flow logs, Traffic Analytics | Not started |
-| Retention and archive | Short interactive retention; long-term retention or immutable storage for compliance | Partly done: retention configurable, 90 days by default |
+| Retention and archive | Short interactive retention; long-term retention or immutable storage for compliance | Partly done: 30 days interactive retention, no archive |
 | Automation Account | Optional in current ALZ; no longer required for Update Manager or Change Tracking | Not needed |
 
 ## Log Analytics workspace
@@ -70,19 +70,41 @@ Platform and security logs stay central.
 
 ## How this maps to this repository
 
-- The workspace in [bootstrap/Azure/monitoring/main.tf](../bootstrap/Azure/monitoring/main.tf) is scoped to Entra ID
-  logs and the break-glass alert. In CAF terms, that is the start of the central workspace, not a separate concern.
-- The CAF-aligned step is to **make it the platform Management workspace**: move it into a management subscription
-  under `mg-platform` and keep the Entra diagnostic setting and break-glass alert pointing at it. Two workspaces
-  (Entra and platform) would split sign-in data away from everything else that Sentinel or KQL queries would need to
-  correlate.
+- One Visual Studio subscription holds everything, so the management landing zone is a resource group,
+  `rg-mgmt-dev-nzn-01`, not a subscription. It is deployed by [ESLZ/management](./management/README.md), a
+  platform stack next to `ESLZ/connectivity`, with its own HCP workspace `4esnok_su_management`.
+- `log-mgmt-dev-nzn-01` is the only workspace in the landing zone. The never-deployed `bootstrap/Azure/monitoring`,
+  which created a second workspace for Entra ID logs, was removed.
 - [workloads/cortex/config/dev.yaml](./workloads/cortex/config/dev.yaml) already expects a
-  `log_analytics_workspace_id` "from the shared services outputs": the AKS Container Insights consumer this workspace
-  would serve.
-- Management groups are deployed with `Azure/avm-ptn-alz`. Its companion module **`Azure/avm-ptn-alz-management`**
-  creates the workspace, the Data Collection Rules and the managed identity. Their IDs are then fed into the ALZ
-  policy assignments through `policy_default_values`, so the Activity Log and diagnostics policies switch on across
-  `mg-4esnok`.
-- On a Visual Studio subscription, keep `PerGB2018`, short retention, and only the log categories you need. The first
-  ~5 GB/month per billing account is free; AKS Container Insights is usually what goes past that.
-- Name the workspace per the [naming convention](./README.md#naming), for example `log-mgmt-prod-aue-001`.
+  `log_analytics_workspace_id` from the shared services outputs: the AKS Container Insights consumer this workspace
+  will serve (see TODO).
+- Management groups are deployed with `Azure/avm-ptn-alz`. Its companion module `Azure/avm-ptn-alz-management`
+  adds the Data Collection Rules and managed identity, whose IDs feed the ALZ policy assignments through
+  `policy_default_values` (see TODO).
+- On the Visual Studio subscription: `PerGB2018`, 30 days retention and a 1 GB daily cap. AKS Container Insights is
+  usually what goes past the free allowance.
+
+## TODO
+
+Options to consider next, roughly in order.
+
+- [ ] **Cortex container logs**: add `4esnok_su_cortex` to `remote_state_consumers` of `4esnok_su_management`, read
+  `log_analytics_workspace_id` with `tfe_outputs`, and give the cortex apply app the read access its Data
+  Collection Rule needs on the workspace.
+- [ ] **Azure Monitor workspace for managed Prometheus**: cortex onboards container logs and Prometheus together,
+  so it needs both workspace IDs before `monitoring.enabled: true`.
+- [ ] **Activity Log**: send the subscription's Activity Log to the workspace, with a diagnostic setting here or by
+  policy.
+- [ ] **Entra ID logs and the break-glass alert**: an Entra ID diagnostic setting to this workspace and an alert on
+  any sign-in by a break-glass account. The diagnostic setting needs a Global or Security Administrator, which no
+  pipeline has. The removed `bootstrap/Azure/monitoring` (git history) has the KQL for the alert.
+- [ ] **ALZ policy archetypes** instead of `empty`, so `DeployIfNotExists` policies deploy the Activity Log and
+  diagnostic settings for every subscription in a management group.
+- [ ] **`avm-ptn-alz-management`**: AMA Data Collection Rules (VM Insights, Change Tracking, Defender for SQL) and a
+  user-assigned identity, once there are VMs.
+- [ ] **Defender for Cloud**: plans per subscription, connected to the workspace.
+- [ ] **Microsoft Sentinel** on the workspace.
+- [ ] **Alerting**: Azure Monitor Baseline Alerts (AMBA), Service Health alerts, an action group.
+- [ ] **Long-term retention or archive** for compliance; immutable storage export if logs must be tamper-proof.
+- [ ] **Network monitoring**: Network Watcher, VNet flow logs and Traffic Analytics for the hub and spokes.
+- [ ] **Daily cap**: revisit once real ingestion is known.
