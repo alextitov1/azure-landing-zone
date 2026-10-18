@@ -12,7 +12,7 @@ The management components that CAF and Azure Landing Zones (ALZ) expect, and whe
 | Central Log Analytics workspace | One platform workspace, owned by the platform team | Done: `log-mgmt-dev-nzn-01` ([ESLZ/management](./management/README.md)) |
 | Entra ID diagnostic setting | Sign-in and audit logs in the central workspace | Not started (SignInLogs needs Entra ID P1; AuditLogs is free) |
 | Activity Log collection | `DeployIfNotExists` policy at management group scope sends every subscription's Activity Log to the workspace | Not started |
-| Resource diagnostic settings | Policy-driven diagnostic settings on platform resources (firewall, VPN gateway, Key Vault, AKS, …) | Not started |
+| Resource diagnostic settings | Policy-driven diagnostic settings on platform resources (firewall, VPN gateway, Key Vault, AKS, …) | Partly done: AKS control-plane logs by policy `Deploy-AKS-Diag-LAW` on `mg-4esnok` ([Policy](../bootstrap/Azure/README.md#policy)) |
 | Azure Monitor Agent and Data Collection Rules | AMA with a user-assigned managed identity; DCRs for VM Insights, Change Tracking, Defender for SQL | Not started |
 | Microsoft Defender for Cloud | Plans enabled per subscription by policy, connected to the central workspace | Not started |
 | Microsoft Sentinel | Optional SIEM on the central workspace | Not started |
@@ -88,9 +88,10 @@ Platform and security logs stay central.
 
 Options to consider next, roughly in order.
 
-- [ ] **Cortex container logs**: add `4esnok_su_cortex` to `remote_state_consumers` of `4esnok_su_management`, read
-  `log_analytics_workspace_id` with `tfe_outputs`, and give the cortex apply app the read access its Data
-  Collection Rule needs on the workspace.
+- [ ] **Container Insights** (AKS node and pod logs): compare a custom DeployIfNotExists policy, since there is no
+  built-in one, with the cortex Terraform switch (`monitoring.enabled`). For the Terraform route: add
+  `4esnok_su_cortex` to `remote_state_consumers` of `4esnok_su_management`, read `log_analytics_workspace_id` with
+  `tfe_outputs`, and give the cortex apply app the read access its Data Collection Rule needs on the workspace.
 - [ ] **Azure Monitor workspace for managed Prometheus**: cortex onboards container logs and Prometheus together,
   so it needs both workspace IDs before `monitoring.enabled: true`.
 - [ ] **Activity Log**: send the subscription's Activity Log to the workspace, with a diagnostic setting here or by
@@ -98,8 +99,9 @@ Options to consider next, roughly in order.
 - [ ] **Entra ID logs and the break-glass alert**: an Entra ID diagnostic setting to this workspace and an alert on
   any sign-in by a break-glass account. The diagnostic setting needs a Global or Security Administrator, which no
   pipeline has. The removed `bootstrap/Azure/monitoring` (git history) has the KQL for the alert.
-- [ ] **ALZ policy archetypes** instead of `empty`, so `DeployIfNotExists` policies deploy the Activity Log and
-  diagnostic settings for every subscription in a management group.
+- [ ] **Official ALZ library**: add `platform/alz` (latest `2026.10.0`) as a dependency of the custom library in
+  `bootstrap/Azure/terraform/lib`, and move to ALZ's archetypes (root, platform, landing zones), so
+  `DeployIfNotExists` policies deploy the Activity Log and diagnostic settings for every subscription.
 - [ ] **`avm-ptn-alz-management`**: AMA Data Collection Rules (VM Insights, Change Tracking, Defender for SQL) and a
   user-assigned identity, once there are VMs.
 - [ ] **Defender for Cloud**: plans per subscription, connected to the workspace.

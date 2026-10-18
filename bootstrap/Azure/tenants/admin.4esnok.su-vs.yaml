@@ -228,6 +228,10 @@ applications:  # app registrations and their enterprise applications (service pr
 management_groups:
   architecture: 4esnok  # mg-4esnok > mg-platform, mg-landingzones, mg-sandbox
   location: australiaeast  # for policy managed identities
+  # Policy assignment parameters, by the default names in terraform/lib/alz_policy_default_values.json
+  policy_default_values:
+    # Central workspace of ESLZ/management (rg-mgmt-dev-nzn-01), used by Deploy-AKS-Diag-LAW
+    log_analytics_workspace_id: /subscriptions/44b9d159-d353-477f-b94f-5ce0f3bd33f1/resourceGroups/rg-mgmt-dev-nzn-01/providers/Microsoft.OperationalInsights/workspaces/log-mgmt-dev-nzn-01
   role_assignments:  # management_group, role (built-in name), and group, application, user or principal_id + principal_type
     - management_group: mg-4esnok
       role: Reader  # plan runs of this workspace read the groups and their role assignments

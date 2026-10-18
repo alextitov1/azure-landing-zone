@@ -54,8 +54,8 @@ provider "azapi" {
   oidc_token_file_path = try(var.tfc_azure_dynamic_credentials.default.oidc_token_file_path, null)
 }
 
-# Reads the management group hierarchy (architecture definitions) in ./lib for Azure/avm-ptn-alz.
-# Signs in like azapi; with no policies in the library it makes no Azure calls of its own.
+# Reads the custom ALZ library in ./lib (hierarchy, archetypes, policy assignments) for Azure/avm-ptn-alz.
+# Signs in like azapi, to read the built-in policy definitions the assignments refer to.
 provider "alz" {
   library_references = [{ custom_url = "${path.root}/lib" }]
 
