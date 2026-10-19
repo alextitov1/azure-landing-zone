@@ -1,0 +1,13 @@
+{
+  "schema_version": 2,
+  "resources": {
+    "grafana": {
+      "dashes": true,
+      "min_length": 2,
+      "max_length": 23,
+      "scope": "resource group",
+      "override_reason": "The catalog drops the dashes for Managed Grafana, which allows them; keep <type>-<workload>-<env>-<region>-<nn>.",
+      "override_source": "ESLZ/README.md"
+    }
+  }
+}

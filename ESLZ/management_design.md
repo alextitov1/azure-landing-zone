@@ -16,6 +16,7 @@ The management components that CAF and Azure Landing Zones (ALZ) expect, and whe
 | Azure Monitor Agent and Data Collection Rules | AMA with a user-assigned managed identity; DCRs for VM Insights, Change Tracking, Defender for SQL | Not started |
 | Microsoft Defender for Cloud | Plans enabled per subscription by policy, connected to the central workspace | Not started |
 | Microsoft Sentinel | Optional SIEM on the central workspace | Not started |
+| Metrics and dashboards | Managed Prometheus (Azure Monitor workspace) and Azure Managed Grafana | Done: `amw-mgmt-dev-nzn-01`, `amg-mgmt-dev-aue-01` ([ESLZ/management](./management/README.md#cost)) |
 | Alerting | Azure Monitor Baseline Alerts (AMBA), Service Health alerts, action groups | Not started |
 | Update and change management | Azure Update Manager, Change Tracking through AMA | Not started |
 | Backup and recovery | Recovery Services or Backup vaults, backup policy | Not started |
@@ -92,8 +93,10 @@ Options to consider next, roughly in order.
   built-in one, with the cortex Terraform switch (`monitoring.enabled`). For the Terraform route: add
   `4esnok_su_cortex` to `remote_state_consumers` of `4esnok_su_management`, read `log_analytics_workspace_id` with
   `tfe_outputs`, and give the cortex apply app the read access its Data Collection Rule needs on the workspace.
-- [ ] **Azure Monitor workspace for managed Prometheus**: cortex onboards container logs and Prometheus together,
-  so it needs both workspace IDs before `monitoring.enabled: true`.
+- [x] **Azure Monitor workspace for managed Prometheus**, and Managed Grafana on top of it.
+- [ ] **Cortex metrics**: cortex onboards container logs and Prometheus together, so it needs both
+  `log_analytics_workspace_id` and `azure_monitor_workspace_id` (outputs of `4esnok_su_management`) before
+  `monitoring.enabled: true`.
 - [ ] **Activity Log**: send the subscription's Activity Log to the workspace, with a diagnostic setting here or by
   policy.
 - [ ] **Entra ID logs and the break-glass alert**: an Entra ID diagnostic setting to this workspace and an alert on

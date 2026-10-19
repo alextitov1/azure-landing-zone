@@ -15,3 +15,13 @@ output "log_analytics_workspace_customer_id" {
   description = "Workspace (customer) ID of the central Log Analytics workspace, for KQL queries and agents."
   value       = nonsensitive(module.log_analytics.resource.workspace_id)
 }
+
+output "azure_monitor_workspace_id" {
+  description = "Resource ID of the Azure Monitor workspace (managed Prometheus), for AKS metrics; null when disabled."
+  value       = try(azurerm_monitor_workspace.prometheus[0].id, null)
+}
+
+output "grafana_endpoint" {
+  description = "URL of Azure Managed Grafana; null when disabled."
+  value       = try(azurerm_dashboard_grafana.this[0].endpoint, null)
+}
