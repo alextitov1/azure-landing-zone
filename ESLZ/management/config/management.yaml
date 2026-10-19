@@ -14,14 +14,45 @@ log_analytics:
   daily_quota_gb: 1                  # ingestion cap per day, protects the Visual Studio credit; -1 removes it
   local_authentication_enabled: false  # shared keys off: agents and queries sign in with Entra ID
 
-# Azure Monitor workspace for managed Prometheus: the workspace itself is free; ingestion is billed per sample.
+# Azure Monitor workspace for managed Prometheus (azurerm_monitor_workspace; no Azure Verified Module exists).
+# The workspace itself is free; ingestion is billed per sample. Every argument is listed: commented ones keep
+# their default. "forces new" means changing it recreates the resource.
 prometheus:
   enabled: true
+  # name: amw-mgmt-dev-nzn-01            # default from the naming convention; forces new
+  # location: newzealandnorth            # default: the stack's location; forces new
+  # public_network_access_enabled: true  # default true; false needs a private endpoint to ingest and query
+  # tags: {}
+  # timeouts: { create: 30m, read: 5m, update: 30m, delete: 30m }
 
-# Azure Managed Grafana (Standard X1, billed per hour plus per active user). Not offered in newzealandnorth.
+# Azure Managed Grafana (azurerm_dashboard_grafana; the Azure Verified Module is only proposed). Billed per hour
+# and per active user (README.md#cost). Every argument is listed: commented ones keep their default.
 grafana:
   enabled: true
-  location: australiaeast
-  region_code: aue
-  major_version: 12                  # 11 or 12
-  public_network_access_enabled: true
+  location: australiaeast                # not offered in newzealandnorth; forces new
+  region_code: aue                       # for the name
+  major_version: 12                      # required: 11 or 12
+  public_network_access_enabled: true    # default true
+  # name: amg-mgmt-dev-aue-01            # default from the naming convention; 2-23 characters; forces new
+  # sku: Standard                        # the only value; forces new
+  # sku_size: X1                         # X1 or X2 (more capacity, higher hourly price); forces new
+  # zone_redundancy_enabled: false       # higher hourly price; forces new
+  # api_key_enabled: false               # Grafana API keys and service accounts
+  # deterministic_outbound_ip_enabled: false  # fixed outbound IPs, e.g. for firewalled data sources
+  # auto_generated_domain_name_label_scope: TenantReuse  # the only value
+  # identity:                            # forces new. The role assignments below are made only for SystemAssigned;
+  #   type: SystemAssigned               # SystemAssigned (default here) or UserAssigned
+  #   identity_ids: []                   # user-assigned identity IDs, for UserAssigned
+  # Data sources besides the Prometheus workspace above, which is always integrated
+  # additional_azure_monitor_workspace_ids: []
+  # Email for alerts and reports. The password is the sensitive variable grafana_smtp_password (TF_VAR_ in HCP).
+  # smtp:
+  #   enabled: true                      # default false
+  #   host: smtp.example.com:587         # required, with port
+  #   user: grafana@example.com          # required
+  #   start_tls_policy: MandatoryStartTLS  # required: OpportunisticStartTLS, NoStartTLS or MandatoryStartTLS
+  #   from_address: grafana@example.com  # required
+  #   from_name: Azure Managed Grafana Notification  # default
+  #   verification_skip_enabled: false   # true skips SSL verification of the SMTP server
+  # tags: {}
+  # timeouts: { create: 30m, read: 5m, update: 30m, delete: 30m }
