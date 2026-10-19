@@ -13,7 +13,8 @@ location: newzealandnorth  # default for resource groups without a location
 # management_group_id: mg-4esnok-platform
 
 # Namespaces to register, each with its preview features. Removing one does not unregister it.
-# resource_providers:
+resource_providers:
+  Microsoft.Dashboard: []  # Azure Managed Grafana (ESLZ/management)
 #   Microsoft.Compute: [EncryptionAtHost]
 #   Microsoft.Network:
 #   Microsoft.Storage:
@@ -38,6 +39,11 @@ role_assignments:
   - role: Contributor
     group: sg-t1-az-sub-vs-contributor
   - role: Reader
+    group: sg-t1-az-sub-vs-reader
+  # Azure Managed Grafana (ESLZ/management): Grafana roles at subscription scope apply to every Grafana instance
+  - role: Grafana Admin
+    group: sg-t1-az-sub-vs-contributor
+  - role: Grafana Viewer
     group: sg-t1-az-sub-vs-reader
 
 # Resource groups and their role assignments. Removing a resource group deletes it and everything in it,

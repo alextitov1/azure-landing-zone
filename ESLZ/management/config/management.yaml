@@ -1,4 +1,5 @@
-# Platform management: the central Log Analytics workspace (ESLZ/management_design.md).
+# Platform management: the central Log Analytics workspace, managed Prometheus and Managed Grafana
+# (ESLZ/management_design.md).
 subscription_id: 44b9d159-d353-477f-b94f-5ce0f3bd33f1
 location: newzealandnorth
 
@@ -12,3 +13,15 @@ log_analytics:
   retention_in_days: 30              # 30-730; the first 31 days are free
   daily_quota_gb: 1                  # ingestion cap per day, protects the Visual Studio credit; -1 removes it
   local_authentication_enabled: false  # shared keys off: agents and queries sign in with Entra ID
+
+# Azure Monitor workspace for managed Prometheus: the workspace itself is free; ingestion is billed per sample.
+prometheus:
+  enabled: true
+
+# Azure Managed Grafana (Standard X1, billed per hour plus per active user). Not offered in newzealandnorth.
+grafana:
+  enabled: true
+  location: australiaeast
+  region_code: aue
+  major_version: 12                  # 11 or 12
+  public_network_access_enabled: true

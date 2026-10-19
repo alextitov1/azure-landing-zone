@@ -1,5 +1,5 @@
 # Platform management: the central Log Analytics workspace, from ../config/management.yaml. The one workspace
-# for platform and workload logs (ESLZ/management_design.md).
+# for platform and workload logs (ESLZ/management_design.md). Prometheus and Grafana are in observability.tf.
 
 locals {
   config        = yamldecode(file("${path.module}/../config/management.yaml"))
