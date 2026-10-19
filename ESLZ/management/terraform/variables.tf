@@ -14,3 +14,11 @@ variable "tfc_azure_dynamic_credentials" {
   description = "Azure dynamic credentials injected by HCP Terraform"
   default     = null
 }
+
+# Only when grafana.smtp is set in ../config/management.yaml; a sensitive TF_VAR_grafana_smtp_password in HCP.
+variable "grafana_smtp_password" {
+  type        = string
+  description = "Password of the SMTP server Azure Managed Grafana sends email through"
+  default     = null
+  sensitive   = true
+}
