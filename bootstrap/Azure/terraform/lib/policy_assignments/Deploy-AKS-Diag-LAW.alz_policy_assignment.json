@@ -8,10 +8,9 @@
     "type": "SystemAssigned"
   },
   "properties": {
-    "description": "Deploys diagnostic settings on AKS clusters to send their control-plane logs to the central Log Analytics workspace. kube-audit-admin is used instead of kube-audit (it leaves out get and list requests), and metrics are off, to keep ingestion small.",
+    "description": "Deploys diagnostic settings on AKS clusters to send their control-plane logs to the central Log Analytics workspace, in the resource-specific tables (AKSControlPlane, AKSAuditAdmin). kube-audit-admin is used instead of kube-audit (it leaves out get and list requests), and metrics are off, to keep ingestion small.",
     "displayName": "Configure diagnostic settings for AKS to the central Log Analytics workspace",
-    "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/6c66c325-74c8-42fd-a286-a74b0e2939d8",
-    "definitionVersion": "3.*.*",
+    "policyDefinitionId": "/providers/Microsoft.Management/managementGroups/placeholder/providers/Microsoft.Authorization/policyDefinitions/Deploy-AKS-Diag-LAW-Dedicated",
     "enforcementMode": "Default",
     "nonComplianceMessages": [
       {
