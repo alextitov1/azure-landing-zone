@@ -42,6 +42,23 @@ resource "tfe_team_token" "pipeline" {
   }
 }
 
+# Token for hcp-autodestroyer (separate repo), which queues destroy runs for workspaces tagged
+# auto_destroy_after, since the Free plan ignores auto_destroy. A description makes it a second
+# owners token instead of replacing the pipeline token above. Same rotation scheme as that token.
+resource "time_rotating" "autodestroyer_token" {
+  rotation_days = 180
+}
+
+resource "tfe_team_token" "autodestroyer" {
+  team_id     = data.tfe_team.owners.id
+  description = "hcp-autodestroyer"
+  expired_at  = timeadd(time_rotating.autodestroyer_token.rotation_rfc3339, "720h")
+
+  lifecycle {
+    replace_triggered_by = [time_rotating.autodestroyer_token]
+  }
+}
+
 module "hcp" {
   source = "../modules/tfe-workspace"
 
