@@ -2,6 +2,8 @@
 
 [Day two operations](#day-two-operations)
 
+TODO: consider alternatives e.g. Terrakube
+
 This directory contains the bootstrap and day-two operations code for HCP (HashiCorp Cloud Platform).
 
 HCP Terraform is used as the backend for the Terraform state files of the deployments in this repository. 

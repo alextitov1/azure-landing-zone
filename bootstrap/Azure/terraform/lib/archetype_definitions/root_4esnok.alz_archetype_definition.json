@@ -4,7 +4,9 @@
   "policy_assignments": [
     "Deploy-AKS-Diag-LAW"
   ],
-  "policy_definitions": [],
+  "policy_definitions": [
+    "Deploy-AKS-Diag-LAW-Dedicated"
+  ],
   "policy_set_definitions": [],
   "role_definitions": []
 }
