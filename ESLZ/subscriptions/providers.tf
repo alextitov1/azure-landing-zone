@@ -1,13 +1,13 @@
 terraform {
   required_version = "~> 1.16"
 
-  # Remote runs: HCP Terraform workspace 4esnok_su_subscriptions (bootstrap/HCP/tier1/projects/4esnok_su_azure.yaml).
+  # Remote runs: HCP Terraform workspace 4esnok_vs_azure_bootstrap_r0 (HCP/config.yaml).
   # Locally, `terraform plan` runs a speculative plan there (needs TF_TOKEN_app_terraform_io).
   cloud {
     organization = "4esnok"
     workspaces {
-      project = "4esnok_su_azure"
-      name    = "4esnok_su_subscriptions"
+      project = "4esnok_vs_r0"
+      name    = "4esnok_vs_azure_bootstrap_r0"
     }
   }
 

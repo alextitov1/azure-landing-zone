@@ -17,7 +17,7 @@ data "azapi_resource" "resource_group" {
 # reservations = { "<spoke>/<name>" = <address prefix> }, vnets, resource_group_id
 data "tfe_outputs" "connectivity" {
   organization = "4esnok"
-  workspace    = "4esnok_su_connectivity"
+  workspace    = "4esnok_vs_azure_networking_r1"
 }
 
 locals {

@@ -1,12 +1,12 @@
 terraform {
   required_version = "~> 1.16"
 
-  # Remote runs: HCP Terraform workspace 4esnok_su_cortex (bootstrap/HCP/tier1/projects/4esnok_su_azure.yaml).
+  # Remote runs: HCP Terraform workspace 4esnok_vs_azure_cortex_r2 (HCP/config.yaml).
   cloud {
     organization = "4esnok"
     workspaces {
-      project = "4esnok_su_azure"
-      name    = "4esnok_su_cortex"
+      project = "4esnok_vs_r2"
+      name    = "4esnok_vs_azure_cortex_r2"
     }
   }
 
@@ -45,5 +45,5 @@ provider "azurerm" {
 }
 
 # Reads the outputs of the platform workspaces. Remote runs use the run's token, which can read the workspaces
-# that list 4esnok_su_cortex in remote_state_consumers; local runs use TF_TOKEN_app_terraform_io.
+# that list 4esnok_vs_azure_cortex_r2 in remote_state_consumers; local runs use TF_TOKEN_app_terraform_io.
 provider "tfe" {}

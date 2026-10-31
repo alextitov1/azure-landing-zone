@@ -73,7 +73,7 @@ Platform and security logs stay central.
 
 - One Visual Studio subscription holds everything, so the management landing zone is a resource group,
   `rg-mgmt-dev-nzn-01`, not a subscription. It is deployed by [ESLZ/management](./management/README.md), a
-  platform stack next to `ESLZ/connectivity`, with its own HCP workspace `4esnok_su_management`.
+  platform stack next to `ESLZ/connectivity`, with its own HCP workspace `4esnok_vs_azure_mgmt_r1`.
 - `log-mgmt-dev-nzn-01` is the only workspace in the landing zone. The never-deployed `bootstrap/Azure/monitoring`,
   which created a second workspace for Entra ID logs, was removed.
 - [workloads/cortex/config/dev.yaml](./workloads/cortex/config/dev.yaml) already expects a
@@ -91,11 +91,11 @@ Options to consider next, roughly in order.
 
 - [ ] **Container Insights** (AKS node and pod logs): compare a custom DeployIfNotExists policy, since there is no
   built-in one, with the cortex Terraform switch (`monitoring.enabled`). For the Terraform route: add
-  `4esnok_su_cortex` to `remote_state_consumers` of `4esnok_su_management`, read `log_analytics_workspace_id` with
+  `4esnok_vs_azure_cortex_r2` to `remote_state_consumers` of `4esnok_vs_azure_mgmt_r1`, read `log_analytics_workspace_id` with
   `tfe_outputs`, and give the cortex apply app the read access its Data Collection Rule needs on the workspace.
 - [x] **Azure Monitor workspace for managed Prometheus**, and Managed Grafana on top of it.
 - [ ] **Cortex metrics**: cortex onboards container logs and Prometheus together, so it needs both
-  `log_analytics_workspace_id` and `azure_monitor_workspace_id` (outputs of `4esnok_su_management`) before
+  `log_analytics_workspace_id` and `azure_monitor_workspace_id` (outputs of `4esnok_vs_azure_mgmt_r1`) before
   `monitoring.enabled: true`.
 - [ ] **Activity Log**: send the subscription's Activity Log to the workspace, with a diagnostic setting here or by
   policy.

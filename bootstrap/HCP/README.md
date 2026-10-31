@@ -1,10 +1,10 @@
-# HCP Terraform
+# HCP Terraform bootstrap (tier 0)
 
-[Day two operations](#day-two-operations)
+To add or change projects and workspaces, see [HCP](../../HCP/README.md) (tier 1).
 
 TODO: consider alternatives e.g. Terrakube
 
-This directory contains the bootstrap and day-two operations code for HCP (HashiCorp Cloud Platform).
+This directory contains the tier-0 bootstrap of HCP (HashiCorp Cloud Platform) Terraform.
 
 HCP Terraform is used as the backend for the Terraform state files of the deployments in this repository. 
 Where it's possible, HPC workspaces are integrated with GitHub, 1Password and Azure, which makes it possible to deploy with a single commit to to the main branch.
@@ -17,30 +17,31 @@ Where it's possible, HPC workspaces are integrated with GitHub, 1Password and Az
 
 ## Introduction
 
-There are two separate deployments. `hcp-tier0` is a minimal, partly click-ops setup that `hcp-tier1` depends on.
-`hcp-tier1` is fully managed as code and holds the rest of the configuration.
+There are two deployments that work the same way: each creates the projects and workspaces listed in its
+`config.yaml` with the shared module `modules/hcp-projects`. They differ only in where they run and how privileged they are.
+Tier 0 runs locally with your user token and your own 1Password access, and creates tier 1. Tier 1 runs in HCP on merge
+to `main`, with its own user token and a 1Password service account limited to the `azure_t1` vault.
 
 | Tier | Workspace | Created by | Runs | Manages |
 |------|-----------|------------|------|---------|
-| 0 | `hcp-tier0` | Manually, in the UI | Locally, with your user token | `hcp-tier1` and its identity |
-| 1 | `hcp-tier1` | Tier 0 | In HCP, on merge to `main` | All other projects and workspaces |
+| 0 | `hcp_tf_bootstrap_r0` | Manually, in the UI | Locally, with your user token | The projects and workspaces in `bootstrap/HCP/config.yaml`: `hcp_tf_workspaces_r1` |
+| 1 | `hcp_tf_workspaces_r1` | Tier 0 | In HCP, on merge to `main` | The projects and workspaces in `HCP/config.yaml` |
 
 ## Layout
 ```
-config/organization.yaml   organization, GitHub repository, Terraform version
-tier0/                     hcp-tier0, run with ./bootstrap-hcp.sh
-tier1/                     hcp-tier1, run by HCP Terraform
-tier1/projects/            one YAML file per project (!!update files in this directory to change projects and workspaces!!)
-modules/tfe-workspace/     project and workspaces, used by both tiers
-docs/                      diagrams
+config.yaml        organization, 1Password account, and the projects and workspaces of tier 0 (same schema as HCP/config.yaml)
+terraform.tf       hcp_tf_bootstrap_r0, run with ./bootstrap-hcp.sh; uses ../../modules/hcp-projects (shared with tier 1)
+bootstrap-hcp.sh   reads the tier-0 token from 1Password and runs terraform in this directory
 ```
+Tier 1 lives in [/HCP](../../HCP/README.md) and has its own `config.yaml`; the two tiers share no configuration.
 
 ## Bootstrap a new HCP account (manual steps)
 
 1. **Create the organization.** Register an HCP account at https://portal.cloud.hashicorp.com,
    then sign in at https://app.terraform.io and create the organization.
 
-2. **Create the tier-0 workspace.** Create a CLI-driven workspace `hcp-tier0` and set its execution mode to **Local**.
+2. **Create the tier-0 workspace.** Create the project `hcp_tf_r0` and in it a CLI-driven workspace `hcp_tf_bootstrap_r0`,
+   and set its execution mode to **Local**.
    It is used to bootstrap the rest of the organization.
 
 3. **Connect GitHub.** Go to **Workspaces → tier-0 → Version Control Workflow → GitHub.com**.
@@ -48,128 +49,53 @@ docs/                      diagrams
    - Choose **Add another organization**.
    - !Once the repository appears in the list, cancel the wizard.
 
-4. **Create a user token.** In HCP Terraform, click your avatar → **Account settings → Tokens → Create an API token**.
+4. **Create the tier-0 user token.** In HCP Terraform, click your avatar → **Account settings → Tokens → Create an API token**.
    Save it in 1Password as `op://IT/terraform_hcp_4esnok_tier0/credential`.
 
-5. **Create a GitHub token.** In GitHub, go to **Settings → Developer settings → Personal access tokens → Fine-grained tokens**.
-   Limit it to this repository and grant these repository permissions:
-   Contents (read), Metadata (read), Webhooks (read and write), Commit statuses (read and write), Pull requests (read).
-   Save it in 1Password as `op://IT/hcp_terraform_tier1/credential`.
-   If HCP cannot create webhooks with it, use a classic token with the `repo` and `admin:repo_hook` scopes instead.
+5. **Create the tier-1 user token.** Create a second API token the same way, with a description such as
+   `hcp_tf_user_hcp_workspace_t1_01` and an expiry date, and save it as `op://IT/hcp_tf_user_hcp_workspace_t1_01/credential`.
+   A separate token keeps the tiers' credentials apart: you can revoke or rotate one without touching the other.
 
 6. **Set up 1Password for tier 1.** Tier 1 reads workspace secrets from the vault `azure_t1`, so the items it passes
    to workspaces must be there. Create a 1Password service account with read and write access to that vault only,
    and save its token in the same vault as `op://azure_t1/op_hcp_rw_t1/credential`.
 
-7. **Apply tier 0.**
+7. **Let Terraform read 1Password.** Tier 0 reads the `secrets:` in `config.yaml` through the 1Password desktop app.
+   Turn on **Settings → Developer → Integrate with 1Password SDKs** in the app, and set `onepassword_account` in
+   `config.yaml` to your account (sign-in address or the name in the app's sidebar). Terraform asks you to unlock the app.
+
+8. **Apply tier 0.**
    ```sh
    ./bootstrap-hcp.sh init
    ./bootstrap-hcp.sh apply
    ```
-   This creates:
-   - an API token for the built-in `owners` team, used by the pipeline
-   - the `hcp` project
-   - the `hcp-tier1` workspace, linked to this repository, with the token set as `TFE_TOKEN`
-   - a GitHub OAuth connection, used by the pipeline workspaces that tier 1 creates
-   - the 1Password service account token on `hcp-tier1`, as `OP_SERVICE_ACCOUNT_TOKEN`
+   This creates, from `config.yaml`:
+   - the `hcp_tf_r1` project
+   - the `hcp_tf_workspaces_r1` workspace, linked to its repository through the GitHub App
+   - the workspace's `secrets:` as sensitive environment variables: the tier-1 user token as `TFE_TOKEN`, and the
+     1Password service account token as `OP_SERVICE_ACCOUNT_TOKEN`
 
-8. **Check the pipeline.** Open `hcp-tier1` in the UI and check that its first run succeeds.
+9. **Check the pipeline.** Open `hcp_tf_workspaces_r1` in the UI and check that its first run succeeds.
 
 > [!NOTE]
 > **Tokens**
 >
-> - The **user token** (step 4) acts as an admin user. It is used only to run `hcp-tier0` locally.
->   Tier 0 needs it, because only a user token can link workspaces through the GitHub App.
->
-> - (!need to refactor!) The **GitHub token** (step 5) is not an HCP Terraform token. It lets HCP Terraform read this repository and create
->   webhooks for the workspaces that tier 1 links through the GitHub OAuth connection. Tier 1 cannot use the GitHub App
->   for that, because HCP Terraform does not allow team tokens to link workspaces through it.
+> - The **user tokens** (steps 4 and 5) act as your admin user. The tier-0 token is used only to run
+>   `hcp_tf_bootstrap_r0` locally. The tier-1 token is `TFE_TOKEN` on `hcp_tf_workspaces_r1`, the pipeline's identity
+>   for every HCP Terraform API call. Both are user tokens because HCP Terraform allows only user tokens to link
+>   workspaces through the GitHub App; team and organization tokens are rejected. No GitHub token is needed: the
+>   GitHub App installation (`vcs.github_app_installation`) gives HCP access to the repositories.
 >
 > - The **1Password token** (step 6) belongs to the service account `op_hcp_rw_t1`, which can only access the `azure_t1` vault. Tier 1 uses it to
 >   resolve `secrets:`. Anything in that vault can reach any workspace through a merged pull request. `azure_t1` also
 >   holds the passwords that bootstrap/Azure generates, including the break-glass accounts, so review `secrets:` changes
 >   carefully, and never store tier-0 credentials such as the HCP Terraform user token there.
->
-> - The **team token** (managed by tier 0) of the `owners` team is the pipeline's identity: `hcp-tier1` uses it for every HCP Terraform
->   API call, such as creating projects, workspaces and variables. Tier 0 creates and rotates it and stores it as
->   `TFE_TOKEN` on `hcp-tier1`. It is visible under **Settings → Teams → owners**.
 
 ![HCP Terraform tier 0](../../docs/pics/hcp-tier0-bootstrap.drawio.svg)
 
-## Day-two operations
-Projects and workspaces are defined in `tier1/projects/*.yaml`, one file per project.
-To change them, edit the YAML, open a pull request, review the plan linked in the PR checks, and merge.
-The merge applies the change automatically.
-
-```yaml
-project: 4esnok_su_azure
-description: Azure tenant 4esnok.su
-workspaces:
-  4esnok_su_entraid_bootstrap:
-    execution_mode: local                       # run from a laptop
-  4esnok_su_subscriptions:
-    vcs:                                        # run by HCP on merge to main
-      working_directory: ESLZ/subscriptions
-```
-
-Optional workspace fields:
-
-| Field | Default |
-|-------|---------|
-| `description` | none |
-| `execution_mode` | `remote` |
-| `auto_apply` | `false`; applies to API, UI and VCS runs and to runs started by run triggers |
-| `terraform_version` | the value in `config/organization.yaml` |
-| `tags` | none |
-| `vcs.branch` | `main` |
-| `vcs.trigger_patterns` | `/<working_directory>/**/*` (every file below it) |
-| `env_vars` | none; environment variables set on the workspace |
-| `azure_oidc` | none; Azure dynamic credentials, see below |
-| `secrets` | none; sensitive environment variables from 1Password, see below |
-| `auto_destroy` | none; scheduled destroy run, see below |
-
-`vcs` links the workspace to this repository through the GitHub OAuth connection created by tier 0.
-`azure_oidc` sets the `TFC_AZURE_*` variables. `plan_app` and `apply_app` are Entra ID application display names;
-their client IDs and the tenant ID are read from the `applications` and `tenant_id` outputs of `apps_workspace`:
-```yaml
-    azure_oidc:
-      apps_workspace: 4esnok_su_entraid_t0_t1
-      plan_app: sp-t0-hcp-entraid-bootstrap-plan
-      apply_app: sp-t0-hcp-entraid-bootstrap-apply
-      subscription_id: <optional, sets ARM_SUBSCRIPTION_ID>
-```
-Each application needs a federated credential for this workspace and run phase (see `bootstrap/Azure/README.md`).
-A new workspace and its applications (in the tenant YAML) go in one pull request. Until `apps_workspace` has created
-the applications, tier 1 leaves out the workspace's `TFC_AZURE_*` variables and its plan shows a warning; each apply of
-`apps_workspace` re-runs `hcp-tier1` through a run trigger, which then sets them. Azure RBAC on subscriptions is granted
-outside Terraform.
-`secrets` maps environment variable names to 1Password references, `op://<vault>/<item>/<field>`, where the field is
-a built-in one (`credential`, `password`, ...) or `<section>/<field>`. Tier 1 reads them with its 1Password
-service account and stores them as sensitive variables, so the vault must be `azure_t1`:
-```yaml
-    secrets:
-      TF_VAR_onepassword_service_account_token: op://azure_t1/op_hcp_rw_t1/credential
-```
-`auto_destroy` makes HCP Terraform queue a destroy run for the workspace, either at a fixed time or after a period
-without runs. Set exactly one of the two fields. Use it for sandbox and test workspaces only: it is refused on a
-workspace with `remote_state_consumers`, because destroying it would break the workspaces that read its outputs.
-```yaml
-    auto_destroy:
-      after_inactivity: 3d            # <number>d or <number>h after the last run
-      # at: "2026-10-31T18:00:00Z"   # or a fixed RFC3339 time
-```
-To cancel it, remove the block. A workspace without `auto_destroy` inherits the project's auto-destroy setting, if any.
-
-> [!WARNING]
-> `auto_destroy` needs an HCP Terraform **Standard or Plus** organization. On the Free plan, HCP accepts the setting
-> without an error but does not store it, so nothing is destroyed and every `hcp-tier1` plan shows the same update again.
-
 ## Maintenance
-- **Pipeline token:** `hcp-tier1` uses this token (`TFE_TOKEN`) to manage projects and workspaces.
-  It rotates every 180 days, and the old one stays valid for 30 more days.
-  Run `./bootstrap-hcp.sh apply` at least every 210 days, or `hcp-tier1` loses access.
-- **GitHub token:** fine-grained tokens expire after at most a year. Before that, create a new one,
-  update it in 1Password and run `./bootstrap-hcp.sh apply`; the OAuth connection is updated in place.
+- **Tier-1 token:** before `hcp_tf_user_hcp_workspace_t1_01` expires, create a new user token (`..._02`), update the
+  `TFE_TOKEN` reference in `config.yaml`, run `./bootstrap-hcp.sh apply`, then revoke the old token.
 - **GitHub access:** to change which repositories the App can see, go to
   **GitHub → Settings → Applications → Installed GitHub Apps → Terraform Cloud → Configure**.
 
