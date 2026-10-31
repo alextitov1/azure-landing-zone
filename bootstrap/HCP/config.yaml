@@ -1,0 +1,21 @@
+organization: 4esnok
+onepassword_account: "my.1password.com"  # TODO: 1Password account (sign-in address or name in the app sidebar), read via the desktop app
+
+projects:
+  hcp_tf_r1:
+    description: HCP Terraform management
+    workspaces:
+      hcp_tf_workspaces_r1:
+        description: "Tier 1: manages all other HCP Terraform projects and workspaces"
+        execution_mode: remote
+        auto_apply: true
+        tags: { tier: "1" }
+        vcs:
+          repo: alextitov1/azure-landing-zone
+          github_app_installation: alextitov1  # GitHub App installation (GitHub account) that can see the repo
+          branch: main
+          working_directory: HCP
+          trigger_patterns: ["/HCP/**/*", "/modules/**/*"]
+        secrets:  # sensitive environment variables, read from 1Password (op://<vault>/<item>/<field>)
+          TFE_TOKEN: op://cloud_r0/hcp_tf_user_hcp_workspace_t1_01/credential  # HCP user token to setup workspaces
+          OP_SERVICE_ACCOUNT_TOKEN: op://cloud_r0/op_hcp_workspaces_r1/credential # OP access token to setup other workspaces secrets

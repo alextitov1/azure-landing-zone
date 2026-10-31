@@ -1,7 +1,7 @@
 # Management
 
 The central Log Analytics workspace in `newzealandnorth`, applied by the HCP Terraform workspace
-`4esnok_su_management`. It is the only workspace in the landing zone: platform and workload logs both go here
+`4esnok_vs_azure_mgmt_r1`. It is the only workspace in the landing zone: platform and workload logs both go here
 ([management design](../management_design.md)).
 
 - Resource group `rg-mgmt-dev-nzn-01`.
@@ -33,18 +33,18 @@ List prices in USD, October 2026 ([Azure retail prices](https://prices.azure.com
 Grafana is the fixed cost and most of a Visual Studio Professional subscription's $50 monthly credit. Set
 `grafana.enabled: false` to remove it when it's not in use; dashboards are lost unless exported.
 
-**Let a workload read the outputs:** add its workspace to `remote_state_consumers` of `4esnok_su_management` in
-`bootstrap/HCP/tier1/projects/4esnok_su_azure.yaml`, then read them as cortex reads connectivity:
+**Let a workload read the outputs:** add its workspace to `remote_state_consumers` of `4esnok_vs_azure_mgmt_r1` in
+`HCP/config.yaml`, then read them as cortex reads connectivity:
 
 ```hcl
 data "tfe_outputs" "management" {
   organization = "4esnok"
-  workspace    = "4esnok_su_management"
+  workspace    = "4esnok_vs_azure_mgmt_r1"
 }
 ```
 
 **Raise the cap:** set `log_analytics.daily_quota_gb` (`-1` removes it). Once the cap is reached, ingestion stops
 until the next day (UTC).
 
-**Remove it:** in HCP Terraform, workspace `4esnok_su_management` → Settings → Destruction and Deletion → Queue
+**Remove it:** in HCP Terraform, workspace `4esnok_vs_azure_mgmt_r1` → Settings → Destruction and Deletion → Queue
 destroy plan. The workspace is soft-deleted for 14 days, so the same name can be recovered.

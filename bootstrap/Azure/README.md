@@ -6,7 +6,7 @@ The bootstraping requires configuring tenant/*.yaml files, and running the boots
 
 The bootstrap process assumnd to be run only once for a newly created tenant. The later changes (Tier 1 and above) are done through the HCP Terraform pipeline.
 
->NOTE: HCP workspace e.g. (`4esnok_su_entraid_t0_t1`) is set up in two phases
+>NOTE: HCP workspace e.g. (`4esnok_vs_entraid_bootstrap_r0`) is set up in two phases
 
 Each tenant is described by a YAML file in `tenants/`. The Terraform configuration in `terraform/` (Azure tier 0) manages:
 
@@ -160,11 +160,11 @@ HCP Terraform workspaces sign in to Azure with [dynamic provider credentials](ht
 - issuer: `https://app.terraform.io`
 - subject: `organization:<org>:project:<project>:workspace:<workspace>:run_phase:<plan|apply>`
 
-The workspace's `TFC_AZURE_*` variables are set by `bootstrap/HCP/tier1` from the `azure_oidc` block of the workspace in its project YAML.
+Setting the workspace's `TFC_AZURE_*` variables is being reworked; `HCP/config.yaml` does not set them for now.
 
 ### Moving this configuration (Azure tier 0) to remote runs
 
-The workspace `4esnok_su_entraid_t0_t1` is set up in two phases, controlled by its entry in `bootstrap/HCP/tier1/projects/4esnok_su_azure.yaml`.
+The workspace `4esnok_vs_entraid_bootstrap_r0` is set up in two phases, controlled by its entry in `HCP/config.yaml`.
 
 **Phase 1 (bootstrap).** The workspace has `execution_mode: local` and only stores state.
 Run `./bootstrap-azure-su.sh apply`, signed in with `az login` as a Global Administrator. This creates the
@@ -172,9 +172,8 @@ Run `./bootstrap-azure-su.sh apply`, signed in with `az login` as a Global Admin
 Security defaults are skipped in this phase.
 
 **Phase 2 (pipeline).**
-1. In the project YAML, replace `execution_mode: local` with the phase-2 block and merge.
-   Tier 1 reads the client IDs of the applications named in `azure_oidc` from the `applications` output, sets the `TFC_AZURE_*` variables, sets
-   `TF_VAR_onepassword_service_account_token` from 1Password (vault `azure_t1`), and links the
+1. In `HCP/config.yaml`, replace `execution_mode: local` with the phase-2 block and merge.
+   Tier 1 sets `TF_VAR_onepassword_service_account_token` from 1Password (vault `azure_t1`), and links the
    workspace to this repository with working directory `bootstrap/Azure/terraform`.
 2. Runs now execute in HCP Terraform as the OIDC applications and start on merge to `main`.
    `./bootstrap-azure-su.sh plan` still works as a speculative plan; `apply` only runs through a merge.

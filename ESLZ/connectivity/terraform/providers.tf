@@ -4,8 +4,8 @@ terraform {
   cloud {
     organization = "4esnok"
     workspaces {
-      project = "4esnok_su_azure"
-      name    = "4esnok_su_connectivity"
+      project = "4esnok_vs_r1"
+      name    = "4esnok_vs_azure_networking_r1"
     }
   }
 

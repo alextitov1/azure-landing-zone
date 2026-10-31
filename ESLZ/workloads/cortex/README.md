@@ -1,6 +1,6 @@
 # Cortex
 
-Tier-2 workload, applied by the HCP Terraform workspace `4esnok_su_cortex`. The core of the platform is an AKS
+Tier-2 workload, applied by the HCP Terraform workspace `4esnok_vs_azure_cortex_r2`. The core of the platform is an AKS
 cluster, `aks-cortex-dev-nzn-01`, with its container registry `crcortexdevnzn01`, both in `rg-cortex-dev-nzn-01`.
 
 Configuration: `config/dev.yaml`. Terraform: `terraform/` (`aks.tf`, `registry.tf`), with the Azure Verified Modules

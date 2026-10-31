@@ -20,7 +20,7 @@ output "break_glass_users" {
 
 output "tenant_id" {
   value       = data.azuread_client_config.current.tenant_id
-  description = "Entra ID tenant ID, read by bootstrap/HCP/tier1 together with `applications` (azure_oidc)"
+  description = "Entra ID tenant ID"
 }
 
 output "management_group_ids" {

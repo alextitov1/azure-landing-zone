@@ -15,27 +15,31 @@ variable "project_description" {
 }
 
 variable "secret_env_vars" {
-  description = "Sensitive environment variables per workspace: { <workspace> = { <key> = <value> } }."
+  description = "Sensitive environment variables per workspace: { <workspace> = { <key> = <secret reference> } }; each reference is a key of secret_values."
   type        = map(map(string))
-  sensitive   = true
+  default     = {}
+}
+
+variable "secret_values" {
+  description = "Secret values by reference, e.g. from an ephemeral resource. Only written to write-only attributes, never to state."
+  type        = map(string)
+  ephemeral   = true
   default     = {}
 }
 
 variable "workspaces" {
   description = "Map of workspaces to create within the project. Key is the workspace name."
   type = map(object({
-    description            = optional(string)
-    execution_mode         = optional(string, "remote") # remote, local or agent
-    terraform_version      = optional(string)           # version or constraint, e.g. "~> 1.16"
-    auto_apply             = optional(bool, false)      # API, UI and VCS runs, and runs started by run triggers
-    working_directory      = optional(string)
-    trigger_patterns       = optional(list(string))
-    tags                   = optional(map(string), {})
-    env_vars               = optional(map(string), {})  # environment variables, e.g. TFC_AZURE_* for dynamic credentials
-    remote_state_consumers = optional(list(string), []) # workspaces of this project that may read this workspace's outputs
-    auto_destroy = optional(object({                    # schedule a destroy run; set exactly one field
-      at               = optional(string)               # RFC3339 time, e.g. "2026-10-31T18:00:00Z"
-      after_inactivity = optional(string)               # e.g. "3d" or "12h" after the last run
+    description       = optional(string)
+    terraform_version = optional(string)      # version or constraint, e.g. "~> 1.16"
+    auto_apply        = optional(bool, false) # API, UI and VCS runs, and runs started by run triggers
+    working_directory = optional(string)
+    trigger_patterns  = optional(list(string))
+    tags              = optional(map(string), {})
+    env_vars          = optional(map(string), {}) # environment variables
+    auto_destroy = optional(object({              # schedule a destroy run; set exactly one field
+      at               = optional(string)         # RFC3339 time, e.g. "2026-10-31T18:00:00Z"
+      after_inactivity = optional(string)         # e.g. "3d" or "12h" after the last run
     }))
     vcs_repo = optional(object({
       identifier                 = string
@@ -64,13 +68,5 @@ variable "workspaces" {
       )
     ])
     error_message = "auto_destroy needs exactly one of at (RFC3339 time) or after_inactivity (<number>d or <number>h)."
-  }
-
-  # Destroying a workspace whose outputs other workspaces read would break them
-  validation {
-    condition = alltrue([
-      for ws in values(var.workspaces) : ws.auto_destroy == null || length(ws.remote_state_consumers) == 0
-    ])
-    error_message = "auto_destroy cannot be set on a workspace with remote_state_consumers."
   }
 }

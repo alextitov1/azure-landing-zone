@@ -1,0 +1,92 @@
+# HCP Terraform tier 1 (hcp_tf_workspaces_r1): organization settings and every project and workspace it manages.
+# Edit, open a pull request, review the plan, merge. See README.md for the fields.
+organization: 4esnok
+
+projects:
+  4esnok_vs_r0:
+    description: "Ring 0 vs.4esnok.su workspaces"
+    workspaces:
+      4esnok_vs_azure_bootstrap_r0:
+        tags: { env: dev, cloud: azure, project: vs.4esnok.su }
+
+        execution_mode: local
+        description: "Bootstrap Entra ID, Azure tenant and subscriptions"
+        # End of the phase 1 block
+
+        # # Phase 2 (pipeline): once phase 1 has created the pipeline identities, replace the block above
+        # # with the block below. Runs then execute in HCP Terraform and start on merge to main.
+        # execution_mode: remote
+        # auto_apply: true
+        # description: "Entra ID tier-1 remote (phase 2 of the azure bootstrap)"
+        # env_vars:
+        #   TF_VAR_tenant_yaml_path: ../tenants/admin.4esnok.su-vs.yaml
+        # secrets:  # sensitive environment variables, read from 1Password by tier 1 (vault azure_t1)
+        #   TF_VAR_onepassword_service_account_token: op://azure_t1/op_hcp_rw_t1/credential
+        # vcs:
+        #   repo: alextitov1/azure-landing-zone
+        #   github_app_installation: alextitov1
+        #   working_directory: bootstrap/Azure/terraform
+        #   trigger_patterns: ["/bootstrap/Azure/terraform/**/*", "/bootstrap/Azure/tenants/admin.4esnok.su-vs.yaml"]
+        # # End of the phase 2 block
+
+      # 4esnok_vs_azure_bootstrap_r0:
+      #   description: "Azure: subscriptions and their resource groups"
+      #   tags: { env: prod, cloud: azure, project: 4esnok.su }
+      #   execution_mode: remote
+      #   auto_apply: true
+      #   vcs:
+      #     repo: alextitov1/azure-landing-zone
+      #     github_app_installation: alextitov1
+      #     working_directory: ESLZ/subscriptions
+
+  4esnok_vs_r1:
+    description: "Ring 1 vs.4esnok.su workspaces"
+    workspaces:
+      4esnok_vs_entraid_mgmt_r1:
+        description: "Entra ID: manage User, Group and App registrations"
+        tags: { env: dev, cloud: azure, project: 4esnok.su }
+        execution_mode: remote
+        auto_apply: true
+        vcs:
+          repo: alextitov1/azure-landing-zone
+          github_app_installation: alextitov1
+          working_directory: ESLZ/management/terraform
+          trigger_patterns: ["/ESLZ/management/**/*"]
+
+      4esnok_vs_azure_mgmt_r1:
+        description: "Azure: management (central Log Analytics workspace)"
+        tags: { env: dev, cloud: azure, project: 4esnok.su }
+        execution_mode: remote
+        auto_apply: true
+        vcs:
+          repo: alextitov1/azure-landing-zone
+          github_app_installation: alextitov1
+          working_directory: ESLZ/management/terraform
+          trigger_patterns: ["/ESLZ/management/**/*"]
+
+      4esnok_vs_azure_networking_r1:
+        description: "Azure: lab hub-and-spoke network"
+        tags: { env: dev, cloud: azure, project: 4esnok.su }
+        execution_mode: remote
+        auto_apply: true
+        remote_state_consumers: [4esnok_vs_azure_cortex_r2]  # workspaces that read the VNet and subnet IDs (tfe_outputs)
+        vcs:
+          repo: alextitov1/azure-landing-zone
+          github_app_installation: alextitov1
+          working_directory: ESLZ/connectivity/terraform
+          trigger_patterns: ["/ESLZ/connectivity/**/*"]
+
+
+  4esnok_vs_r2:
+    description: "Ring 2 vs.4esnok.su workspaces"
+    workspaces:
+      4esnok_vs_azure_cortex_r2:
+        description: "Azure: workload cortex"
+        tags: { env: dev, cloud: azure, project: 4esnok.su }
+        execution_mode: remote
+        auto_apply: true
+        vcs:
+          repo: alextitov1/azure-landing-zone
+          github_app_installation: alextitov1
+          working_directory: ESLZ/workloads/cortex/terraform
+          trigger_patterns: ["/ESLZ/workloads/cortex/**/*"]

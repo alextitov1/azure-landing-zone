@@ -8,10 +8,10 @@ Resources are deployed with [Azure Verified Modules](https://azure.github.io/Azu
 
 | Directory | Contents | HCP Terraform workspace |
 |---|---|---|
-| `subscriptions/` | Subscriptions, resource groups, role assignments | `4esnok_su_subscriptions` |
-| `connectivity/` | Hub-and-spoke network, IPAM | `4esnok_su_connectivity` |
-| `management/` | Central Log Analytics workspace, managed Prometheus, Managed Grafana ([management design](./management_design.md)) | `4esnok_su_management` |
-| `workloads/cortex/` | Tier-2 workload cortex ([workloads](./workloads/README.md)) | `4esnok_su_cortex` |
+| `subscriptions/` | Subscriptions, resource groups, role assignments | `4esnok_vs_azure_bootstrap_r0` |
+| `connectivity/` | Hub-and-spoke network, IPAM | `4esnok_vs_azure_networking_r1` |
+| `management/` | Central Log Analytics workspace, managed Prometheus, Managed Grafana ([management design](./management_design.md)) | `4esnok_vs_azure_mgmt_r1` |
+| `workloads/cortex/` | Tier-2 workload cortex ([workloads](./workloads/README.md)) | `4esnok_vs_azure_cortex_r2` |
 
 ## Naming
 

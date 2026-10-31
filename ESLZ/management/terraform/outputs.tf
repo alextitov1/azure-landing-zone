@@ -1,5 +1,5 @@
 # Read by workloads with `data "tfe_outputs"` (remote_state_consumers of the workspace in
-# bootstrap/HCP/tier1/projects/4esnok_su_azure.yaml), so they never hardcode platform IDs.
+# HCP/config.yaml), so they never hardcode platform IDs.
 output "resource_group_id" {
   description = "ID of the management resource group."
   value       = module.resource_group.resource_id

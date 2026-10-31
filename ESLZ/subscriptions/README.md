@@ -6,7 +6,7 @@ name, tags, management group, resource providers and preview features, budgets, 
 locked), user-assigned managed identities for workloads with their role assignments, and role assignments at
 subscription and resource group scope. Subscriptions are never created or cancelled here.
 
-Runs in the HCP Terraform workspace `4esnok_su_subscriptions` (`bootstrap/HCP/tier1/projects/4esnok_su_azure.yaml`):
+Runs in the HCP Terraform workspace `4esnok_vs_azure_bootstrap_r0` (`HCP/config.yaml`):
 a pull request shows the plan, and a merge to `main` queues a run that needs to be confirmed (`auto_apply` is off).
 
 ## Adding a subscription

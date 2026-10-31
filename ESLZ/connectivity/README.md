@@ -1,6 +1,6 @@
 # Connectivity
 
-Lab hub-and-spoke network in `newzealandnorth`, applied by the HCP Terraform workspace `4esnok_su_connectivity`.
+Lab hub-and-spoke network in `newzealandnorth`, applied by the HCP Terraform workspace `4esnok_vs_azure_networking_r1`.
 
 - Resource group `rg-connectivity-dev-nzn-01`.
 - Address space `10.200.0.0/16`, allocated by Azure Virtual Network Manager IPAM: pool `ipam-hub-dev-nzn-01` (`10.200.0.0/22`) and pool `ipam-spokes-dev-nzn-01` (`10.200.16.0/20`).
@@ -37,4 +37,4 @@ definitions. Consumers are named as in `ESLZ/subscriptions`: `group`, `user`, `s
 `principal_id` with `principal_type`. The workspace's applications have `Directory.Read.All` to resolve the
 names (`bootstrap/Azure/tenants/admin.4esnok.su-vs.yaml`).
 
-**Remove the lab:** in HCP Terraform, workspace `4esnok_su_connectivity` → Settings → Destruction and Deletion → Queue destroy plan.
+**Remove the lab:** in HCP Terraform, workspace `4esnok_vs_azure_networking_r1` → Settings → Destruction and Deletion → Queue destroy plan.

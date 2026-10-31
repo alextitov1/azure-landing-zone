@@ -1,12 +1,12 @@
 terraform {
   required_version = "~> 1.16"
 
-  # Remote runs: HCP Terraform workspace 4esnok_su_management (bootstrap/HCP/tier1/projects/4esnok_su_azure.yaml).
+  # Remote runs: HCP Terraform workspace 4esnok_vs_azure_mgmt_r1 (HCP/config.yaml).
   cloud {
     organization = "4esnok"
     workspaces {
-      project = "4esnok_su_azure"
-      name    = "4esnok_su_management"
+      project = "4esnok_vs_r1"
+      name    = "4esnok_vs_azure_mgmt_r1"
     }
   }
 
