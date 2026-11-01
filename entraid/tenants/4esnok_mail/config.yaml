@@ -1,0 +1,134 @@
+# Microsoft 365 tenant for mail.4esnok.su (Entra ID P1)
+entraid_tenant_id: 0fe4f648-bd9a-4476-b9e3-38a2f8cd242c
+
+# Tier 1 (entraid): day-two users, groups, applications, Conditional Access, governance, management groups.
+# Admin and break-glass users and tier-0 groups are in bootstrap/Azure/<tenant>/config.yaml.
+
+entra_id:
+  # Users managed by tier 0 (bootstrap/Azure). Users are referenced by mail_nickname everywhere in the config.
+  existing_users:
+    - mail_nickname: "sysadmin"
+    - mail_nickname: "breakglass01"
+    - mail_nickname: "breakglass02"
+
+  users:
+    - mail_nickname: "developer1"
+      user_principal_name: "developer@mail.4esnok.su"
+      display_name: "Dev User"
+      organization:
+        department: "developers"
+        job_title: "developer"
+
+  # PIM needs Entra ID P2, which this tenant does not have (see the example below)
+  # pim_roles:
+  #   - role_name: "Global Reader"
+  #     assignment_type: "User"
+  #     assignee_name: "developer1"
+  #     duration: "PT8H"
+
+  # Conditional Access (Entra ID P1). Every policy excludes the break-glass accounts, so a bad policy cannot lock out the tenant.
+  # CA001 and CA002 together replace security defaults; CA003 is report-only until admins have FIDO2 keys.
+  # Security defaults must be turned off first, in the portal (see entraid/README.md#mfa).
+  conditional_access_policies:
+    - display_name: "CA001 Block legacy authentication"
+      state: enabled
+      users:
+        include: [All]
+        exclude: ["breakglass01", "breakglass02"]
+      client_app_types: [exchangeActiveSync, other]
+      grant:
+        controls: [block]
+
+    - display_name: "CA002 Require MFA for all users"
+      state: enabled
+      users:
+        include: [All]
+        exclude: ["breakglass01", "breakglass02"]
+      grant:
+        controls: [mfa]
+
+    - display_name: "CA003 Require phishing-resistant MFA for admins"
+      state: enabledForReportingButNotEnforced  # report-only; set to enabled once admins use FIDO2 keys
+      users:
+        include_roles:
+          - Global Administrator
+          - Privileged Role Administrator
+          - Security Administrator
+          - User Administrator
+          - Application Administrator
+          - Cloud Application Administrator
+          - Conditional Access Administrator
+          - Exchange Administrator
+        exclude: ["breakglass01", "breakglass02"]
+      grant:
+        authentication_strength: "Phishing-resistant MFA"
+
+  # --- Optional sections (commented examples) -----------------------------------------------------
+
+  # Named locations for Conditional Access (P1)
+  # named_locations:
+  #   - display_name: "Office"
+  #     ip_ranges: ["203.0.113.10/32"]
+  #     trusted: true
+  #   - display_name: "Allowed countries"
+  #     countries: ["NZ", "AU"]
+
+  # Custom authentication strengths (P1); built-ins are referenced by name: "Multifactor authentication",
+  # "Passwordless MFA", "Phishing-resistant MFA"
+  # authentication_strength_policies:
+  #   - display_name: "FIDO2 only"
+  #     allowed_combinations: ["fido2"]
+
+  # Dynamic group and group-based licensing (P1); licensed users need usage_location
+  # groups:
+  #   - display_name: "sg-t2-org-developers-dyn"
+  #     dynamic_rule: 'user.department -eq "developers"'
+  #     licenses:
+  #       - sku: "SPB"  # SKU part number (Microsoft 365 Business Premium)
+  #         disabled_plans: []
+
+  # PIM eligible role assignments (Entra ID P2); duration is the maximum activation time
+  # pim_roles:
+  #   - role_name: "Global Reader"
+  #     assignment_type: "User"  # User, Group or ServicePrincipal
+  #     assignee_name: "developer1"
+  #     duration: "PT8H"
+
+  # Access packages with approval and access reviews (Entra ID P2 or ID Governance)
+  # access_package_catalogs:
+  #   - display_name: "General"
+  # access_packages:
+  #   - display_name: "Developer access"
+  #     catalog: "General"
+  #     groups: ["sg-t2-org-developers"]
+  #     approvers: ["sysadmin"]
+  #     duration_days: 90
+  #     review:
+  #       frequency: "quarterly"
+  #       reviewers: ["sysadmin"]
+
+  # Administrative units: scope an admin role to some users and groups (unit admins need P1)
+  # administrative_units:
+  #   - display_name: "au-developers"
+  #     members: ["developer1"]  # user mail_nicknames or group display names
+  #     role_assignments:
+  #       - role_name: "User Administrator"
+  #         assignee: "sysadmin"
+
+  # B2B guests; they can be group members by email
+  # guests:
+  #   - email: "someone@example.com"
+  #     display_name: "Someone (guest)"
+
+  # Cross-tenant access settings (Microsoft Graph property names)
+  # cross_tenant_access:
+  #   partners:
+  #     - tenantId: "00000000-0000-0000-0000-000000000000"  # the other 4esnok tenant
+  #       inboundTrust:
+  #         isMfaAccepted: true
+
+  # Additional custom domains: apply, publish the TXT record from the domain_verification_records
+  # output in DNS (Apps/public-dns), then set verify: true and apply again
+  # domains:
+  #   - name: "example.4esnok.su"
+  #     verify: false

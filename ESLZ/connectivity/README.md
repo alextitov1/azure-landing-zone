@@ -35,6 +35,6 @@ narrowest built-in role with `Microsoft.Network/virtualNetworks/subnets/join/act
 VNet, the subnet and its usages. A custom role is not an option, because the workspace cannot create role
 definitions. Consumers are named as in `ESLZ/subscriptions`: `group`, `user`, `service_principal`, or
 `principal_id` with `principal_type`. The workspace's applications have `Directory.Read.All` to resolve the
-names (`bootstrap/Azure/tenants/admin.4esnok.su-vs.yaml`).
+names (`entraid/tenants/4esnok_vs/config.yaml`).
 
 **Remove the lab:** in HCP Terraform, workspace `4esnok_vs_azure_networking_r1` → Settings → Destruction and Deletion → Queue destroy plan.

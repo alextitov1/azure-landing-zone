@@ -15,4 +15,5 @@ Everything is written in Terraform. State lives in HCP Terraform, and its VCS in
 - [HCP Terraform bootstrap (tier 0)](./bootstrap/HCP/README.md)
 - [HCP Terraform projects and workspaces (tier 1)](./HCP/README.md)
 
-- [Azure tenant bootstrap](./bootstrap/Azure/README.md)
+- [Entra ID tenant bootstrap (tier 0)](./bootstrap/Azure/README.md)
+- [Entra ID tenants (tier 1)](./entraid/README.md)
