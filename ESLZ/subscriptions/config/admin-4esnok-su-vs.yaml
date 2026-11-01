@@ -1,4 +1,4 @@
-# Visual Studio subscription of the admin.4esnok.su tenant (bootstrap/Azure/tenants/admin.4esnok.su-vs.yaml).
+# Visual Studio subscription of the admin.4esnok.su tenant (entraid/tenants/4esnok_vs/config.yaml).
 subscription_id: 44b9d159-d353-477f-b94f-5ce0f3bd33f1
 location: newzealandnorth  # default for resource groups without a location
 
@@ -31,9 +31,9 @@ resource_providers:
 
 # Role assignments at subscription scope. The principal is one of group (display name), user (user principal
 # name), service_principal (display name), or principal_id with principal_type (User, Group or ServicePrincipal).
-# Access goes through groups (bootstrap/Azure/tenants/admin.4esnok.su-vs.yaml): members change there, not here.
+# Access goes through groups (entraid/tenants/4esnok_vs/config.yaml): members change there, not here.
 # Do not declare the application groups (sg-t1-az-sub-vs-apps-*): their roles come from management group
-# mg-landingzones (bootstrap/Azure), and declaring them here would conflict with or lock out the workspace. The workspace cannot assign Owner, User Access
+# mg-landingzones (entraid), and declaring them here would conflict with or lock out the workspace. The workspace cannot assign Owner, User Access
 # Administrator or Role Based Access Control Administrator (see README.md).
 role_assignments:
   - role: Contributor

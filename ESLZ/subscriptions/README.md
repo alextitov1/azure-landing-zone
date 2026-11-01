@@ -15,7 +15,7 @@ a pull request shows the plan, and a merge to `main` queues a run that needs to 
    ```sh
    az account management-group subscription add --name mg-landingzones --subscription <subscription ID>
    ```
-   The workspace's access comes from that group (`management_groups` in `bootstrap/Azure/tenants/<tenant>.yaml`,
+   The workspace's access comes from that group (`management_groups` in `entraid/tenants/<tenant>/config.yaml`,
    applied by the tier-0 Entra ID workspace), and every subscription in it inherits:
    - `sg-t1-az-sub-vs-apps-reader` (member `sp-hcp-4esnok-su-subscriptions-t1-plan-r0`): **Reader**
    - `sg-t1-az-sub-vs-apps-contributor` (member `sp-hcp-4esnok-su-subscriptions-t1-apply-r0`): **Contributor**,

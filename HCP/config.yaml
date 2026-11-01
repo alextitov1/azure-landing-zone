@@ -6,28 +6,15 @@ projects:
   4esnok_vs_r0:
     description: "Ring 0 vs.4esnok.su workspaces"
     workspaces:
+      # 4esnok_vs_entraid_bootstrap_r0:
+      #   description: "Entra ID tier 0: admin and break-glass users (bootstrap/Azure, tenant 4esnok_vs)"
+      #   tags: { env: dev, cloud: azure, project: vs.4esnok.su }
+      #   execution_mode: local  # run by bootstrap/Azure/bootstrap-azure.sh
+
       4esnok_vs_azure_bootstrap_r0:
         tags: { env: dev, cloud: azure, project: vs.4esnok.su }
-
         execution_mode: local
         description: "Bootstrap Entra ID, Azure tenant and subscriptions"
-        # End of the phase 1 block
-
-        # # Phase 2 (pipeline): once phase 1 has created the pipeline identities, replace the block above
-        # # with the block below. Runs then execute in HCP Terraform and start on merge to main.
-        # execution_mode: remote
-        # auto_apply: true
-        # description: "Entra ID tier-1 remote (phase 2 of the azure bootstrap)"
-        # env_vars:
-        #   TF_VAR_tenant_yaml_path: ../tenants/admin.4esnok.su-vs.yaml
-        # secrets:  # sensitive environment variables, read from 1Password by tier 1 (vault azure_t1)
-        #   TF_VAR_onepassword_service_account_token: op://azure_t1/op_hcp_rw_t1/credential
-        # vcs:
-        #   repo: alextitov1/azure-landing-zone
-        #   github_app_installation: alextitov1
-        #   working_directory: bootstrap/Azure/terraform
-        #   trigger_patterns: ["/bootstrap/Azure/terraform/**/*", "/bootstrap/Azure/tenants/admin.4esnok.su-vs.yaml"]
-        # # End of the phase 2 block
 
       # 4esnok_vs_azure_bootstrap_r0:
       #   description: "Azure: subscriptions and their resource groups"
@@ -43,15 +30,11 @@ projects:
     description: "Ring 1 vs.4esnok.su workspaces"
     workspaces:
       4esnok_vs_entraid_mgmt_r1:
-        description: "Entra ID: manage User, Group and App registrations"
+        description: "Entra ID tier 1: users, groups, applications, management groups (entraid, tenant 4esnok_vs)"
         tags: { env: dev, cloud: azure, project: 4esnok.su }
-        execution_mode: remote
-        auto_apply: true
-        vcs:
-          repo: alextitov1/azure-landing-zone
-          github_app_installation: alextitov1
-          working_directory: ESLZ/management/terraform
-          trigger_patterns: ["/ESLZ/management/**/*"]
+        # Run by entraid/entraid.sh until HCP Terraform's Azure sign-in is reworked; then remote, with
+        # vcs (working_directory: entraid) and env_vars: { TF_VAR_tenant: 4esnok_vs }
+        execution_mode: local
 
       4esnok_vs_azure_mgmt_r1:
         description: "Azure: management (central Log Analytics workspace)"
@@ -90,3 +73,19 @@ projects:
           github_app_installation: alextitov1
           working_directory: ESLZ/workloads/cortex/terraform
           trigger_patterns: ["/ESLZ/workloads/cortex/**/*"]
+
+  4esnok_mail_r0:
+    description: "Ring 0 mail.4esnok.su workspaces"
+    workspaces:
+      4esnok_mail_entraid_bootstrap_r0:
+        description: "Entra ID tier 0: admin and break-glass users (bootstrap/Azure, tenant 4esnok_mail)"
+        tags: { env: dev, cloud: azure, project: mail.4esnok.su }
+        execution_mode: local  # run by bootstrap/Azure/bootstrap-azure.sh
+
+  4esnok_mail_r1:
+    description: "Ring 1 mail.4esnok.su workspaces"
+    workspaces:
+      4esnok_mail_entraid_mgmt_r1:
+        description: "Entra ID tier 1: users and Conditional Access (entraid, tenant 4esnok_mail)"
+        tags: { env: dev, cloud: azure, project: mail.4esnok.su }
+        execution_mode: local  # run by entraid/entraid.sh

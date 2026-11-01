@@ -20,7 +20,7 @@ Everything else is created by the platform workspaces:
 | Join on `snet-app` and `snet-aks` for the apply application (subnet `consumers`: Windows 365 Network User) | `ESLZ/connectivity` | |
 | Control plane identity `id-cortex-aks-dev-nzn-01`: Managed Identity Operator on the kubelet identity; consumer of `snet-aks` | `ESLZ/subscriptions` (`managed_identities`), `ESLZ/connectivity` | name in `dev.yaml` |
 | Kubelet identity `id-cortex-kubelet-dev-nzn-01`: AcrPull on the resource group | `ESLZ/subscriptions` (`managed_identities`) | name in `dev.yaml` |
-| Group `sg-t2-az-aks-admin` (cluster-admin) | `bootstrap/Azure` (tenant YAML) | object ID in `dev.yaml` |
+| Group `sg-t2-az-aks-admin` (cluster-admin) | `entraid` (tenant config) | object ID in `dev.yaml` |
 
 **Merge order** for a new cluster: `ESLZ/subscriptions` (identities), then `ESLZ/connectivity` (subnet, its
 consumers, which name the control plane identity, and the reservation), then `ESLZ/workloads/cortex`.
