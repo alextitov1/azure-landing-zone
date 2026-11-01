@@ -1,0 +1,59 @@
+# Microsoft 365 tenant for mail.4esnok.su (Entra ID P1)
+entraid_tenant_id: 0fe4f648-bd9a-4476-b9e3-38a2f8cd242c
+
+# Tier 0 (bootstrap/Azure): admin and break-glass users, tier-0 groups.
+# Everything else is in entraid/tenants/<tenant>/config.yaml (tier 1).
+
+entra_id:
+  users:
+    - mail_nickname: "sysadmin"
+      user_principal_name: "sysadmin@mail.4esnok.su"
+      display_name: "Adm User"
+      organization:
+        department: "sysadmins"
+        job_title: "site reliability engineer"
+      password:
+        onepassword_vault: "azure_t1"
+
+    # Emergency access (break-glass) account: cloud-only, on the onmicrosoft.com domain. Exclude it from every
+    # Conditional Access policy, register a FIDO2 key for it and test the sign-in regularly.
+    - mail_nickname: "breakglass01"
+      user_principal_name: "breakglass01@4esnok.onmicrosoft.com"
+      display_name: "Break Glass 01"
+      organization:
+        department: "sysadmins"
+        job_title: "Emergency access account"
+      entraid_role_names:
+        - Global Administrator
+      password:
+        length: 64
+        onepassword_vault: "azure_t1"
+
+    # Emergency access (break-glass) account: cloud-only, on the onmicrosoft.com domain. Exclude it from every
+    # Conditional Access policy, register a FIDO2 key for it and test the sign-in regularly.
+    - mail_nickname: "breakglass02"
+      user_principal_name: "breakglass02@4esnok.onmicrosoft.com"
+      display_name: "Break Glass 02"
+      organization:
+        department: "sysadmins"
+        job_title: "Emergency access account"
+      entraid_role_names:
+        - Global Administrator
+      password:
+        length: 64
+        onepassword_vault: "azure_t1"
+
+  groups:
+    - display_name: sg-t0-entra-tenant-globaladmin
+      description: Global Administrator role for the tenant
+      assignable_to_role: true
+      entraid_role_names:
+        - Global Administrator
+      members:
+        - sysadmin
+
+    - display_name: sg-t0-entra-tenant-globalreader
+      description: Global Reader role for the tenant
+      assignable_to_role: true
+      entraid_role_names:
+        - "Global Reader"

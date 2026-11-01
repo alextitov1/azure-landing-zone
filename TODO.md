@@ -36,6 +36,14 @@ cloud_r1
 op_hcp_workspace_r1
 
 
+[ ] - 1Password access from HCP remote runs
+
+Remote runs have no 1Password desktop app, so modules/hcp-projects (onepassword-secrets) cannot read secrets
+in hcp_tf_workspaces_r1. Give the workspace a 1Password service account, scoped read-only to the vaults it needs,
+with its token as the sensitive env var OP_SERVICE_ACCOUNT_TOKEN, set by bootstrap/HCP (tier 0).
+Local bootstraps keep signing in through the desktop app.
+
+
 [x] - repo structure, terraform modules are in a separate directory
 
 [x] - HCP decouple t0 and t1 phase

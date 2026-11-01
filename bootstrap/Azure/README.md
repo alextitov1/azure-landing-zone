@@ -1,181 +1,111 @@
-# Bootstrap Azure (EntraID) Tenant.
+# Entra ID tenant bootstrap (tier 0)
 
-The bootstrap process for a newly created azure tenant creates admin users, and service accounts (aka service principals). User accounts are stored in 1Password, and service accounts are configured with OIDC federated credentials, so HCP Terraform runs can sing in to Azure without a client secret.
 
-The bootstraping requires configuring tenant/*.yaml files, and running the bootstrap-*.sh script. To apply configuration.
+This directory contains the bootstrap of each Entra ID tenant: its admin and break-glass users and tier-0 groups
+(`sg-t0-*`). For a tenant with Azure subscriptions, it also creates the intermediate root management group, the
+Azure RBAC on it and the tenant's management group hierarchy settings (see [Intermediate root](#intermediate-root)).
 
-The bootstrap process assumnd to be run only once for a newly created tenant. The later changes (Tier 1 and above) are done through the HCP Terraform pipeline.
+It is run manually by a Global Administrator, when bootstrapping a new tenant or making fundamental changes. Users
+are created with passwords stored in 1Password.
 
->NOTE: HCP workspace e.g. (`4esnok_vs_entraid_bootstrap_r0`) is set up in two phases
+All day-two changes (other users and groups, applications, Conditional Access, management groups, ...) are done in
+[tier 1](../../entraid/README.md), which references the tier-0 users under `existing_users`. Both tiers use the
+shared module [`modules/entraid-tenant`](../../modules/entraid-tenant) and the same `entra_id` config schema,
+described in the [tier-1 README](../../entraid/README.md#tenant-config-reference).
 
-Each tenant is described by a YAML file in `tenants/`. The Terraform configuration in `terraform/` (Azure tier 0) manages:
+Each tenant is a separate Terraform root with its own HCP workspace, named in its `cloud` block, so one tenant's
+config can never be planned against another tenant's state.
 
-- users, including break-glass accounts, and groups (static or dynamic, with group-based licensing)
-- applications (app registrations and service principals) with OIDC federated credentials or client secrets
-- directory roles, PIM eligible roles, administrative units and access packages
-- tenant settings: security defaults, Conditional Access, authorization policy, cross-tenant access, custom domains and B2B guests
-
-## How it works
-
-The bootstrap process creates admin users, groups and service principals in the EntraID. These identities are used to manage azure resources and other less privileged users. Since these are the first identities created in the tenant, before any CI/CD pipelines or other automation is in place, the bootstrap process in done manually by executing a shell script.
+```
+bootstrap-azure.sh         ./bootstrap-azure.sh <tenant> init|plan|apply
+<tenant>/
+  terraform.tf             cloud block (workspace <tenant>_entraid_bootstrap_r0), shared modules
+  config.yaml              the tenant's tier-0 config
+```
 
 
 ## Prerequisites
-- Terraform CLI
-- 1Password + 1Password CLI and access to the organization's vault(s)
-- Azure CLI
 
-## Tenant YAML reference
+- Terraform CLI, Azure CLI
+- 1Password CLI, with access to the `IT` vault (tokens) and the vaults that store user passwords (`password.onepassword_vault`)
+- HCP: workspace `<tenant>_entraid_bootstrap_r0` in project `<tenant>_r0`, with execution mode **Local**,
+  created by [HCP tier 1](../../HCP/config.yaml)
 
-Every section is optional. Features marked P1 or P2 need that Entra ID licence; leave them out of a tenant without it. The tenant files show each section, commented out where it does not apply.
 
-| Section | What it manages | Licence | Graph application permissions (tier-0 apply identity) |
-|---|---|---|---|
-| `users` | Users; `break_glass`, `password_length`, `account_enabled`, `usage_location`, `manager`, direct `entraid_role_names` | Free | `User.ReadWrite.All`, `RoleManagement.ReadWrite.Directory` |
-| `groups` | Security groups, `description` and members (users, applications, guests); `dynamic_rule`; `licenses` | Free; dynamic groups and licensing P1 | `Group.ReadWrite.All`; licensing `LicenseAssignment.ReadWrite.All`, `Organization.Read.All` |
-| `applications` | App registrations, see below | Free | `Application.ReadWrite.All`, `AppRoleAssignment.ReadWrite.All` |
-| `tenant_settings.security_defaults` | Security defaults on or off; applied in remote runs only, because Azure CLI tokens lack `Policy.ReadWrite.ConditionalAccess` | Free | `Policy.Read.All`, `Policy.ReadWrite.ConditionalAccess` |
-| `tenant_settings.authorization_policy` | Default user and guest permissions (Graph property names) | Free | `Policy.ReadWrite.Authorization` |
-| `named_locations`, `authentication_strength_policies`, `conditional_access_policies` | Conditional Access | P1 | `Policy.Read.All`, `Policy.ReadWrite.ConditionalAccess` |
-| `pim_roles` | PIM eligible directory roles and their maximum activation `duration` | P2 | `RoleEligibilitySchedule.ReadWrite.Directory`, `RoleManagementPolicy.ReadWrite.Directory` |
-| `access_package_catalogs`, `access_packages` | Access packages with approval and access reviews | P2 or ID Governance | `EntitlementManagement.ReadWrite.All` |
-| `administrative_units` | Administrative units, members and scoped roles | Free; unit admins P1 | `AdministrativeUnit.ReadWrite.All`, `RoleManagement.ReadWrite.Directory` |
-| `guests` | B2B guest invitations | Free | `User.Invite.All` |
-| `cross_tenant_access` | Cross-tenant access default and partners (Graph property names) | Free | `Policy.ReadWrite.CrossTenantAccess` |
-| `domains` | Additional custom domains and their verification | Free | `Domain.ReadWrite.All` |
-| `management_groups` | Management groups (Azure/avm-ptn-alz) and Azure RBAC on them | Free | Azure: none, the creator becomes Owner of each group (see [Management groups](#management-groups)) |
+## Bootstrap a tenant
 
-Add a permission to the tier-0 apply application only when the tenant uses that section. The plan application needs the read equivalents (`Directory.Read.All` and `Policy.Read.All` cover most of them).
+1. **Sign in** as a Global Administrator of the tenant: `az login --tenant <tenant ID> --allow-no-subscriptions`.
 
-Settings that every tenant already has (`tenant_settings`, `cross_tenant_access.default`, PIM activation duration) are updated in place: taking them out of the YAML leaves the tenant as it is.
+1. **Tenants with Azure: get rights on the tenant root group**, needed for the hierarchy settings. In the portal,
+   turn on **Entra ID → Properties → Access management for Azure resources**, then sign in again with `az login`
+   and assign yourself the role:
+   ```sh
+   az role assignment create --assignee <your object ID> --role "Hierarchy Settings Administrator" \
+     --scope /providers/Microsoft.Management/managementGroups/<tenant ID>
+   ```
 
-### Naming
+1. **Apply tier 0.**
+   ```sh
+   ./bootstrap-azure.sh 4esnok_vs init
+   ./bootstrap-azure.sh 4esnok_vs apply
+   ```
+   The plan fails if the signed-in tenant is not the config's `entraid_tenant_id`.
 
-Names are lowercase with hyphens and carry no tenant name. The tier follows the Microsoft Enterprise Access Model:
-`t0` control plane (Entra ID, root management group), `t1` management plane (subscriptions, platform), `t2` workloads and data.
-The plan fails on names that do not match.
+1. **Tenants with Azure: remove the rights again**: delete the role assignment from the previous step and turn
+   **Access management for Azure resources** off.
 
-| Object | Pattern | Examples |
+1. **Set up the break-glass accounts**, see [Break-glass accounts](../../entraid/README.md#break-glass-accounts).
+
+1. **Apply tier 1**, see [entraid](../../entraid/README.md#day-two-operations).
+
+```mermaid
+flowchart LR
+  op[1Password<br/>tokens] --> script[./bootstrap-azure.sh &lt;tenant&gt;<br>terraform apply]
+  script -- state --> t0[&lt;tenant&gt;_entraid_bootstrap_r0]
+  script -- manage --> tenant[Entra ID tenant<br/>admins, break-glass, tier-0 groups]
+  script -- manage --> azure[Azure<br/>intermediate root, its RBAC,<br/>hierarchy settings]
+  script -- passwords --> op
+```
+
+### Add a tenant
+
+1. Copy an existing tenant directory to `<tenant>/`. In `terraform.tf`, set the workspace name to
+   `<tenant>_entraid_bootstrap_r0`. In `config.yaml`, set the tenant's `entraid_tenant_id`, admin and break-glass
+   `users` and `sg-t0-*` groups. For a tenant without Azure, remove `management_groups` from `config.yaml`, and the `azapi`
+   provider and resources from `terraform.tf` (as in `4esnok_mail`).
+2. Add workspace `<tenant>_entraid_bootstrap_r0` in project `<tenant>_r0` to [HCP/config.yaml](../../HCP/config.yaml).
+3. Bootstrap it as above, then add it to [tier 1](../../entraid/README.md#add-a-tenant).
+
+The directory name is the tenant name, the prefix of its HCP project and workspace names. It must
+match the tenant's directory in [entraid/tenants](../../entraid/tenants).
+
+
+## Intermediate root
+
+Following the Cloud Adoption Framework, a tenant's management groups hang from one intermediate root (`mg-4esnok`)
+below the tenant root group, which gets no policy or role assignments itself. Tier 0 creates only that group, from
+`management_groups` in the tenant config, with Azure RBAC for three groups:
+
+| Group | Role on the intermediate root | Members |
 |---|---|---|
-| Groups | `sg-<tier>-<target>-<scope>-<role>`; target is `entra` (directory roles), `az` (Azure RBAC), `app` (application access) or `org` (teams); `-dyn` for dynamic groups; `m365` instead of `sg` for Microsoft 365 groups | `sg-t0-entra-tenant-globaladmin`, `sg-t2-az-aks-admin`, `sg-t2-org-developers-dyn` |
-| Applications | `<type>-<tier>-<consumer>-<target>-<access>`; type is `sp` (automation), `app` (users sign in) or `mi` (managed identity) | `sp-t0-hcp-entraid-bootstrap-apply`, `sp-t1-gha-public-dns-deploy` |
+| `sg-prd-az-root-owner-t0` | Owner | none standing; add someone only for a change that needs it |
+| `sg-prd-az-root-contributor-t0` | Contributor | `sysadmin`, who runs tier 1 |
+| `sg-prd-az-root-reader-t0` | Reader | none yet |
 
-Groups and applications are keyed by display name, so renaming one recreates it with a new object ID.
+Every group and subscription below inherits these. Tier 0 also sets the tenant's hierarchy settings: new
+subscriptions go to the intermediate root instead of the tenant root group, and `require_authorization_for_group_creation`
+makes creating a management group require write access on its parent. These settings replace any the tenant already
+has, and are removed with the intermediate root.
 
-### Break-glass accounts
+The groups below the intermediate root, their policy and their role assignments are in
+[tier 1](../../entraid/README.md#management-groups), where the intermediate root is marked `exists: true`.
 
-A user with `break_glass: true` is an emergency access account. Each tenant has two, cloud-only on its `onmicrosoft.com` domain, with a permanent Global Administrator role and a 64-character password stored in 1Password (the plan fails if `store_password_in_key_vault` is not set). They are excluded from every Conditional Access policy automatically. An alert on their sign-ins is still to do (see the TODO list in [ESLZ/management_design.md](../../ESLZ/management_design.md)).
 
-After the first apply:
+## HCP Terraform integration
 
-1. Sign in with each account, register a FIDO2 security key (security defaults and Azure's mandatory MFA still require MFA for them), and keep the keys in separate safe places.
-2. Test each sign-in at least every few months.
+The service principals that HCP Terraform runs use to sign in to Azure (OIDC dynamic credentials) are being reworked.
+Until then:
 
-### MFA
-
-- **admin.4esnok.su (free):** `tenant_settings.security_defaults: true`. All users must register MFA; admins are always prompted.
-- **mail.4esnok.su (P1):** security defaults are off and replaced by Conditional Access: CA001 blocks legacy authentication and CA002 requires MFA for all users, both enabled; CA003 requires phishing-resistant MFA for admin roles in report-only mode. Switch CA003 to `enabled` once admins have FIDO2 keys, after checking its report-only results in the sign-in logs.
-
-Users register their own MFA methods at first sign-in; Terraform cannot do this for them.
-
-### Management groups
-
-`management_groups` is applied with the Azure Verified Module for Azure Landing Zones
-([`Azure/avm-ptn-alz`](https://registry.terraform.io/modules/Azure/avm-ptn-alz/azurerm)):
-
-- `architecture`: the hierarchy, an architecture definition in `terraform/lib/<architecture>.alz_architecture_definition.yaml`
-  (management group `id`, `display_name`, `parent_id`, `null` for the tenant root group, and `archetypes`;
-  the built-in `empty` archetype has no policies). Policy comes from archetypes in `terraform/lib` (see [Policy](#policy)).
-- `location`: default location for policy managed identities.
-- `policy_default_values`: values for policy assignment parameters, by the default names in
-  `terraform/lib/alz_policy_default_values.json` (e.g. `log_analytics_workspace_id`).
-- `role_assignments`: `management_group`, `role` (a built-in role name), the principal (`group` or `application`
-  by display name, `user` by user principal name, or `principal_id` with `principal_type`) and an optional ABAC
-  `condition`. Subscriptions below a group inherit its role assignments.
-
-No Azure RBAC is needed up front: the identity that creates a management group becomes its Owner, as long as the
-tenant's hierarchy setting "Require write permissions for creating new management groups" is off (the default).
-Assign Reader on each group to the tier-0 plan application, so plan runs can read it.
-
-Moving a subscription into a group needs Owner on the subscription and write access on the group, so it is done
-by the subscription's Owner (`az account management-group subscription add`), given Management Group Contributor
-on the group in the YAML.
-
-### Policy
-
-Azure Policy is managed centrally, as a custom Azure Landing Zones library in `terraform/lib` that `Azure/avm-ptn-alz`
-assigns with the hierarchy. The layout follows the
-[ALZ library](https://github.com/Azure/Azure-Landing-Zones-Library):
-
-| Path | Contents |
-|---|---|
-| `4esnok.alz_architecture_definition.yaml` | The hierarchy and each group's archetypes |
-| `archetype_definitions/*.alz_archetype_definition.json` | Archetypes: the policy assignments, definitions and role definitions a group gets |
-| `policy_assignments/*.alz_policy_assignment.json` | Policy assignments (ARM JSON; the module sets scope and location) |
-| `policy_definitions/*.alz_policy_definition.json` | Custom policy definitions (ARM JSON), created on the group of the archetype that lists them |
-| `alz_policy_default_values.json` | Default names for assignment parameters, set from `policy_default_values` in the tenant YAML |
-
-| Assignment | Archetype (group) | What it does |
-|---|---|---|
-| `Deploy-AKS-Diag-LAW` | `root_4esnok` (`mg-4esnok`) | DeployIfNotExists: AKS control-plane logs (kube-apiserver, kube-audit-admin, guard, cluster-autoscaler) to the central workspace, in the resource-specific tables `AKSControlPlane` and `AKSAuditAdmin` |
-
-| Definition | Why it is custom |
-|---|---|
-| `Deploy-AKS-Diag-LAW-Dedicated` | Copy of the built-in `6c66c325-74c8-42fd-a286-a74b0e2939d8` (3.0.0), which always writes to the legacy `AzureDiagnostics` table. This one sets `logAnalyticsDestinationType: Dedicated`, and a setting in `AzureDiagnostics` mode is non-compliant, so remediation switches it |
-
-**Add a policy:**
-
-1. Add the assignment file to `policy_assignments/`. The name is at most 24 characters, and the parameter values
-   are placeholders where a default value applies. A custom definition goes in `policy_definitions/`.
-2. List it in the archetype of the group it applies to. A new archetype also goes in the group's `archetypes`.
-3. If a parameter takes a value from the tenant, map it in `alz_policy_default_values.json` and set it under
-   `policy_default_values`.
-
-DeployIfNotExists and Modify assignments get a system-assigned identity. The module grants it the roles from the
-definition, at the group and on resources passed in parameters marked `assignPermissions`. Policy only acts on
-resources created or changed after the assignment; for existing ones, create a remediation task:
-`az policy remediation create --management-group <group> --policy-assignment <assignment> -n <name>`.
-
-## Applications
-
-The `applications` section of a tenant YAML file lists app registrations. Each entry creates the app registration and its enterprise application (service principal), and can set:
-
-| Key | Purpose |
-|---|---|
-| `description` | Description of the app registration |
-| `owners` | User principal names of users from the `users` section |
-| `federated_credentials` | Workload identity federation: `name`, `issuer`, `subject`, optional `audiences` (default `api://AzureADTokenExchange`) and `description` |
-| `graph_app_roles` | Microsoft Graph application permissions, e.g. `Directory.Read.All` (admin consent is granted by the assignment) |
-| `entraid_role_names` | Permanent Entra ID directory roles for the service principal |
-| `client_secret` | Client secret stored in 1Password: `key_vault_name` (vault), optional `rotation_days` (default 180) and `overlap_days` (default 30) |
-
-Prefer `federated_credentials` where the caller supports OIDC. For a client secret, the 1Password item is titled after the application, with the client ID as username, the secret as password and the tenant and expiry in its notes. A new secret is created on the first apply after `rotation_days`; it is stored in 1Password before the old secret is deleted, so anything holding the old value must re-read it from 1Password. The secret expires `overlap_days` after its rotation date, which leaves time to run that apply. Like user passwords, the secret is also kept in the Terraform state.
-
-Groups can list applications as `members` by display name, next to users by user principal name. The `applications` output shows each application's client ID and service principal object ID.
-
-### HCP Terraform OIDC
-
-HCP Terraform workspaces sign in to Azure with [dynamic provider credentials](https://developer.hashicorp.com/terraform/cloud-docs/workspaces/dynamic-provider-credentials/azure-configuration) instead of a client secret. Each workspace gets two applications, one for plan runs (read-only) and one for apply runs, each with a federated credential:
-
-- issuer: `https://app.terraform.io`
-- subject: `organization:<org>:project:<project>:workspace:<workspace>:run_phase:<plan|apply>`
-
-Setting the workspace's `TFC_AZURE_*` variables is being reworked; `HCP/config.yaml` does not set them for now.
-
-### Moving this configuration (Azure tier 0) to remote runs
-
-The workspace `4esnok_vs_entraid_bootstrap_r0` is set up in two phases, controlled by its entry in `HCP/config.yaml`.
-
-**Phase 1 (bootstrap).** The workspace has `execution_mode: local` and only stores state.
-Run `./bootstrap-azure-su.sh apply`, signed in with `az login` as a Global Administrator. This creates the
-`sp-t0-hcp-entraid-bootstrap-plan` and `-apply` applications; their client IDs are in the `applications` output.
-Security defaults are skipped in this phase.
-
-**Phase 2 (pipeline).**
-1. In `HCP/config.yaml`, replace `execution_mode: local` with the phase-2 block and merge.
-   Tier 1 sets `TF_VAR_onepassword_service_account_token` from 1Password (vault `azure_t1`), and links the
-   workspace to this repository with working directory `bootstrap/Azure/terraform`.
-2. Runs now execute in HCP Terraform as the OIDC applications and start on merge to `main`.
-   `./bootstrap-azure-su.sh plan` still works as a speculative plan; `apply` only runs through a merge.
-
-The tier-0 apply application can change users, groups, applications and directory roles, so it controls the tenant. Restrict who can queue applies on its workspace and keep a break-glass Global Administrator account that is not managed by Terraform.
+- Both tiers run locally with the Azure CLI login, and HCP Terraform only stores their state.
+- `applications[].federated_credentials` stays in the tier-1 configs but is not applied; the applications themselves
+  are still created.

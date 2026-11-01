@@ -32,7 +32,7 @@ share their state with the workloads listed in `remote_state_consumers`
 
 | Step | File | What |
 |---|---|---|
-| 1 | `bootstrap/Azure/tenants/admin.4esnok.su-vs.yaml` | Applications `sp-hcp-4esnok-su-<workload>-t2-plan-r0` / `-apply-r0` (federated credentials for the workspace), user group `sg-t2-az-<workload>-contributor` |
+| 1 | `entraid/tenants/4esnok_vs/config.yaml` | Applications `sp-hcp-4esnok-su-<workload>-t2-plan-r0` / `-apply-r0` (federated credentials for the workspace), user group `sg-t2-az-<workload>-contributor` |
 | 2 | `HCP/config.yaml` | Workspace `4esnok_vs_azure_<workload>_r2`, and the workload in `remote_state_consumers` of the platform workspaces it reads |
 | 3 | `ESLZ/subscriptions/config/admin-4esnok-su-vs.yaml` | Resource group `rg-<workload>-<env>-<region>-01`: Reader for the plan application, Contributor for the apply application and the user group. `managed_identities` with their role assignments, if the workload needs identities with roles (its pipeline cannot assign roles) |
 | 4 | `ESLZ/connectivity/config/network.yaml` | A spoke for the workload, if it needs a network, with the apply application (and any managed identity of step 3 that must join, such as an AKS control plane) in `consumers` of each subnet it attaches NICs or private endpoints to (see `ESLZ/connectivity/README.md`), and `reservations` for ranges it uses outside the VNet |

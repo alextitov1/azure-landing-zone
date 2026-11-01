@@ -1,0 +1,69 @@
+# Azure tenant registered on domain admin@4esnok.su with VS subscription
+# Default domain: admin4esnok.onmicrosoft.com
+# Custom domain: vs.4esnok.su
+entraid_tenant_id: 05af71f4-43e2-4c1a-8917-3bf5cb165cfe
+
+# Tier 0 (bootstrap/Azure): admin and break-glass users, tier-0 groups, intermediate root management group.
+# Everything else is in entraid/tenants/<tenant>/config.yaml (tier 1).
+
+entra_id:
+  users:
+    - mail_nickname: "sysadmin"
+      user_principal_name: "sysadmin@vs.4esnok.su"
+      display_name: "(ADM) User"
+      organization:
+        department: "sysadmins"
+        job_title: "Site Reliability Engineer"
+      entraid_role_names:  # direct entraid role assignments
+        - Global Administrator
+      password:
+        onepassword_vault: "cloud_r1"
+
+    # Emergency access (break-glass) account: cloud-only, on the onmicrosoft.com domain. Exclude it from every
+    # Conditional Access policy, register a FIDO2 key for it and test the sign-in regularly.
+    - mail_nickname: "breakglass01"
+      user_principal_name: "breakglass01@admin4esnok.onmicrosoft.com"
+      display_name: "Break Glass 01"
+      organization:
+        department: "sysadmins"
+        job_title: "Emergency access account"
+      entraid_role_names:
+        - Global Administrator
+      password:
+        length: 32
+        onepassword_vault: "cloud_r1"
+
+  groups:
+    - display_name: "sg-prd-entra-globaladmin-t0"
+      description: "Global Administrator role for the tenant, doesn't work because the tenant is on the free tier"
+      assignable_to_role: false  # Requires AAD Premium.
+      # entraid_role_names:
+      #   - Global Administrator
+      members:
+        - sysadmin
+
+    # Azure RBAC on the intermediate root mg-4esnok (management_groups below), inherited by every group and
+    # subscription below it. Owner has no standing members: add someone only for a change that needs it.
+    - display_name: "sg-prd-az-root-owner-t0"
+      description: "Owner on the intermediate root management group mg-4esnok"
+      members: [ ]
+    - display_name: "sg-prd-az-root-reader-t0"
+      description: "Reader on the intermediate root management group mg-4esnok"
+      members:
+        - sysadmin
+
+# Intermediate root management group below the tenant root group (CAF), its Azure RBAC and the tenant's hierarchy
+# settings. The groups below it are created by tier 1 (entraid/tenants/4esnok_vs).
+management_groups:
+  name: mg-4esnok
+  display_name: "4esnok"
+  # Hierarchy settings: new subscriptions always go to this group instead of the tenant root group; with this on,
+  # creating a management group also needs write access on its parent. Needs Hierarchy Settings Administrator on
+  # the tenant root group (../README.md).
+  require_authorization_for_group_creation: true
+  # To groups from entra_id.groups (display names)
+  role_assignments:
+    - role: Owner
+      group: sg-prd-az-root-owner-t0
+    - role: Reader
+      group: sg-prd-az-root-reader-t0

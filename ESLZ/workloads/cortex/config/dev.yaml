@@ -54,7 +54,7 @@ aks:
   # --- Authentication and authorization: Entra ID sign-in, Kubernetes RBAC ---
   entra:
     admin_group_object_ids:          # cluster-admin
-      - 07b726f8-cb4b-4f1b-94ed-571b6e0ab74f  # sg-t2-az-aks-admin (bootstrap/Azure/tenants/admin.4esnok.su-vs.yaml)
+      - 07b726f8-cb4b-4f1b-94ed-571b6e0ab74f  # sg-t2-az-aks-admin (entraid/tenants/4esnok_vs/config.yaml)
     azure_rbac: false                # true: authorize with Azure RBAC instead of Kubernetes RBAC
     disable_local_accounts: true     # no static admin kubeconfig: sign-in with Entra ID only
 
