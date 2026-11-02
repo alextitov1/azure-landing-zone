@@ -35,27 +35,31 @@ resource "tfe_workspace" "this" {
 
 # Values shared by the project's workspaces, e.g. the Azure tenant for dynamic credentials
 resource "tfe_variable_set" "project" {
-  count = length(var.project_env_vars) > 0 ? 1 : 0
+  for_each = { for vs in var.project_variable_sets : vs.name => vs }
 
-  name         = "${var.project_name}-env"
-  description  = "Environment variables of project ${var.project_name}; managed by Terraform"
+  name         = each.key
+  description  = coalesce(each.value.description, "Environment variables of project ${var.project_name}; managed by Terraform")
   organization = var.organization_name
 }
 
 resource "tfe_project_variable_set" "project" {
-  count = length(var.project_env_vars) > 0 ? 1 : 0
+  for_each = tfe_variable_set.project
 
   project_id      = tfe_project.this.id
-  variable_set_id = tfe_variable_set.project[0].id
+  variable_set_id = each.value.id
 }
 
 resource "tfe_variable" "project_env" {
-  for_each = var.project_env_vars
+  for_each = merge([
+    for vs in var.project_variable_sets : {
+      for key, value in vs.env_vars : "${vs.name}/${key}" => { set = vs.name, key = key, value = value }
+    }
+  ]...)
 
-  variable_set_id = tfe_variable_set.project[0].id
+  variable_set_id = tfe_variable_set.project[each.value.set].id
   category        = "env"
-  key             = each.key
-  value           = each.value
+  key             = each.value.key
+  value           = each.value.value
   description     = "managed by Terraform"
 }
 

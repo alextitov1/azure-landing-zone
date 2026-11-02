@@ -122,7 +122,7 @@ Two settings of an application connect it to workspaces:
 
 One application can serve several workspaces: list each in both settings. The values that survive a rebuild,
 `TFC_AZURE_PROVIDER_AUTH` and `ARM_TENANT_ID`, are in the project's variable set, from
-[HCP/config.yaml](../../HCP/config.yaml) (`env_vars` of the project). Nothing is copied by hand, so the landing zone can
+[HCP/config.yaml](../../HCP/config.yaml) (`variable_sets` of the project). Nothing is copied by hand, so the landing zone can
 be rebuilt from scratch in one pass:
 
 1. [bootstrap/HCP](../HCP/README.md), then [HCP](../../HCP/README.md): projects, workspaces and their variable sets.

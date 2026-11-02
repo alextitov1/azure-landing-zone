@@ -14,10 +14,19 @@ variable "project_description" {
   default     = null
 }
 
-variable "project_env_vars" {
-  description = "Environment variables for every workspace in the project, in a variable set attached to it; workspace variables win."
-  type        = map(string)
-  default     = {}
+variable "project_variable_sets" {
+  description = "Variable sets attached to the project, each with environment variables for every workspace in it; workspace variables win. Names are unique in the organization."
+  type = list(object({
+    name        = string
+    description = optional(string)
+    env_vars    = optional(map(string), {})
+  }))
+  default = []
+
+  validation {
+    condition     = length(distinct(var.project_variable_sets[*].name)) == length(var.project_variable_sets)
+    error_message = "Variable set names must be unique."
+  }
 }
 
 variable "secret_env_vars" {
