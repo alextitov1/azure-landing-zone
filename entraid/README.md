@@ -24,8 +24,8 @@ Each tenant has an HCP Terraform workspace `<tenant>_entraid_mgmt_r1` (project `
 
 `4esnok_vs`: open a pull request that changes `tenants/<tenant>/` or the shared code for a speculative plan; merge
 to `main`, then confirm the apply in HCP Terraform (no auto-apply). Runs sign in with dynamic credentials: plan runs
-as `sp-hcp-entraid-mgmt-r1-plan`, apply runs as `sp-hcp-entraid-mgmt-r1-apply`. Tier 0 creates both, their rights
-and their client IDs on the workspace, see
+as `sp-hcp-entraid-mgmt-r1-plan`, apply runs as `sp-hcp-entraid-mgmt-r1-apply`. Tier 0 creates both and their
+rights, and the workspace reads their client IDs, see
 [HCP Terraform integration](../bootstrap/Azure/README.md#hcp-terraform-integration).
 
 Set these environment variables on the workspace by hand, in HCP Terraform:
@@ -33,7 +33,6 @@ Set these environment variables on the workspace by hand, in HCP Terraform:
 | Variable | Value | Sensitive |
 |---|---|---|
 | `TF_VAR_tenant` | the tenant directory, e.g. `4esnok_vs` | no |
-| `TFE_TOKEN` | an HCP Terraform token that can write variables on the tier-1 applications' workspaces | yes |
 | `TF_VAR_onepassword_service_account_token` | the tier-1 1Password service account token (`op://IT/op_azure_t1_rw_t1/credential`) | yes |
 
 ### Local runs
@@ -204,11 +203,10 @@ The `applications` section of a tenant config lists app registrations. Each entr
 | `description` | Description of the app registration |
 | `owners` | `mail_nickname` of users from `users` |
 | `federated_credentials` | Workload identity federation (HCP Terraform, GitHub Actions, ...): `name`, `subject`, and `issuer` and `audiences`, which default to HCP Terraform's (`https://app.terraform.io`, `api://AzureADTokenExchange`) |
-| `hcp_workspaces` | HCP Terraform workspaces that get the application's client ID: `name` and optional `run_phase` (`plan` or `apply`; unset for both); needs top-level `hcp_organization`. The workspace also needs a federated credential, see [HCP Terraform integration](../bootstrap/Azure/README.md#hcp-terraform-integration) |
 | `graph_app_roles` | Microsoft Graph application permissions, e.g. `Directory.Read.All` (admin consent is granted by the assignment) |
 | `entraid_role_names` | Permanent Entra ID directory roles for the service principal |
 | `client_secret` | Client secret stored in 1Password: `key_vault_name` (vault), optional `rotation_days` (default 180) and `overlap_days` (default 30) |
 
 For a client secret, the 1Password item is titled after the application, with the client ID as username, the secret as password and the tenant and expiry in its notes. A new secret is created on the first apply after `rotation_days`; it is stored in 1Password before the old secret is deleted, so anything holding the old value must re-read it from 1Password. The secret expires `overlap_days` after its rotation date, which leaves time to run that apply. Like user passwords, the secret is also kept in the Terraform state.
 
-Groups can list applications as `members` by display name, next to users by `mail_nickname`. The `applications` output shows each application's client ID and service principal object ID.
+Groups can list applications as `members` by display name, next to users by `mail_nickname`. The `applications` output shows each application's client ID and service principal object ID; HCP Terraform workspaces read their client IDs from the `client_ids` output, see [HCP Terraform integration](../bootstrap/Azure/README.md#hcp-terraform-integration).

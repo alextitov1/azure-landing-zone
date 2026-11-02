@@ -18,18 +18,16 @@ module "entraid" {
   config    = local.config.entra_id
 }
 
-module "hcp_workspace_identity" {
-  source = "../../../modules/hcp-workspace-identity"
-
-  organization = local.config.hcp_organization
-  config       = local.config.entra_id.applications
-  applications = module.entraid.applications
-}
-
 module "intermediate_root_management_group" {
   source = "../../../modules/azure-intermediate-root-management-group"
 
   tenant_id = local.config.entraid_tenant_id
   config    = local.config.management_groups
   group_ids = module.entraid.group_ids
+}
+
+# Read by HCP/config.yaml (`variables:`) to point workspaces at their applications
+output "client_ids" {
+  value       = { for name, app in module.entraid.applications : name => app.client_id }
+  description = "Client IDs of the Entra ID applications, by display name"
 }

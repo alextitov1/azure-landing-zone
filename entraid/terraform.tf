@@ -24,10 +24,6 @@ terraform {
       source  = "Azure/alz"
       version = "~> 0.22"
     }
-    tfe = {
-      source  = "hashicorp/tfe"
-      version = "~> 0.82"
-    }
   }
 }
 
@@ -110,14 +106,6 @@ module "entraid" {
   config    = try(local.config.entra_id, {})
 }
 
-module "hcp_workspace_identity" {
-  source = "../modules/hcp-workspace-identity"
-
-  organization = try(local.config.hcp_organization, null)
-  config       = try(local.config.entra_id.applications, [])
-  applications = module.entraid.applications
-}
-
 output "tenant_id" {
   value = module.entraid.tenant_id
 }
@@ -125,6 +113,12 @@ output "tenant_id" {
 output "applications" {
   value       = module.entraid.applications
   description = "Client IDs and service principal object IDs of the Entra ID applications"
+}
+
+# Read by HCP/config.yaml (`variables:`) to point workspaces at their applications
+output "client_ids" {
+  value       = { for name, app in module.entraid.applications : name => app.client_id }
+  description = "Client IDs of the Entra ID applications, by display name"
 }
 
 output "domain_verification_records" {

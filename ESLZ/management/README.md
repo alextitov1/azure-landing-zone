@@ -33,7 +33,7 @@ List prices in USD, October 2026 ([Azure retail prices](https://prices.azure.com
 Grafana is the fixed cost and most of a Visual Studio Professional subscription's $50 monthly credit. Set
 `grafana.enabled: false` to remove it when it's not in use; dashboards are lost unless exported.
 
-**Let a workload read the outputs:** add its workspace to `remote_state_consumers` of `4esnok_vs_azure_mgmt_r1` in
+**Let a workload read the outputs:** add its workspace to `remote_state.workspaces` of `4esnok_vs_azure_mgmt_r1` in
 `HCP/config.yaml`, then read them as cortex reads connectivity:
 
 ```hcl

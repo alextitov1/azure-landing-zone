@@ -19,7 +19,7 @@ variable "project_variable_sets" {
   type = list(object({
     name        = string
     description = optional(string)
-    env_vars    = optional(map(string), {})
+    variables   = optional(map(string), {})
   }))
   default = []
 
