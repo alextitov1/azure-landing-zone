@@ -71,8 +71,8 @@ flowchart LR
 
 1. Copy an existing tenant directory to `<tenant>/`. In `terraform.tf`, set the workspace name to
    `<tenant>_entraid_bootstrap_r0`. In `config.yaml`, set the tenant's `entraid_tenant_id`, admin and break-glass
-   `users` and `sg-t0-*` groups. For a tenant without Azure, remove `management_groups` from `config.yaml`, and the `azapi`
-   provider and resources from `terraform.tf` (as in `4esnok_mail`).
+   `users` and `sg-t0-*` groups. For a tenant without Azure, remove `management_groups` from `config.yaml`, and the
+   `intermediate_root_management_group` module from `terraform.tf` (as in `4esnok_mail`).
 2. Add workspace `<tenant>_entraid_bootstrap_r0` in project `<tenant>_r0` to [HCP/config.yaml](../../HCP/config.yaml).
 3. Bootstrap it as above, then add it to [tier 1](../../entraid/README.md#add-a-tenant).
 
@@ -84,7 +84,9 @@ match the tenant's directory in [entraid/tenants](../../entraid/tenants).
 
 Following the Cloud Adoption Framework, a tenant's management groups hang from one intermediate root (`mg-4esnok`)
 below the tenant root group, which gets no policy or role assignments itself. Tier 0 creates only that group, from
-`management_groups` in the tenant config, with Azure RBAC for three groups:
+`management_groups` in the tenant config with the shared module
+[`modules/azure-intermediate-root-management-group`](../../modules/azure-intermediate-root-management-group), with
+Azure RBAC for three groups:
 
 | Group | Role on the intermediate root | Members |
 |---|---|---|
