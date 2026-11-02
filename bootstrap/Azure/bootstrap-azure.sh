@@ -11,7 +11,6 @@ DIR="$(dirname "$0")/$TENANT"
 
 TF_TOKEN_app_terraform_io=$(op read "op://IT/terraform_hcp_4esnok_tier0/credential")
 export TF_TOKEN_app_terraform_io
-export TFE_TOKEN="$TF_TOKEN_app_terraform_io"  # tfe provider: writes the Azure client IDs to the HCP workspaces
 
 # Token for the 1Password Terraform provider, which stores user passwords. Read last: once exported, op itself
 # would sign in with it.

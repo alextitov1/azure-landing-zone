@@ -1,4 +1,4 @@
-# Read by workloads with `data "tfe_outputs"` (remote_state_consumers of the workspace in
+# Read by workloads with `data "tfe_outputs"` (remote_state of the workspace in
 # HCP/config.yaml), so they never hardcode platform IDs.
 output "resource_group_id" {
   description = "ID of the connectivity resource group."

@@ -52,7 +52,7 @@ resource "tfe_project_variable_set" "project" {
 resource "tfe_variable" "project_env" {
   for_each = merge([
     for vs in var.project_variable_sets : {
-      for key, value in vs.env_vars : "${vs.name}/${key}" => { set = vs.name, key = key, value = value }
+      for key, value in vs.variables : "${vs.name}/${key}" => { set = vs.name, key = key, value = value }
     }
   ]...)
 

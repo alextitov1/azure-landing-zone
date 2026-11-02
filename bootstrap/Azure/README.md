@@ -111,33 +111,34 @@ and an apply application, `sp-hcp-<workspace>-<plan|apply>`, with a federated cr
 Tier 0 creates them for the workspaces that manage the tenant itself (`entraid`, ESLZ/management); tier 1 creates
 them for the other workspaces.
 
-Two settings of an application connect it to workspaces:
+The two sides of the connection are configured where they live:
 
-- `federated_credentials`: lets the runs of a workspace sign in as the application. The subject names the workspace
-  and run phase, `organization:<org>:project:<project>:workspace:<workspace>:run_phase:<plan|apply>`.
-- `hcp_workspaces`: writes the application's client ID to each listed workspace (with `hcp_organization` at the top
-  of the tenant config), as `TFC_AZURE_PLAN_CLIENT_ID` or `TFC_AZURE_APPLY_CLIENT_ID` for its `run_phase`, or
-  `TFC_AZURE_RUN_CLIENT_ID` for both phases. Applied by
-  [`modules/hcp-workspace-identity`](../../modules/hcp-workspace-identity).
+- `federated_credentials` on the application lets the runs of a workspace sign in as it. The subject names the
+  workspace and run phase, `organization:<org>:project:<project>:workspace:<workspace>:run_phase:<plan|apply>`. One
+  application can serve several workspaces, with one federated credential each.
+- The workspace's `TFC_AZURE_PLAN_CLIENT_ID` and `TFC_AZURE_APPLY_CLIENT_ID` are `variables:` in
+  [HCP/config.yaml](../../HCP/config.yaml) that reference the `client_ids` output (client IDs by display name) of
+  the workspace that creates the application, see [workspace variables](../../HCP/README.md#workspace-variables).
 
-One application can serve several workspaces: list each in both settings. The values that survive a rebuild,
-`TFC_AZURE_PROVIDER_AUTH` and `ARM_TENANT_ID`, are in the project's variable set, from
-[HCP/config.yaml](../../HCP/config.yaml) (`variable_sets` of the project). Nothing is copied by hand, so the landing zone can
-be rebuilt from scratch in one pass:
+The values that survive a rebuild, `TFC_AZURE_PROVIDER_AUTH` and `ARM_TENANT_ID`, are in the project's variable set,
+from [HCP/config.yaml](../../HCP/config.yaml) (`variable_sets` of the project). Nothing is copied by hand, so the
+landing zone can be rebuilt from scratch:
 
 1. [bootstrap/HCP](../HCP/README.md), then [HCP](../../HCP/README.md): projects, workspaces and their variable sets.
-2. Tier 0 (this directory): its applications and their workspace variables. The workspaces must exist first.
-3. [Tier 1](../../entraid/README.md): its applications and their workspace variables.
-4. The ESLZ workspaces, whose first run signs in with the new applications.
+2. Tier 0 (this directory): its applications.
+3. [HCP](../../HCP/README.md) again, by hand: sets the client IDs of the tier 0 applications. Tier 0 runs locally, so
+   its applies don't start a run of `hcp_tf_workspaces_r1`.
+4. [Tier 1](../../entraid/README.md): its applications. Its apply re-runs `hcp_tf_workspaces_r1`, which sets their
+   client IDs.
+5. The ESLZ workspaces, whose first run signs in with the new applications.
 
-The scripts give the `tfe` provider the HCP token they already read (`TFE_TOKEN`). Tier 0 runs locally with the
-Azure CLI login, and HCP Terraform only stores its state.
+Tier 0 runs locally with the Azure CLI login, and HCP Terraform only stores its state.
 
 ### Tier 1
 
 For tier 1 of `4esnok_vs` (workspace `4esnok_vs_entraid_mgmt_r1`) to run in HCP Terraform, tier 0 creates:
 
-- its plan and apply applications, with their Graph permissions and client IDs on the workspace;
+- its plan and apply applications, with their Graph permissions;
 - their Azure rights on the intermediate root (see [Intermediate root](#intermediate-root));
 
 The workspace's execution mode and VCS connection are in [HCP/config.yaml](../../HCP/config.yaml). Its other

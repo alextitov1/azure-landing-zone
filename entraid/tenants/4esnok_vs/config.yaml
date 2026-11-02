@@ -1,6 +1,5 @@
 # Azure tenant registered on domain admin@4esnok.su with VS subscription
 entraid_tenant_id: 05af71f4-43e2-4c1a-8917-3bf5cb165cfe
-hcp_organization: 4esnok  # HCP Terraform organization of the applications' hcp_workspaces
 
 # Tier 1 (entraid): day-two users, groups, applications, Conditional Access, governance, management groups.
 # Admin and break-glass users and tier-0 groups are in bootstrap/Azure/<tenant>/config.yaml.
@@ -58,9 +57,6 @@ entra_id:
       federated_credentials:
         - name: "hcp-4esnok_vs_azure_networking_r1-plan"
           subject: "organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_azure_networking_r1:run_phase:plan"
-      hcp_workspaces:  # workspaces that sign in as this application
-        - name: 4esnok_vs_azure_networking_r1
-          run_phase: plan
       graph_app_roles:  # Microsoft Graph application permissions
         - Directory.Read.All
 
@@ -69,9 +65,6 @@ entra_id:
       federated_credentials:
         - name: "hcp-4esnok_vs_azure_networking_r1-apply"
           subject: "organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_azure_networking_r1:run_phase:apply"
-      hcp_workspaces:  # workspaces that sign in as this application
-        - name: 4esnok_vs_azure_networking_r1
-          run_phase: apply
       graph_app_roles:
         - Directory.Read.All
 
@@ -82,18 +75,12 @@ entra_id:
       federated_credentials:
         - name: "hcp-4esnok_vs_azure_cortex_r2-plan"
           subject: "organization:4esnok:project:4esnok_vs_r2:workspace:4esnok_vs_azure_cortex_r2:run_phase:plan"
-      hcp_workspaces:  # workspaces that sign in as this application
-        - name: 4esnok_vs_azure_cortex_r2
-          run_phase: plan
 
     - display_name: "sp-hcp-4esnok-su-cortex-t2-apply-r0"
       description: "HCP Terraform apply runs of 4esnok/4esnok_vs_r2/4esnok_vs_azure_cortex_r2"
       federated_credentials:
         - name: "hcp-4esnok_vs_azure_cortex_r2-apply"
           subject: "organization:4esnok:project:4esnok_vs_r2:workspace:4esnok_vs_azure_cortex_r2:run_phase:apply"
-      hcp_workspaces:  # workspaces that sign in as this application
-        - name: 4esnok_vs_azure_cortex_r2
-          run_phase: apply
 
     # Example: an application with a client secret stored in 1Password and a direct EntraID role,
     # used as a group member by display name.

@@ -91,7 +91,7 @@ Options to consider next, roughly in order.
 
 - [ ] **Container Insights** (AKS node and pod logs): compare a custom DeployIfNotExists policy, since there is no
   built-in one, with the cortex Terraform switch (`monitoring.enabled`). For the Terraform route: add
-  `4esnok_vs_azure_cortex_r2` to `remote_state_consumers` of `4esnok_vs_azure_mgmt_r1`, read `log_analytics_workspace_id` with
+  `4esnok_vs_azure_cortex_r2` to `remote_state.workspaces` of `4esnok_vs_azure_mgmt_r1`, read `log_analytics_workspace_id` with
   `tfe_outputs`, and give the cortex apply app the read access its Data Collection Rule needs on the workspace.
 - [x] **Azure Monitor workspace for managed Prometheus**, and Managed Grafana on top of it.
 - [ ] **Cortex metrics**: cortex onboards container logs and Prometheus together, so it needs both

@@ -45,5 +45,5 @@ provider "azurerm" {
 }
 
 # Reads the outputs of the platform workspaces. Remote runs use the run's token, which can read the workspaces
-# that list 4esnok_vs_azure_cortex_r2 in remote_state_consumers; local runs use TF_TOKEN_app_terraform_io.
+# that list 4esnok_vs_azure_cortex_r2 in remote_state; local runs use TF_TOKEN_app_terraform_io.
 provider "tfe" {}

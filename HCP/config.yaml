@@ -1,6 +1,7 @@
 # HCP Terraform tier 1 (hcp_tf_workspaces_r1): organization settings and every project and workspace it manages.
 # Edit, open a pull request, review the plan, merge. See README.md for the fields.
 organization: 4esnok
+workspace: hcp_tf_workspaces_r1  # runs this config; re-run after each apply of a workspace that `variables:` reads
 
 projects:
   4esnok_vs_r0:
@@ -30,15 +31,15 @@ projects:
     description: "Ring 1 vs.4esnok.su workspaces"
     variable_sets:
       - name: azure_oidc_project_var_set
-        # Azure dynamic credentials; each workspace's client IDs are set by the tier that creates its identities
-        env_vars:
+        # Azure dynamic credentials; each workspace's client IDs are its `variables:`
+        variables:
           TFC_AZURE_PROVIDER_AUTH: "true"
           ARM_TENANT_ID: 05af71f4-43e2-4c1a-8917-3bf5cb165cfe
     workspaces:
       4esnok_vs_entraid_directory_r1:
         description: "Entra ID tier 1: users, groups, applications, management groups (entraid, tenant 4esnok_vs)"
         tags: { env: mgmt, cloud: azure }
-        # Remote: signs in with dynamic credentials, client IDs set by tier 0 (bootstrap/Azure/4esnok_vs); TF_VAR_tenant
+        # Remote: signs in with dynamic credentials as applications of tier 0 (bootstrap/Azure/4esnok_vs); TF_VAR_tenant
         # and the secrets are set by hand (entraid/README.md). No auto_apply: tier 1 can change anything in the
         # tenant, confirm each apply.
         execution_mode: remote
@@ -49,6 +50,9 @@ projects:
           working_directory: entraid
           # the shared root and modules, and this tenant's config only
           trigger_patterns: ["/entraid/*", "/entraid/tenants/4esnok_vs/**/*", "/modules/**/*"]
+        variables:
+          TFC_AZURE_PLAN_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-hcp-entraid-mgmt-r1-plan
+          TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-hcp-entraid-mgmt-r1-apply
 
       4esnok_vs_azure_governance_r1:
         description: "Azure: management groups, subscriptions, resource groups, policy and RBAC"
@@ -60,26 +64,34 @@ projects:
           github_app_installation: alextitov1
           working_directory: ESLZ/management/terraform
           trigger_patterns: ["/ESLZ/management/**/*"]
+        variables:
+          TFC_AZURE_PLAN_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-hcp-azure-mgmt-r1-plan
+          TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-hcp-azure-mgmt-r1-apply
 
   #     4esnok_vs_azure_networking_r2:
   #       description: "Azure: lab hub-and-spoke network"
   #       tags: { env: dev, cloud: azure, project: 4esnok.su }
   #       execution_mode: remote
   #       auto_apply: true
-  #       remote_state_consumers: [4esnok_vs_azure_cortex_r2]  # workspaces that read the VNet and subnet IDs (tfe_outputs)
+  #       remote_state:  # workspaces that read the VNet and subnet IDs (tfe_outputs)
+  #         share_with: workspaces
+  #         workspaces: [4esnok_vs_azure_cortex_r2]
   #       vcs:
   #         repo: alextitov1/azure-landing-zone
   #         github_app_installation: alextitov1
   #         working_directory: ESLZ/connectivity/terraform
   #         trigger_patterns: ["/ESLZ/connectivity/**/*"]
+  #       variables:
+  #         TFC_AZURE_PLAN_CLIENT_ID: tfe://4esnok_vs_entraid_directory_r1/client_ids/sp-hcp-azure-networking-r1-plan
+  #         TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_vs_entraid_directory_r1/client_ids/sp-hcp-azure-networking-r1-apply
 
 
   # 4esnok_vs_r2:
   #   description: "Ring 2 vs.4esnok.su workspaces"
   #   variable_sets:
   #     - name: 4esnok_vs_r2-azure
-  #       # Azure dynamic credentials; each workspace's client IDs are set by the tier that creates its identities
-  #       env_vars:
+  #       # Azure dynamic credentials; each workspace's client IDs are its `variables:`
+  #       variables:
   #         TFC_AZURE_PROVIDER_AUTH: "true"
   #         ARM_TENANT_ID: 05af71f4-43e2-4c1a-8917-3bf5cb165cfe
   #   workspaces:
@@ -93,6 +105,9 @@ projects:
   #         github_app_installation: alextitov1
   #         working_directory: ESLZ/workloads/cortex/terraform
   #         trigger_patterns: ["/ESLZ/workloads/cortex/**/*"]
+  #       variables:
+  #         TFC_AZURE_PLAN_CLIENT_ID: tfe://4esnok_vs_entraid_directory_r1/client_ids/sp-hcp-4esnok-su-cortex-t2-plan-r0
+  #         TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_vs_entraid_directory_r1/client_ids/sp-hcp-4esnok-su-cortex-t2-apply-r0
 
   # 4esnok_mail_r0:
   #   description: "Ring 0 mail.4esnok.su workspaces"
