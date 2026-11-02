@@ -5,12 +5,8 @@ entraid_tenant_id: 0fe4f648-bd9a-4476-b9e3-38a2f8cd242c
 # Admin and break-glass users and tier-0 groups are in bootstrap/Azure/<tenant>/config.yaml.
 
 entra_id:
-  # Users managed by tier 0 (bootstrap/Azure). Users are referenced by mail_nickname everywhere in the config.
-  existing_users:
-    - mail_nickname: "sysadmin"
-    - mail_nickname: "breakglass01"
-    - mail_nickname: "breakglass02"
-
+  # Users are referenced by mail_nickname everywhere in the config. Tier-0 users (bootstrap/Azure) can't be named
+  # here.
   users:
     - mail_nickname: "developer1"
       user_principal_name: "developer@mail.4esnok.su"
@@ -26,7 +22,7 @@ entra_id:
   #     assignee_name: "developer1"
   #     duration: "PT8H"
 
-  # Conditional Access (Entra ID P1). Every policy excludes the break-glass accounts, so a bad policy cannot lock out the tenant.
+  # Conditional Access (Entra ID P1).
   # CA001 and CA002 together replace security defaults; CA003 is report-only until admins have FIDO2 keys.
   # Security defaults must be turned off first, in the portal (see entraid/README.md#mfa).
   conditional_access_policies:
@@ -34,7 +30,6 @@ entra_id:
       state: enabled
       users:
         include: [All]
-        exclude: ["breakglass01", "breakglass02"]
       client_app_types: [exchangeActiveSync, other]
       grant:
         controls: [block]
@@ -43,7 +38,6 @@ entra_id:
       state: enabled
       users:
         include: [All]
-        exclude: ["breakglass01", "breakglass02"]
       grant:
         controls: [mfa]
 
@@ -59,7 +53,6 @@ entra_id:
           - Cloud Application Administrator
           - Conditional Access Administrator
           - Exchange Administrator
-        exclude: ["breakglass01", "breakglass02"]
       grant:
         authentication_strength: "Phishing-resistant MFA"
 

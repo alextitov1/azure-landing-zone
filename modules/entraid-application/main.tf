@@ -16,6 +16,17 @@ resource "azuread_service_principal" "this" {
   owners    = local.owner_ids
 }
 
+resource "azuread_application_federated_identity_credential" "this" {
+  for_each = { for cred in var.entraid_application.federated_credentials : cred.name => cred }
+
+  application_id = azuread_application.this.id
+  display_name   = each.key
+  description    = each.value.description
+  issuer         = each.value.issuer
+  subject        = each.value.subject
+  audiences      = each.value.audiences
+}
+
 # Microsoft Graph application permissions (admin consent is implied by the assignment)
 resource "azuread_app_role_assignment" "graph" {
   for_each = toset(var.entraid_application.graph_app_roles)

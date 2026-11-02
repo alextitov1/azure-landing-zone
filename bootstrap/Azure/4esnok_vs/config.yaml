@@ -3,7 +3,8 @@
 # Custom domain: vs.4esnok.su
 entraid_tenant_id: 05af71f4-43e2-4c1a-8917-3bf5cb165cfe
 
-# Tier 0 (bootstrap/Azure): admin and break-glass users, tier-0 groups, intermediate root management group.
+# Tier 0 (bootstrap/Azure): admin and break-glass users, tier-0 groups, HCP Terraform workspace identities,
+# intermediate root management group.
 # Everything else is in entraid/tenants/<tenant>/config.yaml (tier 1).
 
 entra_id:
@@ -51,6 +52,61 @@ entra_id:
       description: "Reader on the intermediate root management group mg-4esnok"
       members:
         - sysadmin
+        - sp-hcp-entraid-mgmt-r1-plan
+
+  # Identities of HCP Terraform workspaces (dynamic credentials, OIDC): plan runs use the read-only application,
+  # apply runs the privileged one. The workspace settings that use them are not set up yet.
+  applications:
+    # Workspace 4esnok_vs_entraid_mgmt_r1 (entraid, tier 1). The apply application can grant itself any directory
+    # role (RoleManagement.ReadWrite.Directory), so it is as privileged as a Global Administrator: protect its
+    # workspace like tier 0. Its Azure rights on mg-4esnok are not decided yet.
+    - display_name: "sp-hcp-entraid-mgmt-r1-plan"
+      description: "HCP Terraform plan runs of 4esnok/4esnok_vs_r1/4esnok_vs_entraid_mgmt_r1"
+      owners:
+        - sysadmin
+      federated_credentials:
+        - name: "hcp-plan"
+          subject: "organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_entraid_mgmt_r1:run_phase:plan"
+      graph_app_roles:  # Microsoft Graph application permissions
+        - Directory.Read.All
+        - Application.Read.All
+        - RoleManagement.Read.Directory
+        - Policy.Read.All
+
+    - display_name: "sp-hcp-entraid-mgmt-r1-apply"
+      description: "HCP Terraform apply runs of 4esnok/4esnok_vs_r1/4esnok_vs_entraid_mgmt_r1"
+      owners:
+        - sysadmin
+      federated_credentials:
+        - name: "hcp-apply"
+          subject: "organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_entraid_mgmt_r1:run_phase:apply"
+      graph_app_roles:
+        - User.ReadWrite.All
+        - Group.ReadWrite.All
+        - Application.ReadWrite.All
+        - AppRoleAssignment.ReadWrite.All
+        - RoleManagement.ReadWrite.Directory
+        - Directory.Read.All                  # data sources (domains, role templates)
+        - Policy.Read.All
+        - Policy.ReadWrite.ConditionalAccess
+        - Policy.ReadWrite.Authorization
+
+    # Workspace 4esnok_vs_azure_mgmt_r1 (ESLZ/management: central Log Analytics workspace). No Azure rights yet.
+    - display_name: "sp-hcp-azure-mgmt-r1-plan"
+      description: "HCP Terraform plan runs of 4esnok/4esnok_vs_r1/4esnok_vs_azure_mgmt_r1"
+      owners:
+        - sysadmin
+      federated_credentials:
+        - name: "hcp-plan"
+          subject: "organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_azure_mgmt_r1:run_phase:plan"
+
+    - display_name: "sp-hcp-azure-mgmt-r1-apply"
+      description: "HCP Terraform apply runs of 4esnok/4esnok_vs_r1/4esnok_vs_azure_mgmt_r1"
+      owners:
+        - sysadmin
+      federated_credentials:
+        - name: "hcp-apply"
+          subject: "organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_azure_mgmt_r1:run_phase:apply"
 
 # Intermediate root management group below the tenant root group (CAF), its Azure RBAC and the tenant's hierarchy
 # settings. The groups below it are created by tier 1 (entraid/tenants/4esnok_vs).

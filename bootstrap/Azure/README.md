@@ -1,15 +1,16 @@
 # Entra ID tenant bootstrap (tier 0)
 
 
-This directory contains the bootstrap of each Entra ID tenant: its admin and break-glass users and tier-0 groups
-(`sg-t0-*`). For a tenant with Azure subscriptions, it also creates the intermediate root management group, the
+This directory contains the bootstrap of each Entra ID tenant: its admin and break-glass users, tier-0 groups
+(`sg-t0-*`) and the identities of the HCP Terraform workspaces that manage the tenant (see
+[HCP Terraform integration](#hcp-terraform-integration)). For a tenant with Azure subscriptions, it also creates the intermediate root management group, the
 Azure RBAC on it and the tenant's management group hierarchy settings (see [Intermediate root](#intermediate-root)).
 
 It is run manually by a Global Administrator, when bootstrapping a new tenant or making fundamental changes. Users
 are created with passwords stored in 1Password.
 
 All day-two changes (other users and groups, applications, Conditional Access, management groups, ...) are done in
-[tier 1](../../entraid/README.md), which references the tier-0 users under `existing_users`. Both tiers use the
+[tier 1](../../entraid/README.md), which cannot name tier-0 users. Both tiers use the
 shared module [`modules/entraid-tenant`](../../modules/entraid-tenant) and the same `entra_id` config schema,
 described in the [tier-1 README](../../entraid/README.md#tenant-config-reference).
 
@@ -105,9 +106,10 @@ The groups below the intermediate root, their policy and their role assignments 
 
 ## HCP Terraform integration
 
-The service principals that HCP Terraform runs use to sign in to Azure (OIDC dynamic credentials) are being reworked.
-Until then:
+HCP Terraform runs sign in to Azure and Microsoft Graph with dynamic credentials (OIDC): each workspace has a plan
+and an apply application, `sp-hcp-<workspace>-<plan|apply>`, with a federated credential for that run phase.
+Tier 0 creates them for the workspaces that manage the tenant itself (`entraid`, ESLZ/management); tier 1 creates
+them for the other workspaces.
 
-- Both tiers run locally with the Azure CLI login, and HCP Terraform only stores their state.
-- `applications[].federated_credentials` stays in the tier-1 configs but is not applied; the applications themselves
-  are still created.
+The workspace settings that use them are not set up yet. Until then, both tiers run locally with the Azure CLI
+login, and HCP Terraform only stores their state.

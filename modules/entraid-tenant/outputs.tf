@@ -15,7 +15,7 @@ output "applications" {
 
 output "user_ids" {
   value       = local.user_ids
-  description = "Object IDs of the users and existing_users, by mail_nickname"
+  description = "Object IDs of the users, by mail_nickname"
 }
 
 output "group_ids" {

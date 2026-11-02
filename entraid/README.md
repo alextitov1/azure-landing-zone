@@ -33,8 +33,7 @@ The plan fails if the signed-in tenant is not the config's `entraid_tenant_id`.
 ### Add a tenant
 
 1. Bootstrap it in tier 0, see [bootstrap/Azure](../bootstrap/Azure/README.md#add-a-tenant).
-2. Create `tenants/<tenant>/config.yaml`, with the tier-0 users it references under `existing_users`, and
-   `tenants/<tenant>/lib/` with at least `alz_library_metadata.json`.
+2. Create `tenants/<tenant>/config.yaml`, and `tenants/<tenant>/lib/` with at least `alz_library_metadata.json`.
 3. Add workspace `<tenant>_entraid_mgmt_r1` in project `<tenant>_r1` to [HCP/config.yaml](../HCP/config.yaml).
 
 The directory name is the prefix of the tenant's HCP project and workspace names; it must start with a letter or digit
@@ -48,7 +47,6 @@ At the top level are `entraid_tenant_id`, `entra_id` (every Entra ID section bel
 
 | Section | What it manages | Licence | Graph application permissions (apply identity) |
 |---|---|---|---|
-| `existing_users` | Users managed by the other tier, by `mail_nickname` | Free | `User.Read.All` |
 | `users` | Users, see [Users](#users) | Free | `User.ReadWrite.All`, `RoleManagement.ReadWrite.Directory` |
 | `groups` | Security groups, `description` and members (users, applications, guests); `dynamic_rule`; `licenses` | Free; dynamic groups and licensing P1 | `Group.ReadWrite.All`; licensing `LicenseAssignment.ReadWrite.All`, `Organization.Read.All` |
 | `applications` | App registrations, see below | Free | `Application.ReadWrite.All`, `AppRoleAssignment.ReadWrite.All` |
@@ -80,7 +78,7 @@ Groups and applications are keyed by display name, so renaming one recreates it 
 
 ### Break-glass accounts
 
-Each tenant has two emergency access accounts, cloud-only on its `onmicrosoft.com` domain, with a permanent Global Administrator role and a 64-character password stored in 1Password (`password.onepassword_vault`). They are created by tier 0 and listed in tier 1 under `existing_users`. Every Conditional Access policy must list them in `users.exclude`; nothing excludes them automatically. An alert on their sign-ins is still to do (see the TODO list in [ESLZ/management_design.md](../ESLZ/management_design.md)).
+Each tenant has two emergency access accounts, cloud-only on its `onmicrosoft.com` domain, with a permanent Global Administrator role and a 64-character password stored in 1Password (`password.onepassword_vault`). They are created by tier 0, which tier 1 cannot reference, so tier-1 Conditional Access policies do not exclude them. An alert on their sign-ins is still to do (see the TODO list in [ESLZ/management_design.md](../ESLZ/management_design.md)).
 
 After the first apply:
 
@@ -173,7 +171,7 @@ Each entry of the `users` section creates a cloud-only user with a `mail_nicknam
 | `entraid_role_names` | Permanent Entra ID directory roles |
 | `password` | Initial password: `length` (default 15) and `onepassword_vault` |
 
-Users are keyed by `mail_nickname`, and the rest of the config (group members, owners, managers, role, PIM and Conditional Access assignees, `existing_users`) refers to them by it. The nickname must be unique in the tenant and never change: changing it recreates the user, with a new object ID and without its MFA registrations. Changing `user_principal_name`, e.g. to move users to another verified domain, renames the user in place.
+Users are keyed by `mail_nickname`, and the rest of the config (group members, owners, managers, role, PIM and Conditional Access assignees) refers to them by it. Tier-0 users can't be referenced. The nickname must be unique in the tenant and never change: changing it recreates the user, with a new object ID and without its MFA registrations. Changing `user_principal_name`, e.g. to move users to another verified domain, renames the user in place.
 
 With `password.onepassword_vault`, the password is stored in that 1Password vault and is the account's credential. Without it, the password is only in the Terraform state and must be changed at the first sign-in. Either way, the password is kept in the state.
 
@@ -184,8 +182,8 @@ The `applications` section of a tenant config lists app registrations. Each entr
 | Key | Purpose |
 |---|---|
 | `description` | Description of the app registration |
-| `owners` | `mail_nickname` of users from `users` or `existing_users` |
-| `federated_credentials` | Workload identity federation for HCP Terraform; kept in the config but not applied, see [bootstrap/Azure](../bootstrap/Azure/README.md#hcp-terraform-integration) |
+| `owners` | `mail_nickname` of users from `users` |
+| `federated_credentials` | Workload identity federation: `name`, `subject`, and `issuer` and `audiences`, which default to HCP Terraform's (`https://app.terraform.io`, `api://AzureADTokenExchange`); see [HCP Terraform integration](../bootstrap/Azure/README.md#hcp-terraform-integration) |
 | `graph_app_roles` | Microsoft Graph application permissions, e.g. `Directory.Read.All` (admin consent is granted by the assignment) |
 | `entraid_role_names` | Permanent Entra ID directory roles for the service principal |
 | `client_secret` | Client secret stored in 1Password: `key_vault_name` (vault), optional `rotation_days` (default 180) and `overlap_days` (default 30) |

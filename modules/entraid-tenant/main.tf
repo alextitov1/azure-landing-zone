@@ -6,11 +6,6 @@ locals {
     for user in try(var.config.users, []) : user.mail_nickname => user
   }
 
-  # Users managed by another tier (e.g. tier-0 admins)
-  existing_users_by_name = {
-    for user in try(var.config.existing_users, []) : user.mail_nickname => user
-  }
-
   entraid_groups_by_display_name = {
     for group in try(var.config.groups, []) : group.display_name => group
   }
@@ -19,15 +14,7 @@ locals {
     for app in try(var.config.applications, []) : app.display_name => app
   }
 
-  user_ids = merge(
-    { for name, user in data.azuread_user.existing : name => user.object_id },
-    { for name, user in module.entraid_user : name => user.user_id },
-  )
-}
-
-data "azuread_user" "existing" {
-  for_each      = local.existing_users_by_name
-  mail_nickname = each.key
+  user_ids = { for name, user in module.entraid_user : name => user.user_id }
 }
 
 # Validate that the YAML tenant ID matches the Azure tenant we're deploying to
