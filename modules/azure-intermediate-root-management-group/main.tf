@@ -36,11 +36,16 @@ resource "azapi_resource" "intermediate_root_role_assignment" {
   # Role assignment names are GUIDs; derived from the assignment so a new plan doesn't replace it
   name = uuidv5("url", "${var.config.name}|${each.key}")
   body = {
-    properties = {
-      roleDefinitionId = data.azapi_resource_list.role_definition[each.value.role].output.id
-      principalId      = var.group_ids[each.value.group]
-      principalType    = "Group" # skips the principal lookup, which fails while a new group is still replicating
-    }
+    properties = merge(
+      {
+        roleDefinitionId = data.azapi_resource_list.role_definition[each.value.role].output.id
+        principalId      = var.group_ids[each.value.group]
+        principalType    = "Group" # skips the principal lookup, which fails while a new group is still replicating
+      },
+      # ABAC condition, e.g. to stop Role Based Access Control Administrator from assigning privileged roles;
+      # left out rather than null when unset, so the API sees the same body as before
+      { for k, v in { condition = try(trimspace(each.value.condition), null), conditionVersion = "2.0" } : k => v if try(each.value.condition, null) != null },
+    )
   }
 }
 
@@ -51,7 +56,8 @@ resource "azapi_resource" "hierarchy_settings" {
   name      = "default"
   body = {
     properties = {
-      defaultManagementGroup               = azapi_resource.intermediate_root.id
+      # The API stores the group's name, even when given its ID: sending the ID would be a change on every plan
+      defaultManagementGroup               = azapi_resource.intermediate_root.name
       requireAuthorizationForGroupCreation = try(var.config.require_authorization_for_group_creation, false)
     }
   }

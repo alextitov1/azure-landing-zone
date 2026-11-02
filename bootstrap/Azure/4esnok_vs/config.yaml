@@ -2,6 +2,7 @@
 # Default domain: admin4esnok.onmicrosoft.com
 # Custom domain: vs.4esnok.su
 entraid_tenant_id: 05af71f4-43e2-4c1a-8917-3bf5cb165cfe
+hcp_organization: 4esnok  # HCP Terraform organization of the applications' hcp_workspaces
 
 # Tier 0 (bootstrap/Azure): admin and break-glass users, tier-0 groups, HCP Terraform workspace identities,
 # intermediate root management group.
@@ -48,6 +49,10 @@ entra_id:
     - display_name: "sg-prd-az-root-owner-t0"
       description: "Owner on the intermediate root management group mg-4esnok"
       members: [ ]
+    - display_name: "sg-prd-az-root-mgmt-t0"
+      description: "Manages management groups, policy and Azure RBAC below mg-4esnok (tier 1)"
+      members:
+        - sp-hcp-entraid-mgmt-r1-apply
     - display_name: "sg-prd-az-root-reader-t0"
       description: "Reader on the intermediate root management group mg-4esnok"
       members:
@@ -55,18 +60,23 @@ entra_id:
         - sp-hcp-entraid-mgmt-r1-plan
 
   # Identities of HCP Terraform workspaces (dynamic credentials, OIDC): plan runs use the read-only application,
-  # apply runs the privileged one. The workspace settings that use them are not set up yet.
+  # apply runs the privileged one. federated_credentials lets a workspace's runs sign in as the application;
+  # hcp_workspaces writes its client ID to the workspace, so a rebuild needs no copying.
   applications:
     # Workspace 4esnok_vs_entraid_mgmt_r1 (entraid, tier 1). The apply application can grant itself any directory
     # role (RoleManagement.ReadWrite.Directory), so it is as privileged as a Global Administrator: protect its
-    # workspace like tier 0. Its Azure rights on mg-4esnok are not decided yet.
+    # workspace like tier 0. Its Azure rights on mg-4esnok come from sg-prd-az-root-mgmt-t0 (apply) and
+    # sg-prd-az-root-reader-t0 (plan).
     - display_name: "sp-hcp-entraid-mgmt-r1-plan"
       description: "HCP Terraform plan runs of 4esnok/4esnok_vs_r1/4esnok_vs_entraid_mgmt_r1"
       owners:
         - sysadmin
       federated_credentials:
-        - name: "hcp-plan"
+        - name: "hcp-4esnok_vs_entraid_mgmt_r1-plan"
           subject: "organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_entraid_mgmt_r1:run_phase:plan"
+      hcp_workspaces:  # workspaces that sign in as this application
+        - name: 4esnok_vs_entraid_mgmt_r1
+          run_phase: plan
       graph_app_roles:  # Microsoft Graph application permissions
         - Directory.Read.All
         - Application.Read.All
@@ -78,8 +88,11 @@ entra_id:
       owners:
         - sysadmin
       federated_credentials:
-        - name: "hcp-apply"
+        - name: "hcp-4esnok_vs_entraid_mgmt_r1-apply"
           subject: "organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_entraid_mgmt_r1:run_phase:apply"
+      hcp_workspaces:  # workspaces that sign in as this application
+        - name: 4esnok_vs_entraid_mgmt_r1
+          run_phase: apply
       graph_app_roles:
         - User.ReadWrite.All
         - Group.ReadWrite.All
@@ -97,16 +110,22 @@ entra_id:
       owners:
         - sysadmin
       federated_credentials:
-        - name: "hcp-plan"
+        - name: "hcp-4esnok_vs_azure_mgmt_r1-plan"
           subject: "organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_azure_mgmt_r1:run_phase:plan"
+      hcp_workspaces:  # workspaces that sign in as this application
+        - name: 4esnok_vs_azure_mgmt_r1
+          run_phase: plan
 
     - display_name: "sp-hcp-azure-mgmt-r1-apply"
       description: "HCP Terraform apply runs of 4esnok/4esnok_vs_r1/4esnok_vs_azure_mgmt_r1"
       owners:
         - sysadmin
       federated_credentials:
-        - name: "hcp-apply"
+        - name: "hcp-4esnok_vs_azure_mgmt_r1-apply"
           subject: "organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_azure_mgmt_r1:run_phase:apply"
+      hcp_workspaces:  # workspaces that sign in as this application
+        - name: 4esnok_vs_azure_mgmt_r1
+          run_phase: apply
 
 # Intermediate root management group below the tenant root group (CAF), its Azure RBAC and the tenant's hierarchy
 # settings. The groups below it are created by tier 1 (entraid/tenants/4esnok_vs).
@@ -123,3 +142,20 @@ management_groups:
       group: sg-prd-az-root-owner-t0
     - role: Reader
       group: sg-prd-az-root-reader-t0
+    # Tier 1: management groups (Contributor), policy (Resource Policy Contributor) and role assignments, incl. the
+    # policy identities' and Role Based Access Control Administrator for ESLZ pipelines. Contributor can't write
+    # Microsoft.Authorization, hence the other two.
+    - role: Contributor
+      group: sg-prd-az-root-mgmt-t0
+    - role: Resource Policy Contributor
+      group: sg-prd-az-root-mgmt-t0
+    - role: Role Based Access Control Administrator
+      group: sg-prd-az-root-mgmt-t0
+      # cannot assign or remove Owner or User Access Administrator
+      condition: >-
+        ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})) OR
+        (@Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAllValues:GuidNotEquals
+        {8e3af657-a8ff-443c-a75c-2fe8c4bcb635, 18d7d88d-d35e-4fb5-a5c3-7773c20a72d9}))
+        AND ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})) OR
+        (@Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAllValues:GuidNotEquals
+        {8e3af657-a8ff-443c-a75c-2fe8c4bcb635, 18d7d88d-d35e-4fb5-a5c3-7773c20a72d9}))

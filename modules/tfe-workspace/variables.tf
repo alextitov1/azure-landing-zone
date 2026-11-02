@@ -14,6 +14,12 @@ variable "project_description" {
   default     = null
 }
 
+variable "project_env_vars" {
+  description = "Environment variables for every workspace in the project, in a variable set attached to it; workspace variables win."
+  type        = map(string)
+  default     = {}
+}
+
 variable "secret_env_vars" {
   description = "Sensitive environment variables per workspace: { <workspace> = { <key> = <secret reference> } }; each reference is a key of secret_values."
   type        = map(map(string))

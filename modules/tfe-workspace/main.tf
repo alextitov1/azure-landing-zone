@@ -33,6 +33,32 @@ resource "tfe_workspace" "this" {
   }
 }
 
+# Values shared by the project's workspaces, e.g. the Azure tenant for dynamic credentials
+resource "tfe_variable_set" "project" {
+  count = length(var.project_env_vars) > 0 ? 1 : 0
+
+  name         = "${var.project_name}-env"
+  description  = "Environment variables of project ${var.project_name}; managed by Terraform"
+  organization = var.organization_name
+}
+
+resource "tfe_project_variable_set" "project" {
+  count = length(var.project_env_vars) > 0 ? 1 : 0
+
+  project_id      = tfe_project.this.id
+  variable_set_id = tfe_variable_set.project[0].id
+}
+
+resource "tfe_variable" "project_env" {
+  for_each = var.project_env_vars
+
+  variable_set_id = tfe_variable_set.project[0].id
+  category        = "env"
+  key             = each.key
+  value           = each.value
+  description     = "managed by Terraform"
+}
+
 resource "tfe_variable" "env" {
   for_each = merge([
     for ws_name, ws in var.workspaces : {

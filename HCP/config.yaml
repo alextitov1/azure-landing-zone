@@ -28,13 +28,23 @@ projects:
 
   4esnok_vs_r1:
     description: "Ring 1 vs.4esnok.su workspaces"
+    env_vars:  # Azure dynamic credentials; each workspace's client IDs are set by the tier that creates its identities
+      TFC_AZURE_PROVIDER_AUTH: "true"
+      ARM_TENANT_ID: 05af71f4-43e2-4c1a-8917-3bf5cb165cfe
     workspaces:
       4esnok_vs_entraid_mgmt_r1:
         description: "Entra ID tier 1: users, groups, applications, management groups (entraid, tenant 4esnok_vs)"
         tags: { env: dev, cloud: azure, project: 4esnok.su }
-        # Run by entraid/entraid.sh until HCP Terraform's Azure sign-in is reworked; then remote, with
-        # vcs (working_directory: entraid) and env_vars: { TF_VAR_tenant: 4esnok_vs }
-        execution_mode: local
+        # Remote: signs in with dynamic credentials, client IDs set by tier 0 (bootstrap/Azure/4esnok_vs); TF_VAR_tenant
+        # and the secrets are set by hand (entraid/README.md). No auto_apply: tier 1 can change anything in the
+        # tenant, confirm each apply.
+        execution_mode: remote
+        vcs:
+          repo: alextitov1/azure-landing-zone
+          github_app_installation: alextitov1
+          working_directory: entraid
+          # the shared root and modules, and this tenant's config only
+          trigger_patterns: ["/entraid/*", "/entraid/tenants/4esnok_vs/**/*", "/modules/**/*"]
 
       4esnok_vs_azure_mgmt_r1:
         description: "Azure: management (central Log Analytics workspace)"
@@ -62,6 +72,9 @@ projects:
 
   4esnok_vs_r2:
     description: "Ring 2 vs.4esnok.su workspaces"
+    env_vars:  # Azure dynamic credentials; each workspace's client IDs are set by the tier that creates its identities
+      TFC_AZURE_PROVIDER_AUTH: "true"
+      ARM_TENANT_ID: 05af71f4-43e2-4c1a-8917-3bf5cb165cfe
     workspaces:
       4esnok_vs_azure_cortex_r2:
         description: "Azure: workload cortex"

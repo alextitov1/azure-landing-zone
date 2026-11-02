@@ -21,5 +21,6 @@ export TF_VAR_onepassword_service_account_token
 
 TF_TOKEN_app_terraform_io=$(op read "op://IT/terraform_hcp_4esnok_tier0/credential")
 export TF_TOKEN_app_terraform_io
+export TFE_TOKEN="$TF_TOKEN_app_terraform_io"  # tfe provider: writes the Azure client IDs to the HCP workspaces
 
 terraform -chdir="$DIR" "${@:2}"

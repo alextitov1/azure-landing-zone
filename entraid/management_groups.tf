@@ -1,8 +1,8 @@
 # Management groups below the intermediate root, policy and Azure RBAC on them, with the Azure Verified Module for
 # Azure Landing Zones. The hierarchy is an architecture definition in tenants/<tenant>/lib (management_groups.architecture).
 # The intermediate root is created by tier 0 (bootstrap/Azure) and is `exists: true` there: it is not created here,
-# but still gets its archetype's policy and the role assignments below. This tier's rights on it come from the
-# tier-0 Contributor group.
+# but still gets its archetype's policy and the role assignments below. This tier's rights on it come from tier 0
+# (sg-prd-az-root-mgmt-t0 for apply runs, sg-prd-az-root-reader-t0 for plans).
 # Subscriptions are not moved here: that needs Owner on the subscription itself.
 
 locals {

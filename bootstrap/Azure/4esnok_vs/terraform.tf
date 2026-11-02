@@ -18,6 +18,14 @@ module "entraid" {
   config    = local.config.entra_id
 }
 
+module "hcp_workspace_identity" {
+  source = "../../../modules/hcp-workspace-identity"
+
+  organization = local.config.hcp_organization
+  config       = local.config.entra_id.applications
+  applications = module.entraid.applications
+}
+
 module "intermediate_root_management_group" {
   source = "../../../modules/azure-intermediate-root-management-group"
 

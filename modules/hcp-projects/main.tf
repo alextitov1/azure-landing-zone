@@ -23,6 +23,7 @@ module "project" {
   organization_name   = var.organization
   project_name        = each.key
   project_description = try(each.value.description, null)
+  project_env_vars    = try(each.value.env_vars, {})
 
   secret_env_vars = { for name, ws in each.value.workspaces : name => ws.secrets if try(ws.secrets, null) != null }
   secret_values   = module.secrets.values

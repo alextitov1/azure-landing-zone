@@ -24,6 +24,10 @@ terraform {
       source  = "Azure/alz"
       version = "~> 0.22"
     }
+    tfe = {
+      source  = "hashicorp/tfe"
+      version = "~> 0.82"
+    }
   }
 }
 
@@ -37,6 +41,23 @@ variable "tenant" {
   }
 }
 
+# Set by HCP Terraform when the workspace uses dynamic Azure credentials (TFC_AZURE_PROVIDER_AUTH); null for local
+# runs, which sign in with `az login`. Passed explicitly because msgraph, azapi and alz have no built-in HCP support.
+variable "tfc_azure_dynamic_credentials" {
+  type = object({
+    default = object({
+      client_id_file_path  = string
+      oidc_token_file_path = string
+    })
+    aliases = map(object({
+      client_id_file_path  = string
+      oidc_token_file_path = string
+    }))
+  })
+  description = "Azure dynamic credentials injected by HCP Terraform"
+  default     = null
+}
+
 variable "onepassword_service_account_token" {
   type        = string
   description = "1Password service account token, to store user passwords and client secrets. Set via TF_VAR_onepassword_service_account_token."
@@ -47,20 +68,39 @@ locals {
   config = yamldecode(file("${path.module}/tenants/${var.tenant}/config.yaml"))
 }
 
-provider "azuread" {}
+provider "azuread" {
+  use_cli              = var.tfc_azure_dynamic_credentials == null
+  use_oidc             = var.tfc_azure_dynamic_credentials != null
+  client_id_file_path  = try(var.tfc_azure_dynamic_credentials.default.client_id_file_path, null)
+  oidc_token_file_path = try(var.tfc_azure_dynamic_credentials.default.oidc_token_file_path, null)
+}
 
-provider "msgraph" {}
+provider "msgraph" {
+  use_cli              = var.tfc_azure_dynamic_credentials == null
+  use_oidc             = var.tfc_azure_dynamic_credentials != null
+  client_id_file_path  = try(var.tfc_azure_dynamic_credentials.default.client_id_file_path, null)
+  oidc_token_file_path = try(var.tfc_azure_dynamic_credentials.default.oidc_token_file_path, null)
+}
 
 provider "onepassword" {
   service_account_token = var.onepassword_service_account_token
 }
 
-provider "azapi" {}
+provider "azapi" {
+  use_cli              = var.tfc_azure_dynamic_credentials == null
+  use_oidc             = var.tfc_azure_dynamic_credentials != null
+  client_id_file_path  = try(var.tfc_azure_dynamic_credentials.default.client_id_file_path, null)
+  oidc_token_file_path = try(var.tfc_azure_dynamic_credentials.default.oidc_token_file_path, null)
+}
 
 # Each tenant has its own ALZ library (hierarchy, archetypes, policy) for Azure/avm-ptn-alz. The provider loads it
 # even when the tenant has no management_groups, so every tenant needs lib/ with at least alz_library_metadata.json.
 provider "alz" {
-  library_references = [{ custom_url = "${path.root}/tenants/${var.tenant}/lib" }]
+  library_references   = [{ custom_url = "${path.root}/tenants/${var.tenant}/lib" }]
+  use_cli              = var.tfc_azure_dynamic_credentials == null
+  use_oidc             = var.tfc_azure_dynamic_credentials != null
+  client_id_file_path  = try(var.tfc_azure_dynamic_credentials.default.client_id_file_path, null)
+  oidc_token_file_path = try(var.tfc_azure_dynamic_credentials.default.oidc_token_file_path, null)
 }
 
 module "entraid" {
@@ -68,6 +108,14 @@ module "entraid" {
 
   tenant_id = local.config.entraid_tenant_id
   config    = try(local.config.entra_id, {})
+}
+
+module "hcp_workspace_identity" {
+  source = "../modules/hcp-workspace-identity"
+
+  organization = try(local.config.hcp_organization, null)
+  config       = try(local.config.entra_id.applications, [])
+  applications = module.entraid.applications
 }
 
 output "tenant_id" {

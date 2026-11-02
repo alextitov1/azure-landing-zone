@@ -87,13 +87,13 @@ Following the Cloud Adoption Framework, a tenant's management groups hang from o
 below the tenant root group, which gets no policy or role assignments itself. Tier 0 creates only that group, from
 `management_groups` in the tenant config with the shared module
 [`modules/azure-intermediate-root-management-group`](../../modules/azure-intermediate-root-management-group), with
-Azure RBAC for three groups:
+Azure RBAC for three groups (role assignments take an optional ABAC `condition`):
 
-| Group | Role on the intermediate root | Members |
+| Group | Roles on the intermediate root | Members |
 |---|---|---|
 | `sg-prd-az-root-owner-t0` | Owner | none standing; add someone only for a change that needs it |
-| `sg-prd-az-root-contributor-t0` | Contributor | `sysadmin`, who runs tier 1 |
-| `sg-prd-az-root-reader-t0` | Reader | none yet |
+| `sg-prd-az-root-mgmt-t0` | Contributor, Resource Policy Contributor, Role Based Access Control Administrator (can't assign or remove Owner or User Access Administrator) | tier-1 apply runs: management groups, policy and role assignments below |
+| `sg-prd-az-root-reader-t0` | Reader | `sysadmin`, tier-1 plan runs |
 
 Every group and subscription below inherits these. Tier 0 also sets the tenant's hierarchy settings: new
 subscriptions go to the intermediate root instead of the tenant root group, and `require_authorization_for_group_creation`
@@ -111,5 +111,36 @@ and an apply application, `sp-hcp-<workspace>-<plan|apply>`, with a federated cr
 Tier 0 creates them for the workspaces that manage the tenant itself (`entraid`, ESLZ/management); tier 1 creates
 them for the other workspaces.
 
-The workspace settings that use them are not set up yet. Until then, both tiers run locally with the Azure CLI
-login, and HCP Terraform only stores their state.
+Two settings of an application connect it to workspaces:
+
+- `federated_credentials`: lets the runs of a workspace sign in as the application. The subject names the workspace
+  and run phase, `organization:<org>:project:<project>:workspace:<workspace>:run_phase:<plan|apply>`.
+- `hcp_workspaces`: writes the application's client ID to each listed workspace (with `hcp_organization` at the top
+  of the tenant config), as `TFC_AZURE_PLAN_CLIENT_ID` or `TFC_AZURE_APPLY_CLIENT_ID` for its `run_phase`, or
+  `TFC_AZURE_RUN_CLIENT_ID` for both phases. Applied by
+  [`modules/hcp-workspace-identity`](../../modules/hcp-workspace-identity).
+
+One application can serve several workspaces: list each in both settings. The values that survive a rebuild,
+`TFC_AZURE_PROVIDER_AUTH` and `ARM_TENANT_ID`, are in the project's variable set, from
+[HCP/config.yaml](../../HCP/config.yaml) (`env_vars` of the project). Nothing is copied by hand, so the landing zone can
+be rebuilt from scratch in one pass:
+
+1. [bootstrap/HCP](../HCP/README.md), then [HCP](../../HCP/README.md): projects, workspaces and their variable sets.
+2. Tier 0 (this directory): its applications and their workspace variables. The workspaces must exist first.
+3. [Tier 1](../../entraid/README.md): its applications and their workspace variables.
+4. The ESLZ workspaces, whose first run signs in with the new applications.
+
+The scripts give the `tfe` provider the HCP token they already read (`TFE_TOKEN`). Tier 0 runs locally with the
+Azure CLI login, and HCP Terraform only stores its state.
+
+### Tier 1
+
+For tier 1 of `4esnok_vs` (workspace `4esnok_vs_entraid_mgmt_r1`) to run in HCP Terraform, tier 0 creates:
+
+- its plan and apply applications, with their Graph permissions and client IDs on the workspace;
+- their Azure rights on the intermediate root (see [Intermediate root](#intermediate-root));
+
+The workspace's execution mode and VCS connection are in [HCP/config.yaml](../../HCP/config.yaml). Its other
+variables are set by hand in HCP Terraform, see [Remote runs](../../entraid/README.md#remote-runs). The apply
+application can grant itself any directory role (`RoleManagement.ReadWrite.Directory`), so it can reach anything in
+the tenant: protect the workspace like tier 0.

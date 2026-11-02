@@ -28,6 +28,18 @@ projects:
           working_directory: ESLZ/subscriptions
 ```
 
+Optional project field `env_vars`: environment variables for every workspace in the project, in a variable set
+attached to it. A workspace variable with the same name wins. Use it for values that survive a rebuild, such as the
+Azure tenant for dynamic credentials:
+```yaml
+  4esnok_vs_r1:
+    env_vars:
+      TFC_AZURE_PROVIDER_AUTH: "true"
+      ARM_TENANT_ID: 05af71f4-43e2-4c1a-8917-3bf5cb165cfe
+```
+Each workspace's Azure client IDs (`TFC_AZURE_PLAN_CLIENT_ID`, `TFC_AZURE_APPLY_CLIENT_ID`) are not set here: the tier
+that creates its identities writes them, see [HCP Terraform integration](../bootstrap/Azure/README.md#hcp-terraform-integration).
+
 Optional workspace fields:
 
 | Field | Default |

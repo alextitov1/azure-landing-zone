@@ -4,7 +4,8 @@ variable "entraid_application" {
     description     = optional(string)
     owners          = optional(list(string), []) # user mail_nicknames
     graph_app_roles = optional(list(string), []) # Microsoft Graph application permissions, e.g. Directory.Read.All
-    # Workload identity federation, e.g. HCP Terraform dynamic credentials; the defaults are HCP Terraform's
+    # Workload identity federation, e.g. HCP Terraform dynamic credentials or GitHub Actions; the defaults are HCP
+    # Terraform's
     federated_credentials = optional(list(object({
       name        = string
       subject     = string # e.g. organization:<org>:project:<project>:workspace:<workspace>:run_phase:<plan|apply>

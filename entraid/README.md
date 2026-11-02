@@ -16,19 +16,38 @@ tenants/<tenant>/
 
 ## Day-two operations
 
-Edit `tenants/<tenant>/config.yaml`, then plan and apply, signed in with `az login` to that tenant:
+Each tenant has an HCP Terraform workspace `<tenant>_entraid_mgmt_r1` (project `<tenant>_r1`, see
+[HCP/config.yaml](../HCP/config.yaml)). The plan fails if the tenant signed in to is not the config's
+`entraid_tenant_id`.
+
+### Remote runs
+
+`4esnok_vs`: open a pull request that changes `tenants/<tenant>/` or the shared code for a speculative plan; merge
+to `main`, then confirm the apply in HCP Terraform (no auto-apply). Runs sign in with dynamic credentials: plan runs
+as `sp-hcp-entraid-mgmt-r1-plan`, apply runs as `sp-hcp-entraid-mgmt-r1-apply`. Tier 0 creates both, their rights
+and their client IDs on the workspace, see
+[HCP Terraform integration](../bootstrap/Azure/README.md#hcp-terraform-integration).
+
+Set these environment variables on the workspace by hand, in HCP Terraform:
+
+| Variable | Value | Sensitive |
+|---|---|---|
+| `TF_VAR_tenant` | the tenant directory, e.g. `4esnok_vs` | no |
+| `TFE_TOKEN` | an HCP Terraform token that can write variables on the tier-1 applications' workspaces | yes |
+| `TF_VAR_onepassword_service_account_token` | the tier-1 1Password service account token (`op://IT/op_azure_t1_rw_t1/credential`) | yes |
+
+### Local runs
+
+`4esnok_mail`, whose workspace only stores state: edit the config, then plan and apply, signed in with `az login`
+to that tenant:
 
 ```sh
-./entraid.sh 4esnok_vs init
-./entraid.sh 4esnok_vs plan
-./entraid.sh 4esnok_vs apply
+./entraid.sh 4esnok_mail init
+./entraid.sh 4esnok_mail plan
+./entraid.sh 4esnok_mail apply
 ```
 
-The script selects the HCP Terraform workspace `<tenant>_entraid_mgmt_r1` (project `<tenant>_r1`, see
-[HCP/config.yaml](../HCP/config.yaml)), which only stores state for now. Runs move to HCP Terraform, on merge to
-`main`, once its Azure sign-in is reworked.
-
-The plan fails if the signed-in tenant is not the config's `entraid_tenant_id`.
+For a remote workspace the script can still run a speculative plan, with the workspace's own variables.
 
 ### Add a tenant
 
@@ -57,7 +76,7 @@ At the top level are `entraid_tenant_id`, `entra_id` (every Entra ID section bel
 | `guests` | B2B guest invitations | Free | `User.Invite.All` |
 | `cross_tenant_access` | Cross-tenant access default and partners (Graph property names) | Free | `Policy.ReadWrite.CrossTenantAccess` |
 | `domains` | Additional custom domains and their verification | Free | `Domain.ReadWrite.All` |
-| `management_groups` | Management groups (Azure/avm-ptn-alz), Azure Policy and RBAC on them | Free | Azure: Contributor on the intermediate root, from tier 0 (see [Management groups](#management-groups)) |
+| `management_groups` | Management groups (Azure/avm-ptn-alz), Azure Policy and RBAC on them | Free | Azure on the intermediate root, from tier 0: Contributor, Resource Policy Contributor, Role Based Access Control Administrator (see [Management groups](#management-groups)) |
 
 Grant a permission to an apply identity only when its tier uses that section. The plan application needs the read equivalents (`Directory.Read.All` and `Policy.Read.All` cover most of them).
 
@@ -114,9 +133,10 @@ Users register their own MFA methods at first sign-in; Terraform cannot do this 
 
 The intermediate root `mg-4esnok` is created by tier 0, with its Azure RBAC and the hierarchy settings (see
 [Intermediate root](../bootstrap/Azure/README.md#intermediate-root)). Here it is `exists: true` in the architecture:
-not created, but still given its archetype's policy and the role assignments on it. Tier 1 builds the groups below it
-with the Contributor role of the tier-0 Contributor group. Assign Reader on each group to the tier-1 plan
-identity, so plan runs can read it.
+not created, but still given its archetype's policy and the role assignments on it. Tier 1's rights come from
+tier 0 group `sg-prd-az-root-mgmt-t0` on the intermediate root: Contributor for the groups, Resource Policy
+Contributor for policy, and Role Based Access Control Administrator for role assignments, which can't assign or
+remove Owner or User Access Administrator. Plan runs have Reader there.
 
 Moving a subscription into a group needs Owner on the subscription and write access on the group, so it is done
 by the subscription's Owner (`az account management-group subscription add`), given Management Group Contributor
@@ -183,7 +203,8 @@ The `applications` section of a tenant config lists app registrations. Each entr
 |---|---|
 | `description` | Description of the app registration |
 | `owners` | `mail_nickname` of users from `users` |
-| `federated_credentials` | Workload identity federation: `name`, `subject`, and `issuer` and `audiences`, which default to HCP Terraform's (`https://app.terraform.io`, `api://AzureADTokenExchange`); see [HCP Terraform integration](../bootstrap/Azure/README.md#hcp-terraform-integration) |
+| `federated_credentials` | Workload identity federation (HCP Terraform, GitHub Actions, ...): `name`, `subject`, and `issuer` and `audiences`, which default to HCP Terraform's (`https://app.terraform.io`, `api://AzureADTokenExchange`) |
+| `hcp_workspaces` | HCP Terraform workspaces that get the application's client ID: `name` and optional `run_phase` (`plan` or `apply`; unset for both); needs top-level `hcp_organization`. The workspace also needs a federated credential, see [HCP Terraform integration](../bootstrap/Azure/README.md#hcp-terraform-integration) |
 | `graph_app_roles` | Microsoft Graph application permissions, e.g. `Directory.Read.All` (admin consent is granted by the assignment) |
 | `entraid_role_names` | Permanent Entra ID directory roles for the service principal |
 | `client_secret` | Client secret stored in 1Password: `key_vault_name` (vault), optional `rotation_days` (default 180) and `overlap_days` (default 30) |
