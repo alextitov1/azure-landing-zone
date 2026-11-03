@@ -9,6 +9,7 @@ set -euo pipefail  # stop if a secret cannot be read from 1Password
 TOKEN=$(op read "op://IT/terraform_hcp_4esnok_tier0/credential")
 export TF_TOKEN_app_terraform_io="$TOKEN"   # cloud block (state)
 export TFE_TOKEN="$TOKEN"                   # tfe provider
+export OP_ACCOUNT="my.1password.com"        # onepassword provider: desktop app sign-in
 
 # Secrets for the tier-1 workspace are listed in config.yaml (secrets:) and read by Terraform itself.
 
