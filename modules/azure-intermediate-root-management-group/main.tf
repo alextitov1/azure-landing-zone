@@ -56,9 +56,15 @@ resource "azapi_resource" "hierarchy_settings" {
   name      = "default"
   body = {
     properties = {
-      # The API stores the group's name, even when given its ID: sending the ID would be a change on every plan
-      defaultManagementGroup               = azapi_resource.intermediate_root.name
+      defaultManagementGroup               = azapi_resource.intermediate_root.id
       requireAuthorizationForGroupCreation = try(var.config.require_authorization_for_group_creation, false)
     }
+  }
+
+  lifecycle {
+    # The API takes the group's ID but returns its name: https://github.com/Azure/azure-rest-api-specs/issues/33001
+    ignore_changes = [body.properties.defaultManagementGroup]
+    # Ignoring the field would also hide a renamed intermediate root, which is a new group
+    replace_triggered_by = [azapi_resource.intermediate_root.id]
   }
 }

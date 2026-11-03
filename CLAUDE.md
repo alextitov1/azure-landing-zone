@@ -10,6 +10,9 @@ different subscription are marked by the name of their resource group.
 
 ## Rules
 
+- Don't change anything until I explicitly ask: no file edits, branches, commits or pushes. Answer questions and
+  propose changes first, then wait. A question like "can I ...?" or "is it possible ...?" is not a request to make
+  the change. Read-only commands are fine.
 - This is a lab: nothing is production, even resources with production names or tags. Everything is disposable and
   redeployable, so don't write `moved`, `import` or `removed` blocks or migrate state
 - Never run the 1Password CLI (`op`), and never print or log secret values. Reference secrets as `op://` in YAML;
@@ -22,6 +25,8 @@ different subscription are marked by the name of their resource group.
 - Docs: match the existing READMEs, document behaviour rather than code, and link instead of repeating another README.
 - Suggest best practices, even where the existing code doesn't follow them; the goal is to learn and improve.
 - Don't change code outside the task without asking.
+
+- Don't change anything until I explicitly ask: no file edits, branches, commits or pushes. Answer questions and propose changes first, then wait. A question like "can I ...?" or "is it possible ...?" is not a request to make the change. Read-only commands are fine.
 
 
 ## Checks
