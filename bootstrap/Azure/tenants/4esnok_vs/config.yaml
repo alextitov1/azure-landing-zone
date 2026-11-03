@@ -48,17 +48,14 @@ entra_id:
     - display_name: "sg-prd-az-root-owner-t0"
       description: "Owner on the intermediate root management group mg-4esnok"
       members: [ ]
-    # entraid keeps its rights until it has destroyed its management groups, which ESLZ/governance then creates
     - display_name: "sg-prd-az-root-mgmt-t0"
-      description: "Manages management groups, policy and Azure RBAC below mg-4esnok (tier 1)"
+      description: "Manages management groups, policy and Azure RBAC below mg-4esnok (ESLZ/governance)"
       members:
-        - sp-hcp-entraid-directory-r1-apply
         - sp-hcp-azure-governance-r1-apply
     - display_name: "sg-prd-az-root-reader-t0"
       description: "Reader on the intermediate root management group mg-4esnok"
       members:
         - sysadmin
-        - sp-hcp-entraid-directory-r1-plan
         - sp-hcp-azure-governance-r1-plan
 
   # Identities of HCP Terraform workspaces (dynamic credentials, OIDC): plan runs use the read-only application,
@@ -67,8 +64,7 @@ entra_id:
   applications:
     # Workspace 4esnok_vs_entraid_directory_r1 (entraid, tier 1). The apply application can grant itself any
     # directory role (RoleManagement.ReadWrite.Directory), so it is as privileged as a Global Administrator: protect
-    # its workspace like tier 0. Its Azure rights on mg-4esnok come from sg-prd-az-root-mgmt-t0 (apply) and
-    # sg-prd-az-root-reader-t0 (plan).
+    # its workspace like tier 0. It has no Azure rights.
     - display_name: "sp-hcp-entraid-directory-r1-plan"
       description: "HCP Terraform plan runs of 4esnok/4esnok_vs_r1/4esnok_vs_entraid_directory_r1"
       owners:
