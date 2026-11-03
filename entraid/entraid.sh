@@ -12,7 +12,7 @@ DIR="$(dirname "$0")"
 # HCP Terraform workspace, named after the tenant (see HCP/config.yaml)
 export TF_CLOUD_ORGANIZATION="4esnok"
 export TF_CLOUD_PROJECT="${TENANT}_r1"
-export TF_WORKSPACE="${TENANT}_entraid_mgmt_r1"
+export TF_WORKSPACE="${TENANT}_entraid_directory_r1"
 export TF_VAR_tenant="$TENANT"
 
 # Token for the 1Password Terraform provider, which stores user passwords and client secrets in the Azure vault.

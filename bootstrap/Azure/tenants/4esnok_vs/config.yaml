@@ -48,44 +48,47 @@ entra_id:
     - display_name: "sg-prd-az-root-owner-t0"
       description: "Owner on the intermediate root management group mg-4esnok"
       members: [ ]
+    # entraid keeps its rights until it has destroyed its management groups, which ESLZ/governance then creates
     - display_name: "sg-prd-az-root-mgmt-t0"
       description: "Manages management groups, policy and Azure RBAC below mg-4esnok (tier 1)"
       members:
-        - sp-hcp-entraid-mgmt-r1-apply
+        - sp-hcp-entraid-directory-r1-apply
+        - sp-hcp-azure-governance-r1-apply
     - display_name: "sg-prd-az-root-reader-t0"
       description: "Reader on the intermediate root management group mg-4esnok"
       members:
         - sysadmin
-        - sp-hcp-entraid-mgmt-r1-plan
+        - sp-hcp-entraid-directory-r1-plan
+        - sp-hcp-azure-governance-r1-plan
 
   # Identities of HCP Terraform workspaces (dynamic credentials, OIDC): plan runs use the read-only application,
   # apply runs the privileged one. federated_credentials lets a workspace's runs sign in as the application; the
   # workspace reads the client ID from the client_ids output (`variables:` in HCP/config.yaml).
   applications:
-    # Workspace 4esnok_vs_entraid_mgmt_r1 (entraid, tier 1). The apply application can grant itself any directory
-    # role (RoleManagement.ReadWrite.Directory), so it is as privileged as a Global Administrator: protect its
-    # workspace like tier 0. Its Azure rights on mg-4esnok come from sg-prd-az-root-mgmt-t0 (apply) and
+    # Workspace 4esnok_vs_entraid_directory_r1 (entraid, tier 1). The apply application can grant itself any
+    # directory role (RoleManagement.ReadWrite.Directory), so it is as privileged as a Global Administrator: protect
+    # its workspace like tier 0. Its Azure rights on mg-4esnok come from sg-prd-az-root-mgmt-t0 (apply) and
     # sg-prd-az-root-reader-t0 (plan).
-    - display_name: "sp-hcp-entraid-mgmt-r1-plan"
-      description: "HCP Terraform plan runs of 4esnok/4esnok_vs_r1/4esnok_vs_entraid_mgmt_r1"
+    - display_name: "sp-hcp-entraid-directory-r1-plan"
+      description: "HCP Terraform plan runs of 4esnok/4esnok_vs_r1/4esnok_vs_entraid_directory_r1"
       owners:
         - sysadmin
       federated_credentials:
-        - name: "hcp-4esnok_vs_entraid_mgmt_r1-plan"
-          subject: "organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_entraid_mgmt_r1:run_phase:plan"
+        - name: "hcp-4esnok_vs_entraid_directory_r1-plan"
+          subject: "organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_entraid_directory_r1:run_phase:plan"
       graph_app_roles:  # Microsoft Graph application permissions
         - Directory.Read.All
         - Application.Read.All
         - RoleManagement.Read.Directory
         - Policy.Read.All
 
-    - display_name: "sp-hcp-entraid-mgmt-r1-apply"
-      description: "HCP Terraform apply runs of 4esnok/4esnok_vs_r1/4esnok_vs_entraid_mgmt_r1"
+    - display_name: "sp-hcp-entraid-directory-r1-apply"
+      description: "HCP Terraform apply runs of 4esnok/4esnok_vs_r1/4esnok_vs_entraid_directory_r1"
       owners:
         - sysadmin
       federated_credentials:
-        - name: "hcp-4esnok_vs_entraid_mgmt_r1-apply"
-          subject: "organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_entraid_mgmt_r1:run_phase:apply"
+        - name: "hcp-4esnok_vs_entraid_directory_r1-apply"
+          subject: "organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_entraid_directory_r1:run_phase:apply"
       graph_app_roles:
         - User.ReadWrite.All
         - Group.ReadWrite.All
@@ -96,6 +99,29 @@ entra_id:
         - Policy.Read.All
         - Policy.ReadWrite.ConditionalAccess
         - Policy.ReadWrite.Authorization
+
+    # Workspace 4esnok_vs_azure_governance_r1 (ESLZ/governance): management groups below mg-4esnok, policy and
+    # Azure RBAC on them. Its Azure rights on mg-4esnok come from sg-prd-az-root-mgmt-t0 (apply) and
+    # sg-prd-az-root-reader-t0 (plan); Group.Read.All finds the groups its role assignments name.
+    - display_name: "sp-hcp-azure-governance-r1-plan"
+      description: "HCP Terraform plan runs of 4esnok/4esnok_vs_r1/4esnok_vs_azure_governance_r1"
+      owners:
+        - sysadmin
+      federated_credentials:
+        - name: "hcp-4esnok_vs_azure_governance_r1-plan"
+          subject: "organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_azure_governance_r1:run_phase:plan"
+      graph_app_roles:
+        - Group.Read.All
+
+    - display_name: "sp-hcp-azure-governance-r1-apply"
+      description: "HCP Terraform apply runs of 4esnok/4esnok_vs_r1/4esnok_vs_azure_governance_r1"
+      owners:
+        - sysadmin
+      federated_credentials:
+        - name: "hcp-4esnok_vs_azure_governance_r1-apply"
+          subject: "organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_azure_governance_r1:run_phase:apply"
+      graph_app_roles:
+        - Group.Read.All
 
     # Workspace 4esnok_vs_azure_mgmt_r1 (ESLZ/management: central Log Analytics workspace). No Azure rights yet.
     - display_name: "sp-hcp-azure-mgmt-r1-plan"

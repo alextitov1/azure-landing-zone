@@ -57,8 +57,8 @@ projects:
 ```yaml
     variables:
       TF_VAR_tenant: 4esnok_vs
-      TFC_AZURE_PLAN_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-hcp-entraid-mgmt-r1-plan
-      TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-hcp-entraid-mgmt-r1-apply
+      TFC_AZURE_PLAN_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-hcp-entraid-directory-r1-plan
+      TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-hcp-entraid-directory-r1-apply
 ```
 
 - `secrets` works similarly, but the values are read from 1Password. In case tier1, the workspace has a OP token to access the vault.

@@ -20,7 +20,8 @@ ws: 4esnok_vs_entraid_bootstrap_r0
 ws: 4esnok_vs_azure_bootstrap_r0
 
 project: 4esnok_vs_r1
-ws: 4esnok_vs_entraid_mgmt_r1
+ws: 4esnok_vs_entraid_directory_r1
+ws: 4esnok_vs_azure_governance_r1
 ws: 4esnok_vs_azure_mgmt_r1
 ws: 4esnok_vs_azure_networking_r1
 

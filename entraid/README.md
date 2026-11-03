@@ -16,7 +16,7 @@ tenants/<tenant>/
 
 ## Day-two operations
 
-Each tenant has an HCP Terraform workspace `<tenant>_entraid_mgmt_r1` (project `<tenant>_r1`, see
+Each tenant has an HCP Terraform workspace `<tenant>_entraid_directory_r1` (project `<tenant>_r1`, see
 [HCP/config.yaml](../HCP/config.yaml)). The plan fails if the tenant signed in to is not the config's
 `entraid_tenant_id`.
 
@@ -24,7 +24,7 @@ Each tenant has an HCP Terraform workspace `<tenant>_entraid_mgmt_r1` (project `
 
 `4esnok_vs`: open a pull request that changes `tenants/<tenant>/` or the shared code for a speculative plan; merge
 to `main`, then confirm the apply in HCP Terraform (no auto-apply). Runs sign in with dynamic credentials: plan runs
-as `sp-hcp-entraid-mgmt-r1-plan`, apply runs as `sp-hcp-entraid-mgmt-r1-apply`. Tier 0 creates both and their
+as `sp-hcp-entraid-directory-r1-plan`, apply runs as `sp-hcp-entraid-directory-r1-apply`. Tier 0 creates both and their
 rights, and the workspace reads their client IDs, see
 [HCP Terraform integration](../bootstrap/Azure/README.md#hcp-terraform-integration).
 
@@ -52,7 +52,7 @@ For a remote workspace the script can still run a speculative plan, with the wor
 
 1. Bootstrap it in tier 0, see [bootstrap/Azure](../bootstrap/Azure/README.md#add-a-tenant).
 2. Create `tenants/<tenant>/config.yaml`, and `tenants/<tenant>/lib/` with at least `alz_library_metadata.json`.
-3. Add workspace `<tenant>_entraid_mgmt_r1` in project `<tenant>_r1` to [HCP/config.yaml](../HCP/config.yaml).
+3. Add workspace `<tenant>_entraid_directory_r1` in project `<tenant>_r1` to [HCP/config.yaml](../HCP/config.yaml).
 
 The directory name is the prefix of the tenant's HCP project and workspace names; it must start with a letter or digit
 and contain only letters, digits and underscores.
