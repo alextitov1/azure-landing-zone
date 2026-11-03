@@ -28,7 +28,7 @@ resource "onepassword_item" "this" {
   count = var.entraid_user.password.onepassword_vault != null ? 1 : 0
   vault = data.onepassword_vault.this[0].uuid
 
-  title    = "${var.entraid_user.user_principal_name} "
+  title    = var.entraid_user.user_principal_name
   category = "login"
 
   username   = var.entraid_user.user_principal_name

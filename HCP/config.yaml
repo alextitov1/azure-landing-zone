@@ -16,7 +16,7 @@ projects:
       4esnok_vs_entraid_directory_r1:
         description: "Entra ID tier 1: users, groups, applications, management groups (entraid, tenant 4esnok_vs)"
         tags: { env: mgmt, cloud: azure }
-        # Remote: signs in with dynamic credentials as applications of tier 0 (bootstrap/Azure/4esnok_vs); TF_VAR_tenant
+        # Remote: signs in with dynamic credentials as applications of tier 0 (bootstrap/Azure/tenants/4esnok_vs); TF_VAR_tenant
         # and the secrets are set by hand (entraid/README.md). No auto_apply: tier 1 can change anything in the
         # tenant, confirm each apply.
         execution_mode: remote
