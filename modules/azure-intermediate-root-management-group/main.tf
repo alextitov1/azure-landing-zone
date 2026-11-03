@@ -1,5 +1,5 @@
 # The CAF intermediate root: one management group below the tenant root group, Azure RBAC on it for Entra ID groups,
-# and the tenant's hierarchy settings. The groups below it are built by tier 1 (entraid).
+# and the tenant's hierarchy settings. The groups below it are built by ESLZ/governance.
 # azapi rather than azurerm: azurerm needs a subscription, and the Global Administrator may have none yet
 
 locals {

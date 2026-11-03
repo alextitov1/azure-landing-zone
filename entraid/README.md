@@ -1,17 +1,15 @@
 # Entra ID tenants (tier 1)
 
 This directory manages the day-two configuration of each Entra ID tenant: users, groups, applications, Conditional
-Access, PIM, access packages, administrative units, guests, cross-tenant access, domains, and management groups with
-Azure Policy. Admin and break-glass users, tier-0 groups and the intermediate root management group are in tier 0,
-see [bootstrap/Azure](../bootstrap/Azure/README.md).
+Access, PIM, access packages, administrative units, guests, cross-tenant access and domains. Admin and break-glass
+users and tier-0 groups are in tier 0, see [bootstrap/Azure](../bootstrap/Azure/README.md). Management groups and
+Azure Policy are in [ESLZ/governance](../ESLZ/governance/README.md).
 
 ```
 terraform.tf               reads tenants/<tenant>/config.yaml; uses ../modules/entraid-tenant (shared with tier 0)
-management_groups.tf       management groups, Azure Policy and Azure RBAC (Azure/avm-ptn-alz)
 entraid.sh                 ./entraid.sh <tenant> init|plan|apply
 tenants/<tenant>/
   config.yaml              the tenant's tier-1 config
-  lib/                     the tenant's Azure Landing Zones library
 ```
 
 ## Day-two operations
@@ -51,7 +49,7 @@ For a remote workspace the script can still run a speculative plan, with the wor
 ### Add a tenant
 
 1. Bootstrap it in tier 0, see [bootstrap/Azure](../bootstrap/Azure/README.md).
-2. Create `tenants/<tenant>/config.yaml`, and `tenants/<tenant>/lib/` with at least `alz_library_metadata.json`.
+2. Create `tenants/<tenant>/config.yaml`.
 3. Add workspace `<tenant>_entraid_directory_r1` in project `<tenant>_r1` to [HCP/config.yaml](../HCP/config.yaml).
 
 The directory name is the prefix of the tenant's HCP project and workspace names; it must start with a letter or digit
@@ -59,9 +57,9 @@ and contain only letters, digits and underscores.
 
 ## Tenant config reference
 
-Both tiers read the same schema: `bootstrap/Azure/<tenant>/config.yaml` (tier 0) and `entraid/tenants/<tenant>/config.yaml` (tier 1).
-At the top level are `entraid_tenant_id`, `entra_id` (every Entra ID section below except `management_groups`) and
-`management_groups` (Azure). Every section is optional. Features marked P1 or P2 need that Entra ID licence; leave them out of a tenant without it. The tier-1 files show each section, commented out where it does not apply.
+Both tiers read the same schema: `bootstrap/Azure/tenants/<tenant>/config.yaml` (tier 0) and `entraid/tenants/<tenant>/config.yaml` (tier 1).
+At the top level are `entraid_tenant_id` and `entra_id` (every section below); tier 0 also has `management_groups`,
+the intermediate root. Every section is optional. Features marked P1 or P2 need that Entra ID licence; leave them out of a tenant without it. The tier-1 files show each section, commented out where it does not apply.
 
 | Section | What it manages | Licence | Graph application permissions (apply identity) |
 |---|---|---|---|
@@ -75,7 +73,6 @@ At the top level are `entraid_tenant_id`, `entra_id` (every Entra ID section bel
 | `guests` | B2B guest invitations | Free | `User.Invite.All` |
 | `cross_tenant_access` | Cross-tenant access default and partners (Graph property names) | Free | `Policy.ReadWrite.CrossTenantAccess` |
 | `domains` | Additional custom domains and their verification | Free | `Domain.ReadWrite.All` |
-| `management_groups` | Management groups (Azure/avm-ptn-alz), Azure Policy and RBAC on them | Free | Azure on the intermediate root, from tier 0: Contributor, Resource Policy Contributor, Role Based Access Control Administrator (see [Management groups](#management-groups)) |
 
 Grant a permission to an apply identity only when its tier uses that section. The plan application needs the read equivalents (`Directory.Read.All` and `Policy.Read.All` cover most of them).
 
@@ -113,71 +110,6 @@ security defaults off in the portal (**Entra ID → Overview → Properties → 
 applying Conditional Access policies.
 
 Users register their own MFA methods at first sign-in; Terraform cannot do this for them.
-
-### Management groups
-
-`management_groups` is applied with the Azure Verified Module for Azure Landing Zones
-([`Azure/avm-ptn-alz`](https://registry.terraform.io/modules/Azure/avm-ptn-alz/azurerm)):
-
-- `architecture`: the hierarchy, an architecture definition in the tenant's `lib/<architecture>.alz_architecture_definition.yaml`
-  (management group `id`, `display_name`, `parent_id`, `null` for the tenant root group, `exists: true` for a group
-  created by tier 0, and `archetypes`;
-  the built-in `empty` archetype has no policies). Policy comes from archetypes in the same library (see [Policy](#policy)).
-- `location`: default location for policy managed identities.
-- `policy_default_values`: values for policy assignment parameters, by the default names in
-  `tenants/<tenant>/lib/alz_policy_default_values.json` (e.g. `log_analytics_workspace_id`).
-- `role_assignments`: `management_group`, `role` (a built-in role name), the principal (`group` or `application`
-  by display name, `user` by `mail_nickname`, or `principal_id` with `principal_type`) and an optional ABAC
-  `condition`. Subscriptions below a group inherit its role assignments.
-
-The intermediate root `mg-4esnok` is created by tier 0, with its Azure RBAC and the hierarchy settings (see
-[bootstrap/Azure](../bootstrap/Azure/README.md)). Here it is `exists: true` in the architecture:
-not created, but still given its archetype's policy and the role assignments on it. Tier 1's rights come from
-tier 0 group `sg-prd-az-root-mgmt-t0` on the intermediate root: Contributor for the groups, Resource Policy
-Contributor for policy, and Role Based Access Control Administrator for role assignments, which can't assign or
-remove Owner or User Access Administrator. Plan runs have Reader there.
-
-Moving a subscription into a group needs Owner on the subscription and write access on the group, so it is done
-by the subscription's Owner (`az account management-group subscription add`), given Management Group Contributor
-on the group in the config.
-
-### Policy
-
-Azure Policy is managed centrally, as a custom Azure Landing Zones library per tenant in `tenants/<tenant>/lib` that
-`Azure/avm-ptn-alz` assigns with the hierarchy. The `azure/alz` provider loads the library even for a tenant without
-`management_groups`, so every tenant has `lib/` with at least `alz_library_metadata.json`. The layout follows the
-[ALZ library](https://github.com/Azure/Azure-Landing-Zones-Library):
-
-| Path | Contents |
-|---|---|
-| `<architecture>.alz_architecture_definition.yaml` | The hierarchy and each group's archetypes |
-| `archetype_definitions/*.alz_archetype_definition.json` | Archetypes: the policy assignments, definitions and role definitions a group gets |
-| `policy_assignments/*.alz_policy_assignment.json` | Policy assignments (ARM JSON; the module sets scope and location) |
-| `policy_definitions/*.alz_policy_definition.json` | Custom policy definitions (ARM JSON), created on the group of the archetype that lists them |
-| `alz_policy_default_values.json` | Default names for assignment parameters, set from `policy_default_values` in the tenant config |
-
-Tenant `4esnok_vs`:
-
-| Assignment | Archetype (group) | What it does |
-|---|---|---|
-| `Deploy-AKS-Diag-LAW` | `root_4esnok` (`mg-4esnok`) | DeployIfNotExists: AKS control-plane logs (kube-apiserver, kube-audit-admin, guard, cluster-autoscaler) to the central workspace, in the resource-specific tables `AKSControlPlane` and `AKSAuditAdmin` |
-
-| Definition | Why it is custom |
-|---|---|
-| `Deploy-AKS-Diag-LAW-Dedicated` | Copy of the built-in `6c66c325-74c8-42fd-a286-a74b0e2939d8` (3.0.0), which always writes to the legacy `AzureDiagnostics` table. This one sets `logAnalyticsDestinationType: Dedicated`, and a setting in `AzureDiagnostics` mode is non-compliant, so remediation switches it |
-
-**Add a policy:**
-
-1. Add the assignment file to `policy_assignments/`. The name is at most 24 characters, and the parameter values
-   are placeholders where a default value applies. A custom definition goes in `policy_definitions/`.
-2. List it in the archetype of the group it applies to. A new archetype also goes in the group's `archetypes`.
-3. If a parameter takes a value from the tenant, map it in `alz_policy_default_values.json` and set it under
-   `policy_default_values`.
-
-DeployIfNotExists and Modify assignments get a system-assigned identity. The module grants it the roles from the
-definition, at the group and on resources passed in parameters marked `assignPermissions`. Policy only acts on
-resources created or changed after the assignment; for existing ones, create a remediation task:
-`az policy remediation create --management-group <group> --policy-assignment <assignment> -n <name>`.
 
 ## Users
 
