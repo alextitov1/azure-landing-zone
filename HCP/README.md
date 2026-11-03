@@ -41,7 +41,7 @@ projects:
           at: <RFC3339 time>            # e.g. "2026-10-31T18:00:00Z"
 ```
 
-- `runner_workspace`: the name of the HCP workspace that use this configuration file (terraform doesn't know its own namespace). This workspace name is used to create run triggers for workspaces that read outputs. e.g. if `hcp_tf_workspaces_r1` reads APP IDs from outputs of `4esnok_vs_azure_bootstrap_r0`. see [Workspace variables and secrets](#workspace-variables) below.
+- `runner_workspace`: the name of the HCP workspace that use this configuration file (terraform doesn't know its own namespace). This workspace name is used to create run triggers for workspaces that read outputs. e.g. if `hcp_tf_workspaces_r1` reads APP IDs from outputs of `4esnok_vs_azure_bootstrap_r0`. see [Workspace variables and secrets](#workspace-variables-and-secrets) below.
 
 - `variable_sets` is project wide variables, which are applied to every workspace in the project.
 
@@ -53,12 +53,12 @@ projects:
 
 - `variables` maps environment variable names to values. A value of the form `tfe://<workspace>/<output>` or
 `tfe://<workspace>/<output>/<key>` is read from that workspace's output. Any other value is set as it is. E.g. This is how a workspace gets the client IDs of the Entra ID applications it signs in as
-(see [HCP Terraform integration](../bootstrap/Azure/README.md#hcp-terraform-integration)):
+(see [bootstrap/Azure](../bootstrap/Azure/README.md)):
 ```yaml
     variables:
       TF_VAR_tenant: 4esnok_vs
-      TFC_AZURE_PLAN_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-hcp-entraid-mgmt-r1-plan
-      TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-hcp-entraid-mgmt-r1-apply
+      TFC_AZURE_PLAN_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-hcp-entraid-directory-r1-plan
+      TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-hcp-entraid-directory-r1-apply
 ```
 
 - `secrets` works similarly, but the values are read from 1Password. In case tier1, the workspace has a OP token to access the vault.

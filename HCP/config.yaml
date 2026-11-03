@@ -20,7 +20,6 @@ projects:
         # and the secrets are set by hand (entraid/README.md). No auto_apply: tier 1 can change anything in the
         # tenant, confirm each apply.
         execution_mode: remote
-        auto_apply: true
         vcs:
           repo: alextitov1/azure-landing-zone
           github_app_installation: alextitov1
@@ -28,11 +27,25 @@ projects:
           # the shared root and modules, and this tenant's config only
           trigger_patterns: ["/entraid/*", "/entraid/tenants/4esnok_vs/**/*", "/modules/**/*"]
         variables:
-          TFC_AZURE_PLAN_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-hcp-entraid-mgmt-r1-plan
-          TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-hcp-entraid-mgmt-r1-apply
+          TFC_AZURE_PLAN_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-hcp-entraid-directory-r1-plan
+          TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-hcp-entraid-directory-r1-apply
 
       4esnok_vs_azure_governance_r1:
-        description: "Azure: management groups, subscriptions, resource groups, policy and RBAC"
+        description: "Azure: management groups below mg-4esnok, policy and RBAC on them (ESLZ/governance)"
+        tags: { env: mgmt, cloud: azure }
+        # No auto_apply: policy and RBAC on management groups reach every subscription, confirm each apply.
+        execution_mode: remote
+        vcs:
+          repo: alextitov1/azure-landing-zone
+          github_app_installation: alextitov1
+          working_directory: ESLZ/governance/terraform
+          trigger_patterns: ["/ESLZ/governance/**/*"]
+        variables:
+          TFC_AZURE_PLAN_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-hcp-azure-governance-r1-plan
+          TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-hcp-azure-governance-r1-apply
+
+      4esnok_vs_azure_mgmt_r1:
+        description: "Azure: management (central Log Analytics workspace, managed Prometheus, Managed Grafana)"
         tags: { env: mgmt, cloud: azure }
         execution_mode: remote
         auto_apply: true
@@ -97,7 +110,7 @@ projects:
   # 4esnok_mail_r1:
   #   description: "Ring 1 mail.4esnok.su workspaces"
   #   workspaces:
-  #     4esnok_mail_entraid_mgmt_r1:
+  #     4esnok_mail_entraid_directory_r1:
   #       description: "Entra ID tier 1: users and Conditional Access (entraid, tenant 4esnok_mail)"
   #       tags: { env: dev, cloud: azure, project: mail.4esnok.su }
   #       execution_mode: local  # run by entraid/entraid.sh
