@@ -14,14 +14,14 @@ workspace) are done in tier 1.
 
 Create/update the following resources manually:
 
-- HCP: workspace `hcp_tf_bootstrap_r0` in HCP Terraform, with execution mode **Local**.
-- HCP: user tokens for tier 0 and tier 1, stored in 1Password.
-- 1Password: vaults and tokens - see config file for details.
+- HCP: workspace `hcp_tf_bootstrap_r0` in HCP Terraform, with execution mode **Local**. *./terraform.tf*
+- HCP: user tokens for tier 0 and tier 1, stored in 1Password. *./bootstrap-hcp.sh*
+- 1Password: vaults and tokens - see config file for details. *./bootstrap-hcp.sh*
 
 
 ## Bootstrap a new HCP account (manual steps)
 
-1. **Create the organization.** Register an HCP account at https://portal.cloud.hashicorp.com, then sign in at https://app.terraform.io and create the organization.
+1. **Create the HCP organization.** Register an HCP account at https://portal.cloud.hashicorp.com, then sign in at https://app.terraform.io and create the organization.
 
 1. **Create the tier-0 workspace.** Create workspace `hcp_tf_bootstrap_r0` and set its execution mode to **Local**.
 

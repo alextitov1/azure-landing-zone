@@ -15,5 +15,5 @@ module "hcp" {
   organization = local.config.organization
   projects     = local.config.projects
 
-  run_trigger_workspace = local.config.workspace
+  run_trigger_workspace = try(local.config.runner_workspace, null)
 }
