@@ -16,6 +16,10 @@ terraform {
       source  = "microsoft/msgraph"
       version = "~> 0.6"
     }
+    azapi = {
+      source  = "Azure/azapi"
+      version = "~> 2.13"
+    }
   }
 }
 
@@ -30,7 +34,7 @@ variable "tenant" {
 }
 
 # Set by HCP Terraform when the workspace uses dynamic Azure credentials (TFC_AZURE_PROVIDER_AUTH); null for local
-# runs, which sign in with `az login`. Passed explicitly because msgraph has no built-in HCP support.
+# runs, which sign in with `az login`. Passed explicitly because msgraph and azapi have no built-in HCP support.
 variable "tfc_azure_dynamic_credentials" {
   type = object({
     default = object({
@@ -72,6 +76,15 @@ provider "msgraph" {
 
 provider "onepassword" {
   service_account_token = var.onepassword_service_account_token
+}
+
+# Only to destroy the management groups that moved to ESLZ/governance: Terraform destroys a resource with its
+# provider's configuration, and without this block azapi couldn't sign in. Remove it after that apply.
+provider "azapi" {
+  use_cli              = var.tfc_azure_dynamic_credentials == null
+  use_oidc             = var.tfc_azure_dynamic_credentials != null
+  client_id_file_path  = try(var.tfc_azure_dynamic_credentials.default.client_id_file_path, null)
+  oidc_token_file_path = try(var.tfc_azure_dynamic_credentials.default.oidc_token_file_path, null)
 }
 
 module "entraid" {
