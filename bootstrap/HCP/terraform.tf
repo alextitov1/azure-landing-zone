@@ -1,4 +1,4 @@
-# The tfe provider authenticates with TFE_TOKEN, set by bootstrap-hcp.sh.
+# The tfe provider authenticates with TFE_TOKEN and the onepassword provider with OP_ACCOUNT, set by bootstrap-hcp.sh.
 terraform {
   cloud {
     organization = "4esnok"
@@ -6,13 +6,9 @@ terraform {
   }
 
   required_providers {
+    # Reads `secrets:` through the 1Password desktop app for OP_ACCOUNT ("Integrate with 1Password SDKs" must be on)
     onepassword = { source = "1Password/onepassword" } # not a hashicorp/* provider, so it must be declared
   }
-}
-
-# Reads `secrets:` through the 1Password desktop app ("Integrate with 1Password SDKs" must be on)
-provider "onepassword" {
-  account = local.config.onepassword_account
 }
 
 locals {

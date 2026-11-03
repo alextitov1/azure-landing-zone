@@ -1,31 +1,8 @@
-# HCP Terraform tier 1 (hcp_tf_workspaces_r1): organization settings and every project and workspace it manages.
-# Edit, open a pull request, review the plan, merge. See README.md for the fields.
+# this config is used to manage all HCP Terraform projects and workspaces in the {{ organization }}.
 organization: 4esnok
-workspace: hcp_tf_workspaces_r1  # runs this config; re-run after each apply of a workspace that `variables:` reads
+runner_workspace: hcp_tf_workspaces_r1  # the workspace that runs this file; re-run after each apply of a workspace that `variables:` reads
 
 projects:
-  4esnok_vs_r0:
-    description: "Ring 0 vs.4esnok.su workspaces"
-    workspaces:
-      # 4esnok_vs_entraid_bootstrap_r0:
-      #   description: "Entra ID tier 0: admin and break-glass users (bootstrap/Azure, tenant 4esnok_vs)"
-      #   tags: { env: dev, cloud: azure, project: vs.4esnok.su }
-      #   execution_mode: local  # run by bootstrap/Azure/bootstrap-azure.sh
-
-      4esnok_vs_azure_bootstrap_r0:
-        tags: { env: dev, cloud: azure, project: vs.4esnok.su }
-        execution_mode: local
-        description: "Bootstrap Entra ID, Azure tenant and subscriptions"
-
-      # 4esnok_vs_azure_bootstrap_r0:
-      #   description: "Azure: subscriptions and their resource groups"
-      #   tags: { env: prod, cloud: azure, project: 4esnok.su }
-      #   execution_mode: remote
-      #   auto_apply: true
-      #   vcs:
-      #     repo: alextitov1/azure-landing-zone
-      #     github_app_installation: alextitov1
-      #     working_directory: ESLZ/subscriptions
 
   4esnok_vs_r1:
     description: "Ring 1 vs.4esnok.su workspaces"
