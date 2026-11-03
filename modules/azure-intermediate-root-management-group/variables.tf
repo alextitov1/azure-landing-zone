@@ -5,7 +5,7 @@ variable "tenant_id" {
 
 variable "config" {
   type        = any
-  description = "The management_groups section of a tier-0 tenant config (name, display_name, require_authorization_for_group_creation, role_assignments with role, group and an optional ABAC condition); see bootstrap/Azure/README.md#intermediate-root."
+  description = "The management_groups section of a tier-0 tenant config (name, display_name, require_authorization_for_group_creation, role_assignments with role, group and an optional ABAC condition); see bootstrap/Azure/tenants/<tenant>/config.yaml."
 }
 
 variable "group_ids" {

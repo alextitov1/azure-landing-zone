@@ -24,9 +24,9 @@ Each tenant has an HCP Terraform workspace `<tenant>_entraid_directory_r1` (proj
 
 `4esnok_vs`: open a pull request that changes `tenants/<tenant>/` or the shared code for a speculative plan; merge
 to `main`, then confirm the apply in HCP Terraform (no auto-apply). Runs sign in with dynamic credentials: plan runs
-as `sp-hcp-entraid-directory-r1-plan`, apply runs as `sp-hcp-entraid-directory-r1-apply`. Tier 0 creates both and their
-rights, and the workspace reads their client IDs, see
-[HCP Terraform integration](../bootstrap/Azure/README.md#hcp-terraform-integration).
+as `sp-hcp-entraid-directory-r1-plan`, apply runs as `sp-hcp-entraid-directory-r1-apply`. Tier 0 creates both and
+their rights, and the workspace reads their client IDs, see
+[Workspace variables and secrets](../HCP/README.md#workspace-variables-and-secrets).
 
 Set these environment variables on the workspace by hand, in HCP Terraform:
 
@@ -50,7 +50,7 @@ For a remote workspace the script can still run a speculative plan, with the wor
 
 ### Add a tenant
 
-1. Bootstrap it in tier 0, see [bootstrap/Azure](../bootstrap/Azure/README.md#add-a-tenant).
+1. Bootstrap it in tier 0, see [bootstrap/Azure](../bootstrap/Azure/README.md).
 2. Create `tenants/<tenant>/config.yaml`, and `tenants/<tenant>/lib/` with at least `alz_library_metadata.json`.
 3. Add workspace `<tenant>_entraid_directory_r1` in project `<tenant>_r1` to [HCP/config.yaml](../HCP/config.yaml).
 
@@ -131,7 +131,7 @@ Users register their own MFA methods at first sign-in; Terraform cannot do this 
   `condition`. Subscriptions below a group inherit its role assignments.
 
 The intermediate root `mg-4esnok` is created by tier 0, with its Azure RBAC and the hierarchy settings (see
-[Intermediate root](../bootstrap/Azure/README.md#intermediate-root)). Here it is `exists: true` in the architecture:
+[bootstrap/Azure](../bootstrap/Azure/README.md)). Here it is `exists: true` in the architecture:
 not created, but still given its archetype's policy and the role assignments on it. Tier 1's rights come from
 tier 0 group `sg-prd-az-root-mgmt-t0` on the intermediate root: Contributor for the groups, Resource Policy
 Contributor for policy, and Role Based Access Control Administrator for role assignments, which can't assign or
@@ -209,4 +209,4 @@ The `applications` section of a tenant config lists app registrations. Each entr
 
 For a client secret, the 1Password item is titled after the application, with the client ID as username, the secret as password and the tenant and expiry in its notes. A new secret is created on the first apply after `rotation_days`; it is stored in 1Password before the old secret is deleted, so anything holding the old value must re-read it from 1Password. The secret expires `overlap_days` after its rotation date, which leaves time to run that apply. Like user passwords, the secret is also kept in the Terraform state.
 
-Groups can list applications as `members` by display name, next to users by `mail_nickname`. The `applications` output shows each application's client ID and service principal object ID; HCP Terraform workspaces read their client IDs from the `client_ids` output, see [HCP Terraform integration](../bootstrap/Azure/README.md#hcp-terraform-integration).
+Groups can list applications as `members` by display name, next to users by `mail_nickname`. The `applications` output shows each application's client ID and service principal object ID; HCP Terraform workspaces read their client IDs from the `client_ids` output, see [Workspace variables and secrets](../HCP/README.md#workspace-variables-and-secrets).
