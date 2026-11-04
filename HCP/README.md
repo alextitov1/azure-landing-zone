@@ -2,7 +2,7 @@
 
 Day-two management of HCP Terraform projects and workspaces. 
 
-The hcp workspace which applies this configuration are created by [bootstrap/HCP](../bootstrap/HCP/README.md).
+The hcp workspace which applies this configuration. (It is created by [bootstrap/HCP](../bootstrap/HCP/README.md))
 
 ## config.yaml schema
 

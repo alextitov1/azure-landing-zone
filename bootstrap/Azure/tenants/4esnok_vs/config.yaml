@@ -3,25 +3,21 @@
 # Custom domain: vs.4esnok.su
 entraid_tenant_id: 05af71f4-43e2-4c1a-8917-3bf5cb165cfe
 
-# Tier 0 (bootstrap/Azure): admin and break-glass users, tier-0 groups, HCP Terraform workspace identities,
-# intermediate root management group.
-# Everything else is in entraid/tenants/<tenant>/config.yaml (tier 1) and ESLZ/governance (management groups).
 
 entra_id:
   users:
-    - mail_nickname: "sysadmin"
-      user_principal_name: "sysadmin@vs.4esnok.su"
-      display_name: "(ADM) User"
-      organization:
-        department: "sysadmins"
-        job_title: "Site Reliability Engineer"
-      entraid_role_names:  # direct entraid role assignments
-        - Global Administrator
-      password:
-        onepassword_vault: "cloud_r1"
+    # - mail_nickname: "sysadmin"
+    #   user_principal_name: "sysadmin@vs.4esnok.su"
+    #   display_name: "(ADM) User"
+    #   organization:
+    #     department: "sysadmins"
+    #     job_title: "Site Reliability Engineer"
+    #   entraid_role_names:  # direct entraid role assignments
+    #     - Global Administrator
+    #   password:
+    #     onepassword_vault: "cloud_r1"
 
     # Emergency access (break-glass) account: cloud-only, on the onmicrosoft.com domain. Exclude it from every
-    # Conditional Access policy, register a FIDO2 key for it and test the sign-in regularly.
     - mail_nickname: "breakglass01"
       user_principal_name: "breakglass01@admin4esnok.onmicrosoft.com"
       display_name: "Break Glass 01"
@@ -32,19 +28,19 @@ entra_id:
         - Global Administrator
       password:
         length: 32
-        onepassword_vault: "cloud_r1"
+        onepassword_vault: "cloud_r0"
 
   groups:
-    - display_name: "sg-prd-entra-globaladmin-t0"
-      description: "Global Administrator role for the tenant, doesn't work because the tenant is on the free tier"
-      assignable_to_role: false  # Requires AAD Premium.
-      # entraid_role_names:
-      #   - Global Administrator
-      members:
-        - sysadmin
+    # # Requires AAD Premium.
+    # - display_name: "sg-prd-entra-globaladmin-t0"
+    #   description: "Global Administrator role for the tenant, doesn't work because the tenant is on the free tier"
+    #   assignable_to_role: false
+    #   entraid_role_names:
+    #     - Global Administrator
+    #   members:
+    #     - sysadmin
 
     # Azure RBAC on the intermediate root mg-4esnok (management_groups below), inherited by every group and
-    # subscription below it. Owner has no standing members: add someone only for a change that needs it.
     - display_name: "sg-prd-az-root-owner-t0"
       description: "Owner on the intermediate root management group mg-4esnok"
       members: [ ]
@@ -55,20 +51,13 @@ entra_id:
     - display_name: "sg-prd-az-root-reader-t0"
       description: "Reader on the intermediate root management group mg-4esnok"
       members:
-        - sysadmin
         - sp-hcp-azure-governance-r1-plan
 
-  # Identities of HCP Terraform workspaces (dynamic credentials, OIDC): plan runs use the read-only application,
-  # apply runs the privileged one. federated_credentials lets a workspace's runs sign in as the application; the
-  # workspace reads the client ID from the client_ids output (`variables:` in HCP/config.yaml).
   applications:
-    # Workspace 4esnok_vs_entraid_directory_r1 (entraid, tier 1). The apply application can grant itself any
-    # directory role (RoleManagement.ReadWrite.Directory), so it is as privileged as a Global Administrator: protect
-    # its workspace like tier 0. It has no Azure rights.
     - display_name: "sp-hcp-entraid-directory-r1-plan"
       description: "HCP Terraform plan runs of 4esnok/4esnok_vs_r1/4esnok_vs_entraid_directory_r1"
-      owners:
-        - sysadmin
+      # owners:
+      #   - sysadmin
       federated_credentials:
         - name: "hcp-4esnok_vs_entraid_directory_r1-plan"
           subject: "organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_entraid_directory_r1:run_phase:plan"
@@ -80,8 +69,8 @@ entra_id:
 
     - display_name: "sp-hcp-entraid-directory-r1-apply"
       description: "HCP Terraform apply runs of 4esnok/4esnok_vs_r1/4esnok_vs_entraid_directory_r1"
-      owners:
-        - sysadmin
+      # owners:
+      #   - sysadmin
       federated_credentials:
         - name: "hcp-4esnok_vs_entraid_directory_r1-apply"
           subject: "organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_entraid_directory_r1:run_phase:apply"
@@ -96,13 +85,10 @@ entra_id:
         - Policy.ReadWrite.ConditionalAccess
         - Policy.ReadWrite.Authorization
 
-    # Workspace 4esnok_vs_azure_governance_r1 (ESLZ/governance): management groups below mg-4esnok, policy and
-    # Azure RBAC on them. Its Azure rights on mg-4esnok come from sg-prd-az-root-mgmt-t0 (apply) and
-    # sg-prd-az-root-reader-t0 (plan); Group.Read.All finds the groups its role assignments name.
     - display_name: "sp-hcp-azure-governance-r1-plan"
       description: "HCP Terraform plan runs of 4esnok/4esnok_vs_r1/4esnok_vs_azure_governance_r1"
-      owners:
-        - sysadmin
+      # owners:
+      #   - sysadmin
       federated_credentials:
         - name: "hcp-4esnok_vs_azure_governance_r1-plan"
           subject: "organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_azure_governance_r1:run_phase:plan"
@@ -111,8 +97,8 @@ entra_id:
 
     - display_name: "sp-hcp-azure-governance-r1-apply"
       description: "HCP Terraform apply runs of 4esnok/4esnok_vs_r1/4esnok_vs_azure_governance_r1"
-      owners:
-        - sysadmin
+      # owners:
+      #   - sysadmin
       federated_credentials:
         - name: "hcp-4esnok_vs_azure_governance_r1-apply"
           subject: "organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_azure_governance_r1:run_phase:apply"
@@ -122,22 +108,21 @@ entra_id:
     # Workspace 4esnok_vs_azure_mgmt_r1 (ESLZ/management: central Log Analytics workspace). No Azure rights yet.
     - display_name: "sp-hcp-azure-mgmt-r1-plan"
       description: "HCP Terraform plan runs of 4esnok/4esnok_vs_r1/4esnok_vs_azure_mgmt_r1"
-      owners:
-        - sysadmin
+      # owners:
+      #   - sysadmin
       federated_credentials:
         - name: "hcp-4esnok_vs_azure_mgmt_r1-plan"
           subject: "organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_azure_mgmt_r1:run_phase:plan"
 
     - display_name: "sp-hcp-azure-mgmt-r1-apply"
       description: "HCP Terraform apply runs of 4esnok/4esnok_vs_r1/4esnok_vs_azure_mgmt_r1"
-      owners:
-        - sysadmin
+      # owners:
+      #   - sysadmin
       federated_credentials:
         - name: "hcp-4esnok_vs_azure_mgmt_r1-apply"
           subject: "organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_azure_mgmt_r1:run_phase:apply"
 
-# Intermediate root management group below the tenant root group (CAF), its Azure RBAC and the tenant's hierarchy
-# settings. The groups below it are created by ESLZ/governance.
+# Intermediate root management group below the tenant root group (CAF),
 management_groups:
   name: mg-4esnok
   display_name: "4esnok"
@@ -164,7 +149,7 @@ management_groups:
       condition: >-
         ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})) OR
         (@Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAllValues:GuidNotEquals
-        {8e3af657-a8ff-443c-a75c-2fe8c4bcb635, 18d7d88d-d35e-4fb5-a5c3-7773c20a72d9}))
+        {8e3af657-a8ff-443c-a75c-2fe8c4bcb635, 18d7d88d-d35e-4fb5-a5c3-7773c20a72d9, f58310d9-a9f6-439a-9e8d-f62e7b41a168}))
         AND ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})) OR
         (@Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAllValues:GuidNotEquals
-        {8e3af657-a8ff-443c-a75c-2fe8c4bcb635, 18d7d88d-d35e-4fb5-a5c3-7773c20a72d9}))
+        {8e3af657-a8ff-443c-a75c-2fe8c4bcb635, 18d7d88d-d35e-4fb5-a5c3-7773c20a72d9, f58310d9-a9f6-439a-9e8d-f62e7b41a168}))

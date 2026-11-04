@@ -1,6 +1,6 @@
 # this config is used to manage all HCP Terraform projects and workspaces in the {{ organization }}.
 organization: 4esnok
-runner_workspace: hcp_tf_workspaces_r1  # the workspace that runs this file; re-run after each apply of a workspace that `variables:` reads
+runner_workspace: hcp_tf_workspaces_r1  # needs to create trigger in the referenced workspaces, tfe://<workspace_name>/...
 
 projects:
 
@@ -8,23 +8,19 @@ projects:
     description: "Ring 1 vs.4esnok.su workspaces"
     variable_sets:
       - name: azure_oidc_project_var_set
-        # Azure dynamic credentials; each workspace's client IDs are its `variables:`
         variables:
           TFC_AZURE_PROVIDER_AUTH: "true"
-          ARM_TENANT_ID: 05af71f4-43e2-4c1a-8917-3bf5cb165cfe
+          ARM_TENANT_ID: 05af71f4-43e2-4c1a-8917-3bf5cb165cfe ## 4esnok_vs tenant ID
     workspaces:
       4esnok_vs_entraid_directory_r1:
         description: "Entra ID tier 1: users, groups, applications (entraid, tenant 4esnok_vs)"
         tags: { env: mgmt, cloud: azure }
-        # Remote: signs in with dynamic credentials as applications of tier 0 (bootstrap/Azure/tenants/4esnok_vs); TF_VAR_tenant
-        # and the secrets are set by hand (entraid/README.md). No auto_apply: tier 1 can change anything in the
-        # tenant, confirm each apply.
         execution_mode: remote
+        auto_apply: true
         vcs:
           repo: alextitov1/azure-landing-zone
           github_app_installation: alextitov1
           working_directory: entraid
-          # the shared root and modules, and this tenant's config only
           trigger_patterns: ["/entraid/*", "/entraid/tenants/4esnok_vs/**/*", "/modules/**/*"]
         variables:
           TFC_AZURE_PLAN_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-hcp-entraid-directory-r1-plan
@@ -33,8 +29,8 @@ projects:
       4esnok_vs_azure_governance_r1:
         description: "Azure: management groups below mg-4esnok, policy and RBAC on them (ESLZ/governance)"
         tags: { env: mgmt, cloud: azure }
-        # No auto_apply: policy and RBAC on management groups reach every subscription, confirm each apply.
         execution_mode: remote
+        auto_apply: true
         vcs:
           repo: alextitov1/azure-landing-zone
           github_app_installation: alextitov1
