@@ -1,130 +1,137 @@
-# Entra ID tenants (tier 1)
+# Entra ID Day-two management
 
-This directory manages the day-two configuration of each Entra ID tenant: users, groups, applications, Conditional
-Access, PIM, access packages, administrative units, guests, cross-tenant access and domains. Admin and break-glass
-users and tier-0 groups are in tier 0, see [bootstrap/Azure](../bootstrap/Azure/README.md). Management groups and
-Azure Policy are in [ESLZ/governance](../ESLZ/governance/README.md).
+Create user, groups and applications
 
+
+## tenant/config.yaml schema
+
+`tenants/<tenant>/config.yaml`; every section of `entra_id` is optional. Users are referenced everywhere by
+`mail_nickname`, groups and applications by `display_name`.
+
+```yaml
+entraid_tenant_id: <tenant ID>             # required; the plan fails when signed in to another tenant
+entra_id:
+  users:
+    - mail_nickname: <name>                # required; the key, never change it (recreates the user)
+      user_principal_name: <upn>           # required; changing it renames the user in place
+      display_name: <text>                 # required
+      account_enabled: true | false        # default true
+      organization:                        # optional
+        department: <text>
+        job_title: <text>
+        manager: <mail_nickname>
+        usage_location: <country code>     # two letters, needed for licences
+      entraid_role_names: [<role>]         # permanent directory roles, e.g. Global Administrator
+      password:                            # optional
+        length: <n>                        # default 15
+        onepassword_vault: <vault>         # stores the password; without it, it must be changed at first sign-in
+
+  groups:
+    - display_name: <name>                 # required
+      description: <text>                  # optional
+      mail_nickname: <name>                # optional
+      assignable_to_role: true | false     # default false
+      security_enabled: true | false       # default true
+      members: [<mail_nickname | application display_name | guest email>]
+      dynamic_rule: <rule>                 # P1; members must then be empty
+      licenses:                            # P1
+        - sku: <SKU part number>           # e.g. SPB
+          disabled_plans: [<plan>]
+      entraid_role_names: [<role>]         # needs assignable_to_role: true
+
+  applications:
+    - display_name: <name>                 # required
+      description: <text>                  # optional
+      owners: [<mail_nickname>]
+      graph_app_roles: [<permission>]      # Microsoft Graph application permissions, e.g. Directory.Read.All
+      entraid_role_names: [<role>]         # permanent directory roles of the service principal
+      federated_credentials:
+        - name: <name>                     # required
+          subject: <subject>               # required, e.g. organization:<org>:project:<project>:workspace:<ws>:run_phase:<plan|apply>
+          issuer: <url>                    # default https://app.terraform.io
+          audiences: [<audience>]          # default [api://AzureADTokenExchange]
+          description: <text>              # optional
+      client_secret:                       # optional; stored in 1Password
+        key_vault_name: <vault>            # required
+        rotation_days: <n>                 # default 180
+        overlap_days: <n>                  # default 30
+
+  named_locations:                         # P1
+    - display_name: <name>
+      ip_ranges: [<cidr>]                  # either ip_ranges ...
+      trusted: true | false                # default false
+      countries: [<country code>]          # ... or countries
+      include_unknown: true | false        # default false
+
+  authentication_strength_policies:        # P1
+    - display_name: <name>
+      description: <text>
+      allowed_combinations: [<method>]     # e.g. fido2
+
+  conditional_access_policies:             # P1
+    - display_name: <name>
+      state: enabled | disabled | enabledForReportingButNotEnforced  # default report-only
+      users:
+        include: [<mail_nickname> | All | None | GuestsOrExternalUsers]
+        exclude: [<mail_nickname>]
+        include_groups: [<group>]
+        exclude_groups: [<group>]
+        include_roles: [<role>]
+        exclude_roles: [<role>]
+      applications:
+        include: [<application ID> | All | None | Office365 | MicrosoftAdminPortals]  # default [All]
+        exclude: [<application ID>]
+      client_app_types: [all | browser | mobileAppsAndDesktopClients | exchangeActiveSync | other]  # default [all]
+      locations:
+        include: [<named location> | All | AllTrusted]
+        exclude: [<named location>]
+      grant:
+        operator: OR | AND                 # default OR
+        controls: [block | mfa | compliantDevice | domainJoinedDevice | passwordChange]
+        authentication_strength: <name>    # built-in or from authentication_strength_policies
+
+  pim_roles:                               # P2
+    - role_name: <role>
+      assignment_type: User | Group | ServicePrincipal
+      assignee_name: <mail_nickname | group | application>
+      duration: <ISO 8601>                 # maximum activation time of the role, e.g. PT8H
+
+  access_package_catalogs:                 # P2 or ID Governance
+    - display_name: <name>
+      description: <text>
+  access_packages:
+    - display_name: <name>
+      description: <text>
+      catalog: <catalog display_name>      # required
+      groups: [<group>]                    # memberships the package grants
+      requestors: <scope>                  # default AllExistingDirectoryMemberUsers
+      approvers: [<mail_nickname>]         # empty: no approval
+      duration_days: <n>                   # default 90
+      review:
+        frequency: weekly | monthly | quarterly | halfyearly | annual  # default quarterly
+        reviewers: [<mail_nickname>]
+
+  administrative_units:
+    - display_name: <name>
+      description: <text>
+      members: [<mail_nickname | group>]
+      role_assignments:                    # unit admins need P1
+        - role_name: <role>
+          assignee: <mail_nickname | group>
+
+  guests:
+    - email: <address>                     # the key; groups list guests by it
+      display_name: <text>
+      redirect_url: <url>                  # default https://myapps.microsoft.com
+
+  cross_tenant_access:                     # Microsoft Graph property names
+    default: { <property>: <value> }       # updated in place; removing it leaves the tenant as it is
+    partners:
+      - tenantId: <tenant ID>
+        <property>: <value>                # e.g. inboundTrust: { isMfaAccepted: true }
+
+  domains:
+    - name: <domain>
+      verify: true | false                 # set true once the TXT record from domain_verification_records is published
 ```
-terraform.tf               reads tenants/<tenant>/config.yaml; uses ../modules/entraid-tenant (shared with tier 0)
-tenants/<tenant>/
-  config.yaml              the tenant's tier-1 config
-```
 
-## Day-two operations
-
-Each tenant has an HCP Terraform workspace `<tenant>_entraid_directory_r1` (project `<tenant>_r1`), and this
-configuration runs only there. The workspace gets all its settings from [HCP/config.yaml](../HCP/config.yaml): the
-tenant (`TF_VAR_tenant`), the client IDs of its plan and apply applications, and the 1Password service account token
-(`OP_SERVICE_ACCOUNT_TOKEN`); see [Workspace variables and secrets](../HCP/README.md#workspace-variables-and-secrets).
-Nothing is set by hand.
-
-Open a pull request that changes `tenants/<tenant>/` or the shared code for a speculative plan; merging to `main`
-plans and applies it automatically. Runs sign in with dynamic credentials: plan runs as
-`sp-hcp-entraid-directory-r1-plan`, apply runs as `sp-hcp-entraid-directory-r1-apply`. Tier 0 creates both and their
-rights. The plan fails if the tenant signed in to is not the config's `entraid_tenant_id`.
-
-The 1Password service account stores user passwords and client secrets, so it needs write access to every vault the
-config names (`password.onepassword_vault`, `client_secret.key_vault_name`).
-
-`4esnok_mail` has no workspace yet, so its config is not applied; see [Add a tenant](#add-a-tenant).
-
-### Add a tenant
-
-1. Bootstrap it in tier 0, with the workspace's plan and apply applications as in
-   `bootstrap/Azure/tenants/4esnok_vs/config.yaml`; see [bootstrap/Azure](../bootstrap/Azure/README.md).
-2. Create `tenants/<tenant>/config.yaml`.
-3. Add project `<tenant>_r1`, with a variable set for the tenant's Azure dynamic credentials, and its workspace
-   `<tenant>_entraid_directory_r1` to [HCP/config.yaml](../HCP/config.yaml), like `4esnok_vs_entraid_directory_r1`.
-   The commented-out `4esnok_mail_r1` there is a start.
-
-The directory name is the prefix of the tenant's HCP project and workspace names; it must start with a letter or digit
-and contain only letters, digits and underscores.
-
-## Tenant config reference
-
-Both tiers read the same schema: `bootstrap/Azure/tenants/<tenant>/config.yaml` (tier 0) and `entraid/tenants/<tenant>/config.yaml` (tier 1).
-At the top level are `entraid_tenant_id` and `entra_id` (every section below); tier 0 also has `management_groups`,
-the intermediate root. Every section is optional. Features marked P1 or P2 need that Entra ID licence; leave them out of a tenant without it. The tier-1 files show each section, commented out where it does not apply.
-
-| Section | What it manages | Licence | Graph application permissions (apply identity) |
-|---|---|---|---|
-| `users` | Users, see [Users](#users) | Free | `User.ReadWrite.All`, `RoleManagement.ReadWrite.Directory` |
-| `groups` | Security groups, `description` and members (users, applications, guests); `dynamic_rule`; `licenses` | Free; dynamic groups and licensing P1 | `Group.ReadWrite.All`; licensing `LicenseAssignment.ReadWrite.All`, `Organization.Read.All` |
-| `applications` | App registrations, see below | Free | `Application.ReadWrite.All`, `AppRoleAssignment.ReadWrite.All` |
-| `named_locations`, `authentication_strength_policies`, `conditional_access_policies` | Conditional Access | P1 | `Policy.Read.All`, `Policy.ReadWrite.ConditionalAccess` |
-| `pim_roles` | PIM eligible directory roles and their maximum activation `duration` | P2 | `RoleEligibilitySchedule.ReadWrite.Directory`, `RoleManagementPolicy.ReadWrite.Directory` |
-| `access_package_catalogs`, `access_packages` | Access packages with approval and access reviews | P2 or ID Governance | `EntitlementManagement.ReadWrite.All` |
-| `administrative_units` | Administrative units, members and scoped roles | Free; unit admins P1 | `AdministrativeUnit.ReadWrite.All`, `RoleManagement.ReadWrite.Directory` |
-| `guests` | B2B guest invitations | Free | `User.Invite.All` |
-| `cross_tenant_access` | Cross-tenant access default and partners (Graph property names) | Free | `Policy.ReadWrite.CrossTenantAccess` |
-| `domains` | Additional custom domains and their verification | Free | `Domain.ReadWrite.All` |
-
-Grant a permission to an apply identity only when its tier uses that section. The plan application needs the read equivalents (`Directory.Read.All` and `Policy.Read.All` cover most of them).
-
-Settings that every tenant already has (`cross_tenant_access.default`, PIM activation duration) are updated in place: taking them out of the config leaves the tenant as it is.
-
-### Naming
-
-Names are lowercase with hyphens and carry no tenant name. The tier follows the Microsoft Enterprise Access Model:
-`t0` control plane (Entra ID, root management group), `t1` management plane (subscriptions, platform), `t2` workloads and data.
-The plan fails on names that do not match.
-
-| Object | Pattern | Examples |
-|---|---|---|
-| Groups | `sg-<tier>-<target>-<scope>-<role>`; target is `entra` (directory roles), `az` (Azure RBAC), `app` (application access) or `org` (teams); `-dyn` for dynamic groups; `m365` instead of `sg` for Microsoft 365 groups | `sg-t0-entra-tenant-globaladmin`, `sg-t2-az-aks-admin`, `sg-t2-org-developers-dyn` |
-| Applications | `<type>-<tier>-<consumer>-<target>-<access>`; type is `sp` (automation), `app` (users sign in) or `mi` (managed identity) | `sp-t0-hcp-entraid-bootstrap-apply`, `sp-t1-gha-public-dns-deploy` |
-
-Groups and applications are keyed by display name, so renaming one recreates it with a new object ID.
-
-### Break-glass accounts
-
-Each tenant has two emergency access accounts, cloud-only on its `onmicrosoft.com` domain, with a permanent Global Administrator role and a 64-character password stored in 1Password (`password.onepassword_vault`). They are created by tier 0, which tier 1 cannot reference, so tier-1 Conditional Access policies do not exclude them. An alert on their sign-ins is still to do (see the TODO list in [ESLZ/management_design.md](../ESLZ/management_design.md)).
-
-After the first apply:
-
-1. Sign in with each account, register a FIDO2 security key (security defaults and Azure's mandatory MFA still require MFA for them), and keep the keys in separate safe places.
-2. Test each sign-in at least every few months.
-
-### MFA
-
-- **4esnok_vs (admin.4esnok.su, free):** security defaults on. All users must register MFA; admins are always prompted.
-- **4esnok_mail (mail.4esnok.su, P1):** security defaults are off and replaced by Conditional Access: CA001 blocks legacy authentication and CA002 requires MFA for all users, both enabled; CA003 requires phishing-resistant MFA for admin roles in report-only mode. Switch CA003 to `enabled` once admins have FIDO2 keys, after checking its report-only results in the sign-in logs.
-
-Security defaults and other tenant-wide settings (e.g. the authorization policy) are not managed by Terraform. Turn
-security defaults off in the portal (**Entra ID → Overview → Properties → Manage security defaults**) before
-applying Conditional Access policies.
-
-Users register their own MFA methods at first sign-in; Terraform cannot do this for them.
-
-## Users
-
-Each entry of the `users` section creates a cloud-only user with a `mail_nickname`, `user_principal_name` and `display_name`, and can set:
-
-| Key | Purpose |
-|---|---|
-| `account_enabled` | `false` blocks sign-in (default `true`) |
-| `organization` | Profile: `department`, `job_title`, `manager` (`mail_nickname`), `usage_location` (two-letter country code, needed for licences) |
-| `entraid_role_names` | Permanent Entra ID directory roles |
-| `password` | Initial password: `length` (default 15) and `onepassword_vault` |
-
-Users are keyed by `mail_nickname`, and the rest of the config (group members, owners, managers, role, PIM and Conditional Access assignees) refers to them by it. Tier-0 users can't be referenced. The nickname must be unique in the tenant and never change: changing it recreates the user, with a new object ID and without its MFA registrations. Changing `user_principal_name`, e.g. to move users to another verified domain, renames the user in place.
-
-With `password.onepassword_vault`, the password is stored in that 1Password vault and is the account's credential. Without it, the password is only in the Terraform state and must be changed at the first sign-in. Either way, the password is kept in the state.
-
-## Applications
-
-The `applications` section of a tenant config lists app registrations. Each entry creates the app registration and its enterprise application (service principal), and can set:
-
-| Key | Purpose |
-|---|---|
-| `description` | Description of the app registration |
-| `owners` | `mail_nickname` of users from `users` |
-| `federated_credentials` | Workload identity federation (HCP Terraform, GitHub Actions, ...): `name`, `subject`, and `issuer` and `audiences`, which default to HCP Terraform's (`https://app.terraform.io`, `api://AzureADTokenExchange`) |
-| `graph_app_roles` | Microsoft Graph application permissions, e.g. `Directory.Read.All` (admin consent is granted by the assignment) |
-| `entraid_role_names` | Permanent Entra ID directory roles for the service principal |
-| `client_secret` | Client secret stored in 1Password: `key_vault_name` (vault), optional `rotation_days` (default 180) and `overlap_days` (default 30) |
-
-For a client secret, the 1Password item is titled after the application, with the client ID as username, the secret as password and the tenant and expiry in its notes. A new secret is created on the first apply after `rotation_days`; it is stored in 1Password before the old secret is deleted, so anything holding the old value must re-read it from 1Password. The secret expires `overlap_days` after its rotation date, which leaves time to run that apply. Like user passwords, the secret is also kept in the Terraform state.
-
-Groups can list applications as `members` by display name, next to users by `mail_nickname`. The `applications` output shows each application's client ID and service principal object ID; HCP Terraform workspaces read their client IDs from the `client_ids` output, see [Workspace variables and secrets](../HCP/README.md#workspace-variables-and-secrets).
