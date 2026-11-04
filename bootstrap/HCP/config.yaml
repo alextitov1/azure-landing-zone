@@ -18,7 +18,7 @@ projects:
           trigger_patterns: ["/HCP/**/*", "/modules/**/*"]
         secrets:  # sensitive environment variables, read from 1Password (op://<vault>/<item>/<field>)
           TFE_TOKEN: op://cloud_r0/hcp_tf_user_hcp_workspace_t1_01/credential  # HCP user token to setup workspaces
-          OP_SERVICE_ACCOUNT_TOKEN: op://cloud_r1/op_hcp_workspaces_r1/credential # OP access token to setup other workspaces secrets
+          OP_SERVICE_ACCOUNT_TOKEN: op://cloud_r1/op_hcp_workspaces_t1/credential # OP access token to setup other workspaces secrets
   
   4esnok_vs_r0:
     description: "Ring 0 vs.4esnok.su workspaces"

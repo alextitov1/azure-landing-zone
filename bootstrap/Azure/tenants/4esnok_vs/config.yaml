@@ -28,7 +28,7 @@ entra_id:
         - Global Administrator
       password:
         length: 32
-        onepassword_vault: "cloud_r0"
+        onepassword_vault: "cloud_r1"
 
   groups:
     # # Requires AAD Premium.

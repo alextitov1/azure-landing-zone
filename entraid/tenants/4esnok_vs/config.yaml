@@ -18,7 +18,7 @@ entra_id:
         onepassword_vault: "cloud_r1"
 
     - mail_nickname: "developer1"
-      user_principal_name: "developer@4esnok.su"
+      user_principal_name: "developer@vs.4esnok.su"
       display_name: "(DEV) User"
       organization:
         department: "developers"
