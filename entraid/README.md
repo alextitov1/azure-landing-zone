@@ -7,50 +7,36 @@ Azure Policy are in [ESLZ/governance](../ESLZ/governance/README.md).
 
 ```
 terraform.tf               reads tenants/<tenant>/config.yaml; uses ../modules/entraid-tenant (shared with tier 0)
-entraid.sh                 ./entraid.sh <tenant> init|plan|apply
 tenants/<tenant>/
   config.yaml              the tenant's tier-1 config
 ```
 
 ## Day-two operations
 
-Each tenant has an HCP Terraform workspace `<tenant>_entraid_directory_r1` (project `<tenant>_r1`, see
-[HCP/config.yaml](../HCP/config.yaml)). The plan fails if the tenant signed in to is not the config's
-`entraid_tenant_id`.
+Each tenant has an HCP Terraform workspace `<tenant>_entraid_directory_r1` (project `<tenant>_r1`), and this
+configuration runs only there. The workspace gets all its settings from [HCP/config.yaml](../HCP/config.yaml): the
+tenant (`TF_VAR_tenant`), the client IDs of its plan and apply applications, and the 1Password service account token
+(`OP_SERVICE_ACCOUNT_TOKEN`); see [Workspace variables and secrets](../HCP/README.md#workspace-variables-and-secrets).
+Nothing is set by hand.
 
-### Remote runs
+Open a pull request that changes `tenants/<tenant>/` or the shared code for a speculative plan; merging to `main`
+plans and applies it automatically. Runs sign in with dynamic credentials: plan runs as
+`sp-hcp-entraid-directory-r1-plan`, apply runs as `sp-hcp-entraid-directory-r1-apply`. Tier 0 creates both and their
+rights. The plan fails if the tenant signed in to is not the config's `entraid_tenant_id`.
 
-`4esnok_vs`: open a pull request that changes `tenants/<tenant>/` or the shared code for a speculative plan; merge
-to `main`, then confirm the apply in HCP Terraform (no auto-apply). Runs sign in with dynamic credentials: plan runs
-as `sp-hcp-entraid-directory-r1-plan`, apply runs as `sp-hcp-entraid-directory-r1-apply`. Tier 0 creates both and
-their rights, and the workspace reads their client IDs, see
-[Workspace variables and secrets](../HCP/README.md#workspace-variables-and-secrets).
+The 1Password service account stores user passwords and client secrets, so it needs write access to every vault the
+config names (`password.onepassword_vault`, `client_secret.key_vault_name`).
 
-Set these environment variables on the workspace by hand, in HCP Terraform:
-
-| Variable | Value | Sensitive |
-|---|---|---|
-| `TF_VAR_tenant` | the tenant directory, e.g. `4esnok_vs` | no |
-| `TF_VAR_onepassword_service_account_token` | the tier-1 1Password service account token (`op://IT/op_azure_t1_rw_t1/credential`) | yes |
-
-### Local runs
-
-`4esnok_mail`, whose workspace only stores state: edit the config, then plan and apply, signed in with `az login`
-to that tenant:
-
-```sh
-./entraid.sh 4esnok_mail init
-./entraid.sh 4esnok_mail plan
-./entraid.sh 4esnok_mail apply
-```
-
-For a remote workspace the script can still run a speculative plan, with the workspace's own variables.
+`4esnok_mail` has no workspace yet, so its config is not applied; see [Add a tenant](#add-a-tenant).
 
 ### Add a tenant
 
-1. Bootstrap it in tier 0, see [bootstrap/Azure](../bootstrap/Azure/README.md).
+1. Bootstrap it in tier 0, with the workspace's plan and apply applications as in
+   `bootstrap/Azure/tenants/4esnok_vs/config.yaml`; see [bootstrap/Azure](../bootstrap/Azure/README.md).
 2. Create `tenants/<tenant>/config.yaml`.
-3. Add workspace `<tenant>_entraid_directory_r1` in project `<tenant>_r1` to [HCP/config.yaml](../HCP/config.yaml).
+3. Add project `<tenant>_r1`, with a variable set for the tenant's Azure dynamic credentials, and its workspace
+   `<tenant>_entraid_directory_r1` to [HCP/config.yaml](../HCP/config.yaml), like `4esnok_vs_entraid_directory_r1`.
+   The commented-out `4esnok_mail_r1` there is a start.
 
 The directory name is the prefix of the tenant's HCP project and workspace names; it must start with a letter or digit
 and contain only letters, digits and underscores.

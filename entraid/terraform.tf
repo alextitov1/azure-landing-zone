@@ -1,7 +1,8 @@
-# Tier 1 of an Entra ID tenant: day-two users, groups, applications, Conditional Access and governance. Run by
-# entraid.sh, which picks the tenant and its HCP workspace; see README.md.
+# Tier 1 of an Entra ID tenant: day-two users, groups, applications, Conditional Access and governance. Runs only in
+# the tenant's HCP Terraform workspace, which sets the tenant (TF_VAR_tenant), the 1Password token
+# (OP_SERVICE_ACCOUNT_TOKEN) and Azure dynamic credentials, all from HCP/config.yaml; see README.md.
 terraform {
-  cloud {}
+  cloud {} # HCP runs set the workspace; keeps a local init from creating local state
 
   required_providers {
     azuread = {
@@ -21,7 +22,7 @@ terraform {
 
 variable "tenant" {
   type        = string
-  description = "Tenant directory under tenants/, e.g. 4esnok_vs. Set via TF_VAR_tenant."
+  description = "Tenant directory under tenants/, e.g. 4esnok_vs. Set by the workspace's TF_VAR_tenant (HCP/config.yaml)."
 
   validation {
     condition     = fileexists("${path.module}/tenants/${var.tenant}/config.yaml")
@@ -29,8 +30,8 @@ variable "tenant" {
   }
 }
 
-# Set by HCP Terraform when the workspace uses dynamic Azure credentials (TFC_AZURE_PROVIDER_AUTH); null for local
-# runs, which sign in with `az login`. Passed explicitly because msgraph has no built-in HCP support.
+# Set by HCP Terraform, as the workspace uses dynamic Azure credentials (TFC_AZURE_PROVIDER_AUTH). Required, so a run
+# without them fails here. Passed explicitly because msgraph has no built-in HCP support.
 variable "tfc_azure_dynamic_credentials" {
   type = object({
     default = object({
@@ -43,13 +44,6 @@ variable "tfc_azure_dynamic_credentials" {
     }))
   })
   description = "Azure dynamic credentials injected by HCP Terraform"
-  default     = null
-}
-
-variable "onepassword_service_account_token" {
-  type        = string
-  description = "1Password service account token, to store user passwords and client secrets. Set via TF_VAR_onepassword_service_account_token."
-  sensitive   = true
 }
 
 locals {
@@ -57,21 +51,15 @@ locals {
 }
 
 provider "azuread" {
-  use_cli              = var.tfc_azure_dynamic_credentials == null
-  use_oidc             = var.tfc_azure_dynamic_credentials != null
-  client_id_file_path  = try(var.tfc_azure_dynamic_credentials.default.client_id_file_path, null)
-  oidc_token_file_path = try(var.tfc_azure_dynamic_credentials.default.oidc_token_file_path, null)
+  use_oidc             = true
+  client_id_file_path  = var.tfc_azure_dynamic_credentials.default.client_id_file_path
+  oidc_token_file_path = var.tfc_azure_dynamic_credentials.default.oidc_token_file_path
 }
 
 provider "msgraph" {
-  use_cli              = var.tfc_azure_dynamic_credentials == null
-  use_oidc             = var.tfc_azure_dynamic_credentials != null
-  client_id_file_path  = try(var.tfc_azure_dynamic_credentials.default.client_id_file_path, null)
-  oidc_token_file_path = try(var.tfc_azure_dynamic_credentials.default.oidc_token_file_path, null)
-}
-
-provider "onepassword" {
-  service_account_token = var.onepassword_service_account_token
+  use_oidc             = true
+  client_id_file_path  = var.tfc_azure_dynamic_credentials.default.client_id_file_path
+  oidc_token_file_path = var.tfc_azure_dynamic_credentials.default.oidc_token_file_path
 }
 
 module "entraid" {

@@ -5,45 +5,54 @@ entraid_tenant_id: 05af71f4-43e2-4c1a-8917-3bf5cb165cfe
 # Admin and break-glass users and tier-0 groups are in bootstrap/Azure/<tenant>/config.yaml.
 
 entra_id:
-  # Users are referenced by mail_nickname everywhere in the config. Tier-0 users (bootstrap/Azure) can't be named
-  # here; add them to groups in tier 0.
-  # users:
-  #   - mail_nickname: "developer1"
-  #     user_principal_name: "developer@4esnok.su"
-  #     display_name: "(DEV) User"
-  #     organization:
-  #       department: "developers"
-  #       job_title: "developer"
+  users:
+    - mail_nickname: sysadmin
+      user_principal_name: sysadmin@vs.4esnok.su
+      display_name: "(ADM) User"
+      organization:
+        department: sysadmins
+        job_title: Site Reliability Engineer
+      entraid_role_names:  # direct entraid role assignments
+        - Global Administrator
+      password:
+        onepassword_vault: "cloud_r1"
+
+    - mail_nickname: "developer1"
+      user_principal_name: "developer@4esnok.su"
+      display_name: "(DEV) User"
+      organization:
+        department: "developers"
+        job_title: "developer"
 
   groups:
     - display_name: "sg-t2-az-aks-admin"
       description: "Admin access to AKS clusters"
-      members: []  # user mail_nicknames or application display names
+      members: [sysadmin]  # user mail_nicknames or application display names
 
     # Azure RBAC on the Visual Studio subscription (44b9d159-d353-477f-b94f-5ce0f3bd33f1), separate groups for
     # users and for applications. The user groups' roles are assigned by ESLZ/subscriptions; the application
     # groups' roles are assigned on management group mg-landingzones (management_groups below), which the
     # subscription inherits once it is moved there.
-    - display_name: "sg-t1-az-sub-vs-contributor"
-      description: "Users: Contributor on the Visual Studio subscription"
-      members: []
-    - display_name: "sg-t1-az-sub-vs-reader"
-      description: "Users: Reader on the Visual Studio subscription"
-      members: []
-    - display_name: "sg-t1-az-sub-vs-apps-contributor"
-      description: "Applications: Contributor and constrained RBAC Administrator on the Visual Studio subscription"
-      members:
-        - sp-hcp-azure-networking-r1-apply
-    - display_name: "sg-t1-az-sub-vs-apps-reader"
-      description: "Applications: Reader on the Visual Studio subscription"
-      members:
-        - sp-hcp-azure-networking-r1-plan
+    # - display_name: "sg-t1-az-sub-vs-contributor"
+    #   description: "Users: Contributor on the Visual Studio subscription"
+    #   members: [sysadmin]
+    # - display_name: "sg-t1-az-sub-vs-reader"
+    #   description: "Users: Reader on the Visual Studio subscription"
+    #   members: []
+    # - display_name: "sg-t1-az-sub-vs-apps-contributor"
+    #   description: "Applications: Contributor and constrained RBAC Administrator on the Visual Studio subscription"
+    #   members:
+    #     - sp-hcp-azure-networking-r1-apply
+    # - display_name: "sg-t1-az-sub-vs-apps-reader"
+    #   description: "Applications: Reader on the Visual Studio subscription"
+    #   members:
+    #     - sp-hcp-azure-networking-r1-plan
 
-    # Tier-2 workload cortex (ESLZ/workloads/cortex): Contributor on its resource group rg-cortex-dev-nzn-01,
-    # assigned by ESLZ/subscriptions.
-    - display_name: "sg-t2-az-cortex-contributor"
-      description: "Users: Contributor on the cortex resource group"
-      members: []
+    # # Tier-2 workload cortex (ESLZ/workloads/cortex): Contributor on its resource group rg-cortex-dev-nzn-01,
+    # # assigned by ESLZ/subscriptions.
+    # - display_name: "sg-t2-az-cortex-contributor"
+    #   description: "Users: Contributor on the cortex resource group"
+    #   members: []
 
   applications:  # app registrations and their enterprise applications (service principals)
     # Identities of HCP Terraform workspaces (dynamic credentials, OIDC): plan runs use the read-only application,
