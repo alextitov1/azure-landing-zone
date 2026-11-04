@@ -7,7 +7,8 @@ It is run manually, when bootstrapping a new tenant or making fundamental change
 
 It creates the admin and break-glass users, the tier-0 groups, the identities of the HCP workspaces that manage the
 tenant and, for a tenant with Azure, the intermediate root management group `mg-4esnok`. All day-two operations are
-done in [tier 1](../../entraid/README.md).
+done in [tier 1](../../entraid/README.md), and the management groups below `mg-4esnok` in
+[ESLZ/governance](../../ESLZ/governance/README.md).
 
 
 ## Prerequisites

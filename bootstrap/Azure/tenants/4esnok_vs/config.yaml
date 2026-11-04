@@ -5,7 +5,7 @@ entraid_tenant_id: 05af71f4-43e2-4c1a-8917-3bf5cb165cfe
 
 # Tier 0 (bootstrap/Azure): admin and break-glass users, tier-0 groups, HCP Terraform workspace identities,
 # intermediate root management group.
-# Everything else is in entraid/tenants/<tenant>/config.yaml (tier 1).
+# Everything else is in entraid/tenants/<tenant>/config.yaml (tier 1) and ESLZ/governance (management groups).
 
 entra_id:
   users:
@@ -48,17 +48,14 @@ entra_id:
     - display_name: "sg-prd-az-root-owner-t0"
       description: "Owner on the intermediate root management group mg-4esnok"
       members: [ ]
-    # entraid keeps its rights until it has destroyed its management groups, which ESLZ/governance then creates
     - display_name: "sg-prd-az-root-mgmt-t0"
-      description: "Manages management groups, policy and Azure RBAC below mg-4esnok (tier 1)"
+      description: "Manages management groups, policy and Azure RBAC below mg-4esnok (ESLZ/governance)"
       members:
-        - sp-hcp-entraid-directory-r1-apply
         - sp-hcp-azure-governance-r1-apply
     - display_name: "sg-prd-az-root-reader-t0"
       description: "Reader on the intermediate root management group mg-4esnok"
       members:
         - sysadmin
-        - sp-hcp-entraid-directory-r1-plan
         - sp-hcp-azure-governance-r1-plan
 
   # Identities of HCP Terraform workspaces (dynamic credentials, OIDC): plan runs use the read-only application,
@@ -67,8 +64,7 @@ entra_id:
   applications:
     # Workspace 4esnok_vs_entraid_directory_r1 (entraid, tier 1). The apply application can grant itself any
     # directory role (RoleManagement.ReadWrite.Directory), so it is as privileged as a Global Administrator: protect
-    # its workspace like tier 0. Its Azure rights on mg-4esnok come from sg-prd-az-root-mgmt-t0 (apply) and
-    # sg-prd-az-root-reader-t0 (plan).
+    # its workspace like tier 0. It has no Azure rights.
     - display_name: "sp-hcp-entraid-directory-r1-plan"
       description: "HCP Terraform plan runs of 4esnok/4esnok_vs_r1/4esnok_vs_entraid_directory_r1"
       owners:
@@ -141,7 +137,7 @@ entra_id:
           subject: "organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_azure_mgmt_r1:run_phase:apply"
 
 # Intermediate root management group below the tenant root group (CAF), its Azure RBAC and the tenant's hierarchy
-# settings. The groups below it are created by tier 1 (entraid/tenants/4esnok_vs).
+# settings. The groups below it are created by ESLZ/governance.
 management_groups:
   name: mg-4esnok
   display_name: "4esnok"
@@ -155,9 +151,9 @@ management_groups:
       group: sg-prd-az-root-owner-t0
     - role: Reader
       group: sg-prd-az-root-reader-t0
-    # Tier 1: management groups (Contributor), policy (Resource Policy Contributor) and role assignments, incl. the
-    # policy identities' and Role Based Access Control Administrator for ESLZ pipelines. Contributor can't write
-    # Microsoft.Authorization, hence the other two.
+    # ESLZ/governance: management groups (Contributor), policy (Resource Policy Contributor) and role assignments,
+    # incl. the policy identities' and Role Based Access Control Administrator for ESLZ pipelines. Contributor can't
+    # write Microsoft.Authorization, hence the other two.
     - role: Contributor
       group: sg-prd-az-root-mgmt-t0
     - role: Resource Policy Contributor

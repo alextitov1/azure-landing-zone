@@ -33,7 +33,7 @@ resource_providers:
 # name), service_principal (display name), or principal_id with principal_type (User, Group or ServicePrincipal).
 # Access goes through groups (entraid/tenants/4esnok_vs/config.yaml): members change there, not here.
 # Do not declare the application groups (sg-t1-az-sub-vs-apps-*): their roles come from management group
-# mg-landingzones (entraid), and declaring them here would conflict with or lock out the workspace. The workspace cannot assign Owner, User Access
+# mg-landingzones (ESLZ/governance), and declaring them here would conflict with or lock out the workspace. The workspace cannot assign Owner, User Access
 # Administrator or Role Based Access Control Administrator (see README.md).
 role_assignments:
   - role: Contributor
