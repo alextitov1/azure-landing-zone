@@ -16,7 +16,7 @@ a pull request shows the plan, and a merge to `main` queues a run that needs to 
    az account management-group subscription add --name mg-landingzones --subscription <subscription ID>
    ```
    The workspace's access comes from that group (`management_groups` in
-   [ESLZ/governance](../governance/config/governance.yaml)), and every subscription in it inherits:
+   [ESLZ/governance](../governance/config.yaml)), and every subscription in it inherits:
    - `sg-t1-az-sub-vs-apps-reader` (the workspace's plan application; none until its r1 workspace exists): **Reader**
    - `sg-t1-az-sub-vs-apps-contributor` (the workspace's apply application): **Contributor**,
      and **Role Based Access Control Administrator** with a condition that blocks assigning or removing

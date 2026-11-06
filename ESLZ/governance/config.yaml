@@ -1,0 +1,27 @@
+# Management groups below the intermediate root mg-4esnok, Azure Policy and Azure RBAC on them; see README.md.
+entraid_tenant_id: 05af71f4-43e2-4c1a-8917-3bf5cb165cfe  # 4esnok_vs; its tenant root group is the parent of mg-4esnok
+
+alz_library_references:  # ALZ libraries the alz provider loads
+  - custom_url: ./alz-lib  # relative to ESLZ/governance
+
+management_groups:
+  architecture: 4esnok     # alz-lib/4esnok.alz_architecture_definition.yaml
+  location: australiaeast  # required by the module, for policy managed identities
+  role_assignments: {}     # by management group
+    # Pipelines of ESLZ/subscriptions and ESLZ/connectivity, for every subscription in mg-landingzones. Off while
+    # their groups are commented out in entraid and their workspaces don't exist.
+    # mg-landingzones:
+    #   - role: Reader
+    #     group: sg-t1-az-sub-vs-apps-reader
+    #   - role: Contributor
+    #     group: sg-t1-az-sub-vs-apps-contributor
+    #   - role: Role Based Access Control Administrator
+    #     group: sg-t1-az-sub-vs-apps-contributor
+    #     # cannot assign or remove Owner, User Access Administrator or Role Based Access Control Administrator
+    #     condition: >-
+    #       ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})) OR
+    #       (@Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAllValues:GuidNotEquals
+    #       {8e3af657-a8ff-443c-a75c-2fe8c4bcb635, 18d7d88d-d35e-4fb5-a5c3-7773c20a72d9, f58310d9-a9f6-439a-9e8d-f62e7b41a168}))
+    #       AND ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})) OR
+    #       (@Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAllValues:GuidNotEquals
+    #       {8e3af657-a8ff-443c-a75c-2fe8c4bcb635, 18d7d88d-d35e-4fb5-a5c3-7773c20a72d9, f58310d9-a9f6-439a-9e8d-f62e7b41a168}))

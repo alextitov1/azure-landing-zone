@@ -3,5 +3,5 @@
   "name": "4esnok",
   "display_name": "4esnok landing zone",
   "description": "Custom Azure Landing Zones library of admin.4esnok.su: management group hierarchy, archetypes and policy assignments.",
-  "path": "ESLZ/governance/lib"
+  "path": "ESLZ/governance/alz-lib"
 }

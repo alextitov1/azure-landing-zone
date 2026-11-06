@@ -1,0 +1,28 @@
+# mg-4esnok is created by tier 0 (bootstrap/Azure), so it is `exists: true`: not created here, but still given its
+# archetype. Changing a group's parent_id recreates the group.
+name: 4esnok
+management_groups:
+  - id: mg-4esnok  # intermediate root: tenant-wide policy and RBAC
+    display_name: 4esnok
+    parent_id: null
+    exists: true
+    archetypes:
+      - empty
+  - id: mg-platform  # shared platform subscriptions (management, connectivity, identity)
+    display_name: Platform
+    parent_id: mg-4esnok
+    exists: false
+    archetypes:
+      - empty
+  - id: mg-landingzones  # workload subscriptions
+    display_name: Landing zones
+    parent_id: mg-4esnok
+    exists: false
+    archetypes:
+      - empty
+  - id: mg-sandbox  # experiments: no connectivity to the platform
+    display_name: Sandbox
+    parent_id: mg-4esnok
+    exists: false
+    archetypes:
+      - empty

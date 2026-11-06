@@ -48,3 +48,9 @@ Local bootstraps keep signing in through the desktop app.
 [x] - repo structure, terraform modules are in a separate directory
 
 [x] - HCP decouple t0 and t1 phase
+
+
+[ ] - alzlibtool for the ALZ library
+
+Try alzlibtool (github.com/Azure/alzlib) on ESLZ/governance/alz-lib: check the library and generate its documentation
+from alz_library_metadata.json (display_name, description), e.g. as a PR check.
