@@ -1,0 +1,14 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Azure/Azure-Landing-Zones-Library/main/schemas/archetype_definition.json",
+  "name": "4esnok_sandbox",
+  "policy_assignments": [
+    "Enforce-ALZ-Sandbox"
+  ],
+  "policy_definitions": [
+    "Deny-VNET-Peer-Cross-Sub"
+  ],
+  "policy_set_definitions": [
+    "Enforce-ALZ-Sandbox"
+  ],
+  "role_definitions": []
+}

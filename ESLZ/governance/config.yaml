@@ -2,11 +2,15 @@
 entraid_tenant_id: 05af71f4-43e2-4c1a-8917-3bf5cb165cfe  # 4esnok_vs; its tenant root group is the parent of mg-4esnok
 
 alz_library_references:  # ALZ libraries the alz provider loads
+  - path: platform/alz     # CAF reference policy; alz-lib's archetypes pick assignments from it by name
+    ref: 2026.11.0
   - custom_url: ./alz-lib  # relative to ESLZ/governance
 
 management_groups:
   architecture: 4esnok     # alz-lib/4esnok.alz_architecture_definition.yaml
   location: australiaeast  # required by the module, for policy managed identities
+  policy_default_values:   # assignment parameters, by default name in alz-lib/alz_policy_default_values.json
+    allowed_locations: [newzealandnorth, australiaeast]
   role_assignments: {}     # by management group
     # Pipelines of ESLZ/subscriptions and ESLZ/connectivity, for every subscription in mg-landingzones. Off while
     # their groups are commented out in entraid and their workspaces don't exist.

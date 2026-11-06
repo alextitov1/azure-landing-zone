@@ -1,0 +1,17 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Azure/Azure-Landing-Zones-Library/main/schemas/default_policy_values.json",
+  "defaults": [
+    {
+      "default_name": "allowed_locations",
+      "description": "The locations resources can be deployed to.",
+      "policy_assignments": [
+        {
+          "parameter_names": [
+            "listOfAllowedLocations"
+          ],
+          "policy_assignment_name": "Deny-Resource-Locations"
+        }
+      ]
+    }
+  ]
+}

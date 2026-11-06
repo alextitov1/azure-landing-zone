@@ -23,6 +23,8 @@ alz_library_references:                # required; ALZ libraries the alz provide
 management_groups:
   architecture: <name>                 # required; the hierarchy, <name>.alz_architecture_definition.yaml in a library
   location: <region>                   # required; for policy managed identities
+  policy_default_values:               # optional; assignment parameters set here
+    <default name>: <value>            # e.g. allowed_locations: [<region>, ...]
   role_assignments:                    # optional
     <management group>:                # e.g. mg-landingzones
       - role: <role>                   # required; built-in role name
@@ -34,6 +36,8 @@ management_groups:
 
 - `architecture`: each group's `id`, `display_name`, `parent_id` and `archetypes`. `mg-4esnok` is `exists: true`:
   tier 0 creates it, and this workspace only gives it its archetype.
+- `policy_default_values`: keys are the default names in `alz-lib/alz_policy_default_values.json`, and each sets the
+  parameters mapped to that name. `allowed_locations` is the regions `Deny-Resource-Locations` allows.
 - `role_assignments`: subscriptions below a management group inherit its role assignments. Groups are looked up in
   Entra ID by display name, so they must exist before the plan ([entraid](../../entraid/README.md) creates them).
 
@@ -47,7 +51,25 @@ az account management-group subscription add --name <management group> --subscri
 
 ## Policy
 
-No policy is assigned yet: every group has the alz provider's built-in `empty` archetype.
+A few of the policies that CAF recommends, chosen to cost nothing and not get in the way of lab work. Each group has
+one archetype from `alz-lib/`:
+
+| Group | Assignment | Effect | |
+|---|---|---|---|
+| `mg-4esnok` | `Audit-ResourceRGLocation` | Audit | Resources in a different region from their resource group |
+| | `Deny-UnmanagedDisk` | Audit | Virtual machines without managed disks |
+| | `Deny-Classic-Resources` | Deny | Classic (ASM) resource types |
+| | `Deny-Resource-Locations` | Deny | Regions not in `allowed_locations`; global resources are allowed |
+| | `Deploy-SvcHealth-BuiltIn` | DeployIfNotExists | A service health alert in each subscription, in `rg-serviceHealthAlert`, notifying its Owners |
+| `mg-landingzones` | `Deny-Storage-http` | Deny | Storage accounts that accept HTTP |
+| `mg-sandbox` | `Enforce-ALZ-Sandbox` | Deny | Hybrid connectivity resources and VNet peering to other subscriptions |
+| `mg-platform` | none | | |
+
+All but `Deny-Resource-Locations` come from the Azure Landing Zones reference library, `platform/alz`, which
+`alz_library_references` loads at a pinned release. An archetype names the assignments, and the definitions it needs,
+that it takes from there. Only what an archetype lists is created, so the rest of the reference library isn't deployed.
+ALZ policies that need Log Analytics, Defender for Cloud plans or a DDoS plan are left out, as are Denies that would
+block common experiments, such as `Deny-IP-forwarding` and `Deny-Subnet-Without-Nsg`.
 
 Policy comes from `alz-lib/`, a custom [Azure Landing Zones library](https://github.com/Azure/Azure-Landing-Zones-Library)
 that the module assigns with the hierarchy:
@@ -58,20 +80,22 @@ that the module assigns with the hierarchy:
 | `archetype_definitions/*.alz_archetype_definition.json` | Archetypes: the policy assignments, definitions and role definitions a group gets |
 | `policy_assignments/*.alz_policy_assignment.json` | Policy assignments; the module sets scope and location |
 | `policy_definitions/*.alz_policy_definition.json` | Custom policy definitions, created on the group of the archetype that lists them |
-| `alz_policy_default_values.json` | Default names for assignment parameters whose values are set in Terraform |
+| `alz_policy_default_values.json` | Default names for assignment parameters whose values are set in `policy_default_values` |
 
 **Add a policy:**
 
-1. Add the assignment to `policy_assignments/`, with a name of at most 24 characters, and a custom definition to
+1. Use an assignment from [`platform/alz`](https://github.com/Azure/Azure-Landing-Zones-Library/tree/main/platform/alz/policy_assignments)
+   by name, or add one to `policy_assignments/`, with a name of at most 24 characters, and a custom definition to
    `policy_definitions/`.
 2. List them in an archetype, and give the group that archetype instead of `empty`.
-3. A parameter whose value comes from another stack, such as a Log Analytics workspace ID, keeps a placeholder in the
-   assignment and gets a default name in `alz_policy_default_values.json`. The module sets it from
-   `policy_default_values`, which isn't passed in yet.
+3. A parameter whose value is set in `config.yaml`, such as the allowed regions or a Log Analytics workspace ID from
+   another stack, keeps a placeholder in the assignment and gets a default name in `alz_policy_default_values.json`.
+   The module sets it from `policy_default_values`.
 
 DeployIfNotExists and Modify assignments get a system-assigned identity. The module grants it the roles from the
 definition, at the group and on resources passed in parameters marked `assignPermissions`. Policy acts only on
-resources created or changed after the assignment; for existing ones, create a remediation task:
+resources created or changed after the assignment; for existing ones, such as the service health alert in a
+subscription that was already in the hierarchy, create a remediation task:
 
 ```sh
 az policy remediation create --management-group <group> --policy-assignment <assignment> -n <name>
