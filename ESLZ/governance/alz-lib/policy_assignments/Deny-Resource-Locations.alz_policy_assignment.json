@@ -1,0 +1,26 @@
+{
+  "type": "Microsoft.Authorization/policyAssignments",
+  "apiVersion": "2024-04-01",
+  "name": "Deny-Resource-Locations",
+  "location": "${default_location}",
+  "dependsOn": [],
+  "properties": {
+    "description": "Restricts the locations resources can be deployed to. Resources in the global location are not evaluated.",
+    "displayName": "Allowed locations",
+    "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/e56962a6-4747-49cd-b67b-bf8b01975c4c",
+    "definitionVersion": "1.*.*",
+    "enforcementMode": "Default",
+    "nonComplianceMessages": [
+      {
+        "message": "Resources {enforcementMode} be deployed to the allowed locations in ESLZ/governance/config.yaml (policy_default_values.allowed_locations)."
+      }
+    ],
+    "parameters": {
+      "listOfAllowedLocations": {
+        "value": []
+      }
+    },
+    "scope": "/providers/Microsoft.Management/managementGroups/placeholder",
+    "notScopes": []
+  }
+}

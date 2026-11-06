@@ -7,7 +7,7 @@ management_groups:
     parent_id: null
     exists: true
     archetypes:
-      - empty
+      - 4esnok_root
   - id: mg-platform  # shared platform subscriptions (management, connectivity, identity)
     display_name: Platform
     parent_id: mg-4esnok
@@ -19,10 +19,10 @@ management_groups:
     parent_id: mg-4esnok
     exists: false
     archetypes:
-      - empty
+      - 4esnok_landing_zones
   - id: mg-sandbox  # experiments: no connectivity to the platform
     display_name: Sandbox
     parent_id: mg-4esnok
     exists: false
     archetypes:
-      - empty
+      - 4esnok_sandbox

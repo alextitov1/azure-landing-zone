@@ -1,0 +1,14 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Azure/Azure-Landing-Zones-Library/main/schemas/archetype_definition.json",
+  "name": "4esnok_root",
+  "policy_assignments": [
+    "Audit-ResourceRGLocation",
+    "Deny-Classic-Resources",
+    "Deny-Resource-Locations",
+    "Deny-UnmanagedDisk",
+    "Deploy-SvcHealth-BuiltIn"
+  ],
+  "policy_definitions": [],
+  "policy_set_definitions": [],
+  "role_definitions": []
+}

@@ -38,6 +38,11 @@ module "alz" {
   location           = var.config.location
   enable_telemetry   = false
 
+  # JSON-encoded, as the module's input is map(string) to take values of any type
+  policy_default_values = {
+    for name, value in try(var.config.policy_default_values, {}) : name => jsonencode({ value = value })
+  }
+
   # "<management group>|<role>|group/<name> or id/<principal ID>" => module input
   management_group_role_assignments = {
     for ra in local.role_assignments :
