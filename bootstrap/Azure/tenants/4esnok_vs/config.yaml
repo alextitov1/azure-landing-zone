@@ -45,8 +45,11 @@ entra_id:
           subject: organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_entraid_directory_r1:run_phase:apply
         - name: hcp-4esnok_vs_entraid_directory_r1-plan
           subject: organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_entraid_directory_r1:run_phase:plan
-      graph_app_roles:
+      entraid_role_names:
         - Global Administrator
+      # graph_app_roles:
+        # - Group.Read.All
+        # - RoleManagement.ReadWrite.Directory
 
     - display_name: sp-prd-az-mg4esnok-owner-hcp-workspace-t1
       description: HCP TF workspace 4esnok_vs_azure_governance_r1
