@@ -24,8 +24,8 @@ projects:
           trigger_patterns: ["/entraid/*", "/entraid/tenants/4esnok_vs/**/*", "/modules/**/*"]
         variables:
           TF_VAR_tenant: 4esnok_vs  # entraid/tenants/<tenant>
-          TFC_AZURE_PLAN_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-hcp-entraid-directory-r1-plan
-          TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-hcp-entraid-directory-r1-apply
+          TFC_AZURE_PLAN_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-prd-entraid-global-admin-hcp-workspace-t1
+          TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-prd-entraid-global-admin-hcp-workspace-t1
         secrets:  # stores user passwords and client secrets in the vaults the tenant config names
           OP_SERVICE_ACCOUNT_TOKEN: op://cloud_r1/op_hcp_workspaces_t1/credential
 
@@ -40,8 +40,8 @@ projects:
           working_directory: ESLZ/governance
           trigger_patterns: ["/ESLZ/governance/**/*", "/modules/azure-management-groups/**/*"]
         variables:
-          TFC_AZURE_PLAN_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-hcp-azure-governance-r1-plan
-          TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-hcp-azure-governance-r1-apply
+          TFC_AZURE_PLAN_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-prd-az-mg4esnok-owner-hcp-workspace-t1
+          TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-prd-az-mg4esnok-owner-hcp-workspace-t1
 
       4esnok_vs_azure_mgmt_r1:
         description: "Azure: management (central Log Analytics workspace, managed Prometheus, Managed Grafana)"
@@ -54,8 +54,8 @@ projects:
           working_directory: ESLZ/management/terraform
           trigger_patterns: ["/ESLZ/management/**/*"]
         variables:
-          TFC_AZURE_PLAN_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-hcp-azure-mgmt-r1-plan
-          TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-hcp-azure-mgmt-r1-apply
+          TFC_AZURE_PLAN_CLIENT_ID: tfe://4esnok_vs_entraid_directory_r1/client_ids/sp-prd-az-mgmt-contributor-hcp-workspace-t2
+          TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_vs_entraid_directory_r1/client_ids/sp-prd-az-mgmt-contributor-hcp-workspace-t2
 
   #     4esnok_vs_azure_networking_r2:
   #       description: "Azure: lab hub-and-spoke network"
@@ -126,7 +126,7 @@ projects:
   #         trigger_patterns: ["/entraid/*", "/entraid/tenants/4esnok_mail/**/*", "/modules/**/*"]
   #       variables:
   #         TF_VAR_tenant: 4esnok_mail
-  #         TFC_AZURE_PLAN_CLIENT_ID: tfe://4esnok_mail_azure_bootstrap_r0/client_ids/sp-hcp-entraid-directory-r1-plan
-  #         TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_mail_azure_bootstrap_r0/client_ids/sp-hcp-entraid-directory-r1-apply
+  #         TFC_AZURE_PLAN_CLIENT_ID: tfe://4esnok_mail_azure_bootstrap_r0/client_ids/sp-prd-hcp-entraid-directory-plan-r1
+  #         TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_mail_azure_bootstrap_r0/client_ids/sp-prd-entraid-global-admin-hcp-workspace-t1
   #       secrets:
   #         OP_SERVICE_ACCOUNT_TOKEN: op://cloud_r1/op_hcp_workspaces_r1/credential

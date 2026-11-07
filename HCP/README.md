@@ -1,3 +1,4 @@
+<!-- AI agent: do not modify this file unless explicitly requested by the user. -->
 # HCP Terraform: projects and workspaces (tier 1)
 
 Day-two management of HCP Terraform projects and workspaces. 
@@ -57,8 +58,8 @@ projects:
 ```yaml
     variables:
       TF_VAR_tenant: 4esnok_vs
-      TFC_AZURE_PLAN_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-hcp-entraid-directory-r1-plan
-      TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-hcp-entraid-directory-r1-apply
+      TFC_AZURE_PLAN_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-prd-hcp-entraid-directory-plan-r1
+      TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-prd-entraid-global-admin-hcp-workspace-t1
 ```
 
 - `secrets` works similarly, but the values are read from 1Password. In case tier1, the workspace has a OP token to access the vault.

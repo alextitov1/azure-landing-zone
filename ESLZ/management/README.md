@@ -13,8 +13,13 @@ The central Log Analytics workspace in `newzealandnorth`, applied by the HCP Ter
 - Azure Managed Grafana `amg-mgmt-dev-aue-01` in `australiaeast`, since Grafana is not offered in `newzealandnorth`
   (`grafana.enabled`). Standard X1, Grafana 12, public endpoint. Its managed identity has Monitoring Data Reader on
   the Prometheus workspace and Monitoring Reader on the subscription, so Prometheus, Azure Monitor metrics and
-  Log Analytics are data sources. Users get Grafana Admin (`sg-t1-az-sub-vs-contributor`) or Grafana Viewer
-  (`sg-t1-az-sub-vs-reader`) from `ESLZ/subscriptions`, which also registers `Microsoft.Dashboard`.
+  Log Analytics are data sources. Users get Grafana Admin (`sg-az-sub-vs-contributor-t1`) or Grafana Viewer
+  (`sg-az-sub-vs-reader-t1`) from `ESLZ/subscriptions`, which also registers `Microsoft.Dashboard`.
+
+The workspace signs in as `sp-prd-az-mgmt-contributor-hcp-workspace-t2`, created by
+[entraid](../../entraid/README.md). It gets Contributor on `mg-4esnok` through the group `sg-az-mgmt-contributor-t2`,
+plus Role Based Access Control Administrator limited to Grafana's two roles, from
+[governance](../governance/README.md).
 
 Configuration: `config/management.yaml`. Terraform: `terraform/`. Workloads read the `log_analytics_workspace_id`
 and `azure_monitor_workspace_id` outputs; `grafana_endpoint` is the Grafana URL.

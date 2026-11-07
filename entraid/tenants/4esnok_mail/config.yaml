@@ -74,7 +74,7 @@ entra_id:
 
   # Dynamic group and group-based licensing (P1); licensed users need usage_location
   # groups:
-  #   - display_name: "sg-t2-org-developers-dyn"
+  #   - display_name: "sg-org-developers-dyn-t2"
   #     dynamic_rule: 'user.department -eq "developers"'
   #     licenses:
   #       - sku: "SPB"  # SKU part number (Microsoft 365 Business Premium)
@@ -93,7 +93,7 @@ entra_id:
   # access_packages:
   #   - display_name: "Developer access"
   #     catalog: "General"
-  #     groups: ["sg-t2-org-developers"]
+  #     groups: ["sg-org-developers-t2"]
   #     approvers: ["sysadmin"]
   #     duration_days: 90
   #     review:

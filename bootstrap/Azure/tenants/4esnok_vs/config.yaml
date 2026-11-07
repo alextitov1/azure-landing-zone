@@ -3,153 +3,75 @@
 # Custom domain: vs.4esnok.su
 entraid_tenant_id: 05af71f4-43e2-4c1a-8917-3bf5cb165cfe
 
-
 entra_id:
   users:
-    # - mail_nickname: "sysadmin"
-    #   user_principal_name: "sysadmin@vs.4esnok.su"
-    #   display_name: "(ADM) User"
-    #   organization:
-    #     department: "sysadmins"
-    #     job_title: "Site Reliability Engineer"
-    #   entraid_role_names:  # direct entraid role assignments
-    #     - Global Administrator
-    #   password:
-    #     onepassword_vault: "cloud_r1"
-
-    # Emergency access (break-glass) account: cloud-only, on the onmicrosoft.com domain. Exclude it from every
-    - mail_nickname: "breakglass01"
-      user_principal_name: "breakglass01@admin4esnok.onmicrosoft.com"
-      display_name: "Break Glass 01"
+    - mail_nickname: breakglass01
+      user_principal_name: breakglass01@admin4esnok.onmicrosoft.com
+      display_name: Break Glass 01
       organization:
-        department: "sysadmins"
-        job_title: "Emergency access account"
+        department: sysadmins
+        job_title: Emergency access account
       entraid_role_names:
         - Global Administrator
       password:
         length: 32
-        onepassword_vault: "cloud_r1"
+        onepassword_vault: cloud_r1
 
   groups:
-    # # Requires AAD Premium.
-    # - display_name: "sg-prd-entra-globaladmin-t0"
-    #   description: "Global Administrator role for the tenant, doesn't work because the tenant is on the free tier"
+    # # Requires AAD Premiumm, using the direct entraid_role_assignments instead.
+    # - display_name: sg-prd-entra-globaladmin-t0
+    #   description: Global Administrator role for the tenant
     #   assignable_to_role: false
     #   entraid_role_names:
     #     - Global Administrator
     #   members:
     #     - sysadmin
 
-    # Azure RBAC on the intermediate root mg-4esnok (management_groups below), inherited by every group and
-    - display_name: "sg-prd-az-root-owner-t0"
-      description: "Owner on the intermediate root management group mg-4esnok"
-      members: [ ]
-    - display_name: "sg-prd-az-root-mgmt-t0"
-      description: "Manages management groups, policy and Azure RBAC below mg-4esnok (ESLZ/governance)"
+    # Bootstrapping Azure RBAC
+    - display_name: sg-prd-az-mg4esnok-owner-t0
+      description: Owner on mg-4esnok management group (intermediate root)
       members:
-        - sp-hcp-azure-governance-r1-apply
-    - display_name: "sg-prd-az-root-reader-t0"
-      description: "Reader on the intermediate root management group mg-4esnok"
-      members:
-        - sp-hcp-azure-governance-r1-plan
+        - sp-prd-az-mg4esnok-owner-hcp-workspace-t1
+
+    # - display_name: sg-prd-az-mg4esnok-reader-t0
+    #   description: Reader on mg-4esnok management group (intermediate root)
+    #   members: [ ]
 
   applications:
-    - display_name: "sp-hcp-entraid-directory-r1-plan"
-      description: "HCP Terraform plan runs of 4esnok/4esnok_vs_r1/4esnok_vs_entraid_directory_r1"
-      # owners:
-      #   - sysadmin
+    - display_name: sp-prd-entraid-global-admin-hcp-workspace-t1
+      description: HCP TF workspace 4esnok_vs_entraid_directory_r1
       federated_credentials:
-        - name: "hcp-4esnok_vs_entraid_directory_r1-plan"
-          subject: "organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_entraid_directory_r1:run_phase:plan"
-      graph_app_roles:  # Microsoft Graph application permissions
-        - Directory.Read.All
-        - Application.Read.All
-        - RoleManagement.Read.Directory
-        - Policy.Read.All
-
-    - display_name: "sp-hcp-entraid-directory-r1-apply"
-      description: "HCP Terraform apply runs of 4esnok/4esnok_vs_r1/4esnok_vs_entraid_directory_r1"
-      # owners:
-      #   - sysadmin
-      federated_credentials:
-        - name: "hcp-4esnok_vs_entraid_directory_r1-apply"
-          subject: "organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_entraid_directory_r1:run_phase:apply"
+        - name: hcp-4esnok_vs_entraid_directory_r1-apply
+          subject: organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_entraid_directory_r1:run_phase:apply
+        - name: hcp-4esnok_vs_entraid_directory_r1-plan
+          subject: organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_entraid_directory_r1:run_phase:plan
       graph_app_roles:
-        - User.ReadWrite.All
-        - Group.ReadWrite.All
-        - Application.ReadWrite.All
-        - AppRoleAssignment.ReadWrite.All
-        - RoleManagement.ReadWrite.Directory
-        - Directory.Read.All                  # data sources (domains, role templates)
-        - Policy.Read.All
-        - Policy.ReadWrite.ConditionalAccess
-        - Policy.ReadWrite.Authorization
+        - Global Administrator
 
-    - display_name: "sp-hcp-azure-governance-r1-plan"
-      description: "HCP Terraform plan runs of 4esnok/4esnok_vs_r1/4esnok_vs_azure_governance_r1"
-      # owners:
-      #   - sysadmin
+    - display_name: sp-prd-az-mg4esnok-owner-hcp-workspace-t1
+      description: HCP TF workspace 4esnok_vs_azure_governance_r1
       federated_credentials:
-        - name: "hcp-4esnok_vs_azure_governance_r1-plan"
-          subject: "organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_azure_governance_r1:run_phase:plan"
+        - name: hcp-4esnok_vs_azure_governance_r1-apply
+          subject: organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_azure_governance_r1:run_phase:apply
+        - name: hcp-4esnok_vs_azure_governance_r1-plan
+          subject: organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_azure_governance_r1:run_phase:plan
       graph_app_roles:
         - Group.Read.All
-
-    - display_name: "sp-hcp-azure-governance-r1-apply"
-      description: "HCP Terraform apply runs of 4esnok/4esnok_vs_r1/4esnok_vs_azure_governance_r1"
-      # owners:
-      #   - sysadmin
-      federated_credentials:
-        - name: "hcp-4esnok_vs_azure_governance_r1-apply"
-          subject: "organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_azure_governance_r1:run_phase:apply"
-      graph_app_roles:
-        - Group.Read.All
-
-    # Workspace 4esnok_vs_azure_mgmt_r1 (ESLZ/management: central Log Analytics workspace). No Azure rights yet.
-    - display_name: "sp-hcp-azure-mgmt-r1-plan"
-      description: "HCP Terraform plan runs of 4esnok/4esnok_vs_r1/4esnok_vs_azure_mgmt_r1"
-      # owners:
-      #   - sysadmin
-      federated_credentials:
-        - name: "hcp-4esnok_vs_azure_mgmt_r1-plan"
-          subject: "organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_azure_mgmt_r1:run_phase:plan"
-
-    - display_name: "sp-hcp-azure-mgmt-r1-apply"
-      description: "HCP Terraform apply runs of 4esnok/4esnok_vs_r1/4esnok_vs_azure_mgmt_r1"
-      # owners:
-      #   - sysadmin
-      federated_credentials:
-        - name: "hcp-4esnok_vs_azure_mgmt_r1-apply"
-          subject: "organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_azure_mgmt_r1:run_phase:apply"
 
 # Intermediate root management group below the tenant root group (CAF),
 management_groups:
   name: mg-4esnok
-  display_name: "4esnok"
-  # Hierarchy settings: new subscriptions always go to this group instead of the tenant root group; with this on,
-  # creating a management group also needs write access on its parent. Needs Hierarchy Settings Administrator on
-  # the tenant root group (../README.md).
+  display_name: 4esnok
+  # Hierarchy settings, on the tenant root group; they need Hierarchy Settings Administrator there (../README.md).
+  # true (default): new subscriptions go to this group. false: tier 0 leaves the default group as it is, here
+  # mg-sandbox, which ESLZ/governance creates and which is set by hand (../README.md).
+  default_management_group: false
+  # Creating a management group also needs write access on its parent
   require_authorization_for_group_creation: true
   # To groups from entra_id.groups (display names)
   role_assignments:
     - role: Owner
-      group: sg-prd-az-root-owner-t0
-    - role: Reader
-      group: sg-prd-az-root-reader-t0
-    # ESLZ/governance: management groups (Contributor), policy (Resource Policy Contributor) and role assignments,
-    # incl. the policy identities' and Role Based Access Control Administrator for ESLZ pipelines. Contributor can't
-    # write Microsoft.Authorization, hence the other two.
-    - role: Contributor
-      group: sg-prd-az-root-mgmt-t0
-    - role: Resource Policy Contributor
-      group: sg-prd-az-root-mgmt-t0
-    - role: Role Based Access Control Administrator
-      group: sg-prd-az-root-mgmt-t0
-      # cannot assign or remove Owner or User Access Administrator
-      condition: >-
-        ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})) OR
-        (@Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAllValues:GuidNotEquals
-        {8e3af657-a8ff-443c-a75c-2fe8c4bcb635, 18d7d88d-d35e-4fb5-a5c3-7773c20a72d9, f58310d9-a9f6-439a-9e8d-f62e7b41a168}))
-        AND ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})) OR
-        (@Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAllValues:GuidNotEquals
-        {8e3af657-a8ff-443c-a75c-2fe8c4bcb635, 18d7d88d-d35e-4fb5-a5c3-7773c20a72d9, f58310d9-a9f6-439a-9e8d-f62e7b41a168}))
+      group: sg-prd-az-mg4esnok-owner-t0
+    # - role: Reader
+    #   group: sg-prd-az-mg4esnok-reader-t0
+

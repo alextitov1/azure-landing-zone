@@ -25,42 +25,56 @@ entra_id:
         job_title: "developer"
 
   groups:
-    - display_name: "sg-t2-az-aks-admin"
+    - display_name: "sg-az-aks-admin-t2"
       description: "Admin access to AKS clusters"
       members: [sysadmin]  # user mail_nicknames or application display names
+
+    # Workspace 4esnok_vs_azure_mgmt_r1 (ESLZ/management); its roles on mg-4esnok are assigned by ESLZ/governance
+    - display_name: sg-az-mgmt-contributor-t2
+      description: Contributor and constrained RBAC Administrator on mg-4esnok, for ESLZ/management
+      members: [sp-prd-az-mgmt-contributor-hcp-workspace-t2]
 
     # Azure RBAC on the Visual Studio subscription (44b9d159-d353-477f-b94f-5ce0f3bd33f1), separate groups for
     # users and for applications. The user groups' roles are assigned by ESLZ/subscriptions; the application
     # groups' roles are assigned on management group mg-landingzones (management_groups below), which the
     # subscription inherits once it is moved there.
-    # - display_name: "sg-t1-az-sub-vs-contributor"
+    # - display_name: "sg-az-sub-vs-contributor-t1"
     #   description: "Users: Contributor on the Visual Studio subscription"
     #   members: [sysadmin]
-    # - display_name: "sg-t1-az-sub-vs-reader"
+    # - display_name: "sg-az-sub-vs-reader-t1"
     #   description: "Users: Reader on the Visual Studio subscription"
     #   members: []
-    # - display_name: "sg-t1-az-sub-vs-apps-contributor"
+    # - display_name: "sg-az-sub-vs-apps-contributor-t1"
     #   description: "Applications: Contributor and constrained RBAC Administrator on the Visual Studio subscription"
     #   members:
     #     - sp-hcp-azure-networking-r1-apply
-    # - display_name: "sg-t1-az-sub-vs-apps-reader"
+    # - display_name: "sg-az-sub-vs-apps-reader-t1"
     #   description: "Applications: Reader on the Visual Studio subscription"
     #   members:
     #     - sp-hcp-azure-networking-r1-plan
 
     # # Tier-2 workload cortex (ESLZ/workloads/cortex): Contributor on its resource group rg-cortex-dev-nzn-01,
     # # assigned by ESLZ/subscriptions.
-    # - display_name: "sg-t2-az-cortex-contributor"
+    # - display_name: "sg-az-cortex-contributor-t2"
     #   description: "Users: Contributor on the cortex resource group"
     #   members: []
 
   applications:  # app registrations and their enterprise applications (service principals)
-    # Identities of HCP Terraform workspaces (dynamic credentials, OIDC): plan runs use the read-only application,
-    # apply runs the privileged one. The identities of the entraid and ESLZ/management workspaces are in tier 0.
+    # Identities of HCP Terraform workspaces (dynamic credentials, OIDC). Those of the tier-1 workspaces (entraid,
+    # ESLZ/governance) are in tier 0.
+
+    # Workspace 4esnok_vs_azure_mgmt_r1 (ESLZ/management). Azure RBAC from sg-az-mgmt-contributor-t2.
+    - display_name: sp-prd-az-mgmt-contributor-hcp-workspace-t2
+      description: HCP TF workspace 4esnok_vs_azure_mgmt_r1
+      federated_credentials:
+        - name: hcp-4esnok_vs_azure_mgmt_r1-apply
+          subject: organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_azure_mgmt_r1:run_phase:apply
+        - name: hcp-4esnok_vs_azure_mgmt_r1-plan
+          subject: organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_azure_mgmt_r1:run_phase:plan
 
     # Workspace 4esnok_vs_azure_networking_r1 (ESLZ/connectivity). Directory.Read.All resolves the principal names
-    # in its subnet consumers. Azure RBAC comes from group membership: sg-t1-az-sub-vs-apps-reader (plan) and
-    # sg-t1-az-sub-vs-apps-contributor (apply).
+    # in its subnet consumers. Azure RBAC comes from group membership: sg-az-sub-vs-apps-reader-t1 (plan) and
+    # sg-az-sub-vs-apps-contributor-t1 (apply).
     - display_name: "sp-hcp-azure-networking-r1-plan"
       description: "HCP Terraform plan runs of 4esnok/4esnok_vs_r1/4esnok_vs_azure_networking_r1"
       federated_credentials:
@@ -130,7 +144,7 @@ entra_id:
 
   # Dynamic group and group-based licensing (P1); licensed users need usage_location
   # groups:
-  #   - display_name: "sg-t2-org-developers-dyn"
+  #   - display_name: "sg-org-developers-dyn-t2"
   #     dynamic_rule: 'user.department -eq "developers"'
   #     licenses:
   #       - sku: "SPB"  # SKU part number (Microsoft 365 Business Premium)
@@ -149,7 +163,7 @@ entra_id:
   # access_packages:
   #   - display_name: "Developer access"
   #     catalog: "General"
-  #     groups: ["sg-t2-org-developers"]
+  #     groups: ["sg-org-developers-t2"]
   #     approvers: ["sysadmin"]
   #     duration_days: 90
   #     review:

@@ -17,14 +17,14 @@ a pull request shows the plan, and a merge to `main` queues a run that needs to 
    ```
    The workspace's access comes from that group (`management_groups` in
    [ESLZ/governance](../governance/config.yaml)), and every subscription in it inherits:
-   - `sg-t1-az-sub-vs-apps-reader` (the workspace's plan application; none until its r1 workspace exists): **Reader**
-   - `sg-t1-az-sub-vs-apps-contributor` (the workspace's apply application): **Contributor**,
+   - `sg-az-sub-vs-apps-reader-t1` (the workspace's plan application; none until its r1 workspace exists): **Reader**
+   - `sg-az-sub-vs-apps-contributor-t1` (the workspace's apply application): **Contributor**,
      and **Role Based Access Control Administrator** with a condition that blocks assigning or removing
      Owner, User Access Administrator and Role Based Access Control Administrator. The workspace can manage
      every other role assignment, but cannot make anyone, itself included, an owner.
 
-   Users get access through separate groups (`sg-t1-az-sub-vs-contributor`, `-reader`), whose roles are declared
-   in the subscription's YAML like any other role assignment. Owner stays outside Terraform.
+   Users get access through separate groups (`sg-az-sub-vs-contributor-t1`, `sg-az-sub-vs-reader-t1`), whose roles
+   are declared in the subscription's YAML like any other role assignment. Owner stays outside Terraform.
 2. Add `config/<name>.yaml` with at least `subscription_id`.
 3. Declare what to manage.
 
