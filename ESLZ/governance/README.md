@@ -7,8 +7,8 @@ the Azure Verified Module for Azure Landing Zones
 `4esnok_vs_azure_governance_r1` applies it when a change is merged to `main`.
 
 `mg-4esnok`, its Azure RBAC and the tenant's hierarchy settings are tier 0
-([bootstrap/Azure](../../bootstrap/Azure/README.md)). Tier 0 also creates this workspace's identities,
-`sp-hcp-azure-governance-r1-plan` and `-apply`, and gives them their rights on `mg-4esnok`.
+([bootstrap/Azure](../../bootstrap/Azure/README.md)). Tier 0 also creates this workspace's identity,
+`sp-prd-az-mg4esnok-owner-hcp-workspace-t1`, and gives it Owner on `mg-4esnok`.
 
 
 ## config.yaml schema

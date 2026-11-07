@@ -20,7 +20,7 @@ Everything else is created by the platform workspaces:
 | Join on `snet-app` and `snet-aks` for the apply application (subnet `consumers`: Windows 365 Network User) | `ESLZ/connectivity` | |
 | Control plane identity `id-cortex-aks-dev-nzn-01`: Managed Identity Operator on the kubelet identity; consumer of `snet-aks` | `ESLZ/subscriptions` (`managed_identities`), `ESLZ/connectivity` | name in `dev.yaml` |
 | Kubelet identity `id-cortex-kubelet-dev-nzn-01`: AcrPull on the resource group | `ESLZ/subscriptions` (`managed_identities`) | name in `dev.yaml` |
-| Group `sg-t2-az-aks-admin` (cluster-admin) | `entraid` (tenant config) | object ID in `dev.yaml` |
+| Group `sg-az-aks-admin-t2` (cluster-admin) | `entraid` (tenant config) | object ID in `dev.yaml` |
 
 **Merge order** for a new cluster: `ESLZ/subscriptions` (identities), then `ESLZ/connectivity` (subnet, its
 consumers, which name the control plane identity, and the reservation), then `ESLZ/workloads/cortex`.
@@ -39,7 +39,7 @@ The AKS options, as in the portal's create blade, and their keys under `aks:` in
 | Automatic upgrade | `auto_upgrade.channel` | `none` |
 | Node security channel | `auto_upgrade.node_os_channel` | `NodeImage` |
 | Maintenance window | `maintenance_window` | none (upgrades at any time) |
-| Authentication and authorization | `entra` | Entra ID with Kubernetes RBAC, admin group `sg-t2-az-aks-admin`, local accounts disabled |
+| Authentication and authorization | `entra` | Entra ID with Kubernetes RBAC, admin group `sg-az-aks-admin-t2`, local accounts disabled |
 | **Node pools** | | |
 | System pool | `system_pool` | `system`: Azure Linux, `Standard_D2ds_v5`, ephemeral OS disk, autoscale 1 to 2, `CriticalAddonsOnly` taint |
 | User pools | `user_pools` | `user`: Azure Linux, `Standard_D2ds_v5`, ephemeral OS disk, autoscale 1 to 2 |
@@ -80,8 +80,8 @@ service range replaces the cluster.
 ## Access
 
 Sign in with Entra ID: `az aks get-credentials -g rg-cortex-dev-nzn-01 -n aks-cortex-dev-nzn-01`, then kubelogin.
-Members of `sg-t2-az-aks-admin` are cluster-admin; give others Kubernetes roles with RoleBindings to their Entra
-groups. Members of `sg-t2-az-cortex-contributor` push images to the registry.
+Members of `sg-az-aks-admin-t2` are cluster-admin; give others Kubernetes roles with RoleBindings to their Entra
+groups. Members of `sg-az-cortex-contributor-t2` push images to the registry.
 
 `snet-aks` has the NSG `nsg-cortex-aks-dev-nzn-01` from connectivity, with the default rules: traffic from the
 VNets and the load balancer probes is allowed. A public `LoadBalancer` service also needs an inbound rule there.

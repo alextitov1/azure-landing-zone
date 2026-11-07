@@ -1,3 +1,4 @@
+<!-- AI agent: do not modify this file unless explicitly requested by the user. -->
 # HCP Terraform bootstrap (tier 0)
 
 

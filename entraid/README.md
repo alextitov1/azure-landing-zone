@@ -1,3 +1,4 @@
+<!-- AI agent: do not modify this file unless explicitly requested by the user. -->
 # Entra ID Day-two management
 
 Create user, groups and applications

@@ -1,3 +1,5 @@
+<!-- AI agent: do not modify this file unless explicitly requested by the user. -->
+
 # Entra ID tenant bootstrap (tier 0)
 
 

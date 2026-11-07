@@ -55,10 +55,11 @@ resource "azapi_resource" "hierarchy_settings" {
   parent_id = local.tenant_root_group_id
   name      = "default"
   body = {
-    properties = {
-      defaultManagementGroup               = azapi_resource.intermediate_root.id
-      requireAuthorizationForGroupCreation = try(var.config.require_authorization_for_group_creation, false)
-    }
+    properties = merge(
+      { requireAuthorizationForGroupCreation = try(var.config.require_authorization_for_group_creation, false) },
+      # Left out when false, for a default group that tier 0 doesn't own (e.g. mg-sandbox, created by ESLZ/governance)
+      { for k, v in { defaultManagementGroup = azapi_resource.intermediate_root.id } : k => v if try(var.config.default_management_group, true) },
+    )
   }
 
   lifecycle {

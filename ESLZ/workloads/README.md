@@ -32,7 +32,7 @@ share their state with the workloads listed in their `remote_state`
 
 | Step | File | What |
 |---|---|---|
-| 1 | `entraid/tenants/4esnok_vs/config.yaml` | Applications `sp-hcp-4esnok-su-<workload>-t2-plan-r0` / `-apply-r0` (federated credentials for the workspace), user group `sg-t2-az-<workload>-contributor` |
+| 1 | `entraid/tenants/4esnok_vs/config.yaml` | Applications `sp-hcp-4esnok-su-<workload>-t2-plan-r0` / `-apply-r0` (federated credentials for the workspace), user group `sg-az-<workload>-contributor-t2` |
 | 2 | `HCP/config.yaml` | Workspace `4esnok_vs_azure_<workload>_r2`, and the workload in `remote_state.workspaces` of the platform workspaces it reads |
 | 3 | `ESLZ/subscriptions/config/admin-4esnok-su-vs.yaml` | Resource group `rg-<workload>-<env>-<region>-01`: Reader for the plan application, Contributor for the apply application and the user group. `managed_identities` with their role assignments, if the workload needs identities with roles (its pipeline cannot assign roles) |
 | 4 | `ESLZ/connectivity/config/network.yaml` | A spoke for the workload, if it needs a network, with the apply application (and any managed identity of step 3 that must join, such as an AKS control plane) in `consumers` of each subnet it attaches NICs or private endpoints to (see `ESLZ/connectivity/README.md`), and `reservations` for ranges it uses outside the VNet |
@@ -43,5 +43,5 @@ the applications. Merge step 3 (and 4) after that, because role assignments and 
 applications. If consumers name a managed identity of step 3, merge step 4 after step 3 has applied. Merge step 5
 last. Its first plan needs the resource group, its role assignments and the connectivity outputs.
 
-Keep the applications out of `sg-t1-az-sub-vs-apps-*`. Those groups give subscription-wide rights to the
+Keep the applications out of `sg-az-sub-vs-apps-*-t1`. Those groups give subscription-wide rights to the
 platform pipelines.

@@ -44,7 +44,7 @@ entra_id:
         onepassword_vault: "azure_t1"
 
   groups:
-    - display_name: sg-t0-entra-tenant-globaladmin
+    - display_name: sg-entra-tenant-globaladmin-t0
       description: Global Administrator role for the tenant
       assignable_to_role: true
       entraid_role_names:
@@ -52,7 +52,7 @@ entra_id:
       members:
         - sysadmin
 
-    - display_name: sg-t0-entra-tenant-globalreader
+    - display_name: sg-entra-tenant-globalreader-t0
       description: Global Reader role for the tenant
       assignable_to_role: true
       entraid_role_names:

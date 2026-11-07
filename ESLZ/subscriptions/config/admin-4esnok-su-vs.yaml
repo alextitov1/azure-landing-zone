@@ -32,19 +32,19 @@ resource_providers:
 # Role assignments at subscription scope. The principal is one of group (display name), user (user principal
 # name), service_principal (display name), or principal_id with principal_type (User, Group or ServicePrincipal).
 # Access goes through groups (entraid/tenants/4esnok_vs/config.yaml): members change there, not here.
-# Do not declare the application groups (sg-t1-az-sub-vs-apps-*): their roles come from management group
+# Do not declare the application groups (sg-az-sub-vs-apps-*-t1): their roles come from management group
 # mg-landingzones (ESLZ/governance), and declaring them here would conflict with or lock out the workspace. The workspace cannot assign Owner, User Access
 # Administrator or Role Based Access Control Administrator (see README.md).
 role_assignments:
   - role: Contributor
-    group: sg-t1-az-sub-vs-contributor
+    group: sg-az-sub-vs-contributor-t1
   - role: Reader
-    group: sg-t1-az-sub-vs-reader
+    group: sg-az-sub-vs-reader-t1
   # Azure Managed Grafana (ESLZ/management): Grafana roles at subscription scope apply to every Grafana instance
   - role: Grafana Admin
-    group: sg-t1-az-sub-vs-contributor
+    group: sg-az-sub-vs-contributor-t1
   - role: Grafana Viewer
-    group: sg-t1-az-sub-vs-reader
+    group: sg-az-sub-vs-reader-t1
 
 # Resource groups and their role assignments. Removing a resource group deletes it and everything in it,
 # unless `lock: true` (a CanNotDelete lock) makes the delete fail.
@@ -58,13 +58,13 @@ resource_groups:
       - role: Contributor
         service_principal: sp-hcp-4esnok-su-cortex-t2-apply-r0
       - role: Contributor
-        group: sg-t2-az-cortex-contributor
+        group: sg-az-cortex-contributor-t2
 #   rg-t2-aks-dev:
 #     location: newzealandnorth
 #     tags: { env: dev }
 #     role_assignments:
 #       - role: Azure Kubernetes Service Cluster Admin Role
-#         group: sg-t2-az-aks-admin
+#         group: sg-az-aks-admin-t2
 
 # User-assigned managed identities for workloads, created here because a workload pipeline (Contributor) cannot
 # assign roles. Each one goes in a resource group above; a role assignment is scoped to one of those resource
