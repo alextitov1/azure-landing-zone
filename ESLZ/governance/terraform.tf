@@ -1,6 +1,6 @@
-# Management groups below the intermediate root mg-4esnok, with Azure Policy and Azure RBAC on them, from config.yaml.
-# Runs only in the HCP Terraform workspace 4esnok_vs_azure_governance_r1, which sets the Azure dynamic credentials
-# (HCP/config.yaml); see README.md.
+# Management groups below the intermediate root mg-4esnok, with Azure Policy and Azure RBAC on them, from config.yaml,
+# and subscription vending, from subscriptions/. Runs only in the HCP Terraform workspace
+# 4esnok_vs_azure_governance_r1, which sets the Azure dynamic credentials (HCP/config.yaml); see README.md.
 terraform {
   required_version = "~> 1.16"
 
@@ -41,6 +41,12 @@ variable "tfc_azure_dynamic_credentials" {
 locals {
   config = yamldecode(file("${path.module}/config.yaml"))
   oidc   = var.tfc_azure_dynamic_credentials.default
+
+  # One landing zone per file, named after it
+  landing_zones = {
+    for f in fileset("${path.module}/subscriptions", "*.yaml") :
+    trimsuffix(f, ".yaml") => yamldecode(file("${path.module}/subscriptions/${f}"))
+  }
 }
 
 provider "azapi" {
@@ -63,7 +69,7 @@ provider "alz" {
   oidc_token_file_path = local.oidc.oidc_token_file_path
 }
 
-# Only reads the groups that role assignments name
+# Only reads the groups and service principals that role assignments name
 provider "azuread" {
   use_oidc             = true
   client_id_file_path  = local.oidc.client_id_file_path
@@ -77,7 +83,19 @@ module "management_groups" {
   config    = local.config.management_groups
 }
 
+module "subscription_vending" {
+  source = "../../modules/azure-subscription-vending"
+
+  landing_zones        = local.landing_zones
+  management_group_ids = module.management_groups.management_group_ids
+}
+
 output "management_group_ids" {
   value       = module.management_groups.management_group_ids
   description = "Resource IDs of the management groups, by name"
+}
+
+output "landing_zones" {
+  value       = module.subscription_vending.landing_zones
+  description = "Per landing zone: resource IDs of its resource groups and managed identities, and the identities' principal IDs"
 }

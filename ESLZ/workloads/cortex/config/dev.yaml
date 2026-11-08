@@ -13,14 +13,14 @@ tags:
   env: dev
   workload: cortex
 
-# Created by ESLZ/subscriptions (config/admin-4esnok-su-vs.yaml), which also grants this workspace access to it
+# Created by ESLZ/governance (subscriptions/landingzone-cortex.yaml), which also grants this workspace access to it
 resource_group: rg-cortex-dev-nzn-01
 
 # Spoke and subnet in ESLZ/connectivity (config/network.yaml): key of its `subnets` output
 subnet: cortex/snet-app
 
 # Container registry crcortexdevnzn01 (Azure/avm-res-containerregistry-registry). The AKS nodes pull from it with
-# the kubelet identity (AcrPull on the resource group, assigned by ESLZ/subscriptions).
+# the kubelet identity (AcrPull on the resource group, assigned by ESLZ/governance).
 registry:
   sku: Basic                    # Basic, Standard or Premium (private endpoints, network rules, retention, zones)
   public_network_access: true   # false needs Premium and a private endpoint
@@ -45,7 +45,7 @@ aks:
   #   duration_hours: 4              # at least 4
   #   utc_offset: "+13:00"
 
-  # Control plane and kubelet identities, created by ESLZ/subscriptions (managed_identities) with their role
+  # Control plane and kubelet identities, created by ESLZ/governance (managed_identities) with their role
   # assignments, because this pipeline cannot assign roles
   identities:
     control_plane: id-cortex-aks-dev-nzn-01  # Managed Identity Operator on the kubelet identity; consumer of the node subnet

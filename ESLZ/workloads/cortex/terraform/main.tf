@@ -6,7 +6,7 @@ locals {
   tags   = try(local.config.tags, {})
 }
 
-# Created and access-controlled by ESLZ/subscriptions
+# Created and access-controlled by ESLZ/governance
 data "azapi_resource" "resource_group" {
   type      = "Microsoft.Resources/resourceGroups@2024-03-01"
   name      = local.config.resource_group

@@ -1,5 +1,5 @@
 # Container registry, configured by `registry` in ../config/dev.yaml. The AKS nodes pull with the kubelet identity,
-# which has AcrPull on the resource group (ESLZ/subscriptions); members of sg-az-cortex-contributor-t2 push.
+# which has AcrPull on the resource group (ESLZ/governance); members of sg-az-cortex-contributor-t2 push.
 
 locals {
   registry = local.config.registry

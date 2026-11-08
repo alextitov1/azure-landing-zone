@@ -1,0 +1,41 @@
+# Workload landing zone cortex (ESLZ/workloads/cortex, tier 2). It shares the Visual Studio subscription; as a
+# subscription of its own, it would go to mg-landingzones (README.md#subscriptions).
+subscription_id: 44b9d159-d353-477f-b94f-5ce0f3bd33f1
+location: newzealandnorth
+
+# Namespaces the stack deploys, each with its preview features; its pipeline cannot register them
+resource_providers:
+  Microsoft.ContainerService: []
+  Microsoft.ContainerRegistry: []
+
+# Its pipeline and users get access to this resource group only
+resource_groups:
+  rg-cortex-dev-nzn-01:
+    tags: { env: dev, workload: cortex }
+    role_assignments:
+      - role: Reader
+        service_principal: sp-hcp-4esnok-su-cortex-t2-plan-r0
+      - role: Contributor
+        service_principal: sp-hcp-4esnok-su-cortex-t2-apply-r0
+      # Once the group exists in entraid/tenants/4esnok_vs/config.yaml
+      # - role: Contributor
+      #   group: sg-az-cortex-contributor-t2
+
+# User-assigned managed identities, created here because the workload pipeline (Contributor) cannot assign roles.
+# Each one goes in a resource group above; a role assignment is scoped to one of those resource groups
+# (resource_group), a resource (scope: its ID relative to the subscription, starting with /resourceGroups/) or,
+# with neither, the subscription. To join a subnet, an identity is a consumer of it in ESLZ/connectivity.
+managed_identities:
+  # AKS control plane: assigns the kubelet identity to the nodes. It joins the node subnet as a consumer of
+  # cortex/snet-aks (ESLZ/connectivity), so apply this first.
+  id-cortex-aks-dev-nzn-01:
+    resource_group: rg-cortex-dev-nzn-01
+    role_assignments:
+      - role: Managed Identity Operator
+        scope: /resourceGroups/rg-cortex-dev-nzn-01/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-cortex-kubelet-dev-nzn-01
+  # AKS nodes (kubelet): pull images from the registries in the cortex resource group
+  id-cortex-kubelet-dev-nzn-01:
+    resource_group: rg-cortex-dev-nzn-01
+    role_assignments:
+      - role: AcrPull
+        resource_group: rg-cortex-dev-nzn-01

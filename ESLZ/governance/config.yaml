@@ -12,11 +12,10 @@ management_groups:
   policy_default_values:   # assignment parameters, by default name in alz-lib/alz_policy_default_values.json
     allowed_locations: [newzealandnorth, australiaeast]
   role_assignments:        # by management group
-    # Workspace 4esnok_vs_azure_mgmt_r1 (ESLZ/management). RBAC Administrator only for the roles it gives Grafana's
-    # managed identity (Monitoring Reader, Monitoring Data Reader), and only to service principals.
+    # Workspace 4esnok_vs_azure_mgmt_r1 (ESLZ/management), whose Contributor is on its resource group only
+    # (subscriptions/platform-management.yaml). RBAC Administrator only for the roles it gives Grafana's managed
+    # identity (Monitoring Reader, Monitoring Data Reader), and only to service principals, in any subscription.
     mg-4esnok:
-      - role: Contributor
-        group: sg-az-mgmt-contributor-t2
       - role: Role Based Access Control Administrator
         group: sg-az-mgmt-contributor-t2
         # Restrict RBAC changes to Monitoring Reader and Monitoring Data Reader
@@ -32,21 +31,3 @@ management_groups:
           {43d0d8ad-25c7-4714-9337-8ba259a9fe05, b0d8363b-8ddd-447d-831f-62ca05bff136}
           AND @Resource[Microsoft.Authorization/roleAssignments:PrincipalType] ForAnyOfAnyValues:StringEqualsIgnoreCase
           {'ServicePrincipal'}))
-
-    # Pipelines of ESLZ/subscriptions and ESLZ/connectivity, for every subscription in mg-landingzones. Off while
-    # their groups are commented out in entraid and their workspaces don't exist.
-    # mg-landingzones:
-    #   - role: Reader
-    #     group: sg-az-sub-vs-apps-reader-t1
-    #   - role: Contributor
-    #     group: sg-az-sub-vs-apps-contributor-t1
-    #   - role: Role Based Access Control Administrator
-    #     group: sg-az-sub-vs-apps-contributor-t1
-    #     # cannot assign or remove Owner, User Access Administrator or Role Based Access Control Administrator
-    #     condition: >-
-    #       ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})) OR
-    #       (@Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAllValues:GuidNotEquals
-    #       {8e3af657-a8ff-443c-a75c-2fe8c4bcb635, 18d7d88d-d35e-4fb5-a5c3-7773c20a72d9, f58310d9-a9f6-439a-9e8d-f62e7b41a168}))
-    #       AND ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})) OR
-    #       (@Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAllValues:GuidNotEquals
-    #       {8e3af657-a8ff-443c-a75c-2fe8c4bcb635, 18d7d88d-d35e-4fb5-a5c3-7773c20a72d9, f58310d9-a9f6-439a-9e8d-f62e7b41a168}))

@@ -8,8 +8,7 @@ Resources are deployed with [Azure Verified Modules](https://azure.github.io/Azu
 
 | Directory | Contents | HCP Terraform workspace |
 |---|---|---|
-| `governance/` | Management groups below `mg-4esnok`, Azure Policy, RBAC on management groups | `4esnok_vs_azure_governance_r1` |
-| `subscriptions/` | Subscriptions, resource groups, role assignments | `4esnok_vs_azure_bootstrap_r0` |
+| `governance/` | Management groups below `mg-4esnok`, Azure Policy, RBAC on management groups; subscription vending: subscriptions, a resource group per landing zone, role assignments | `4esnok_vs_azure_governance_r1` |
 | `connectivity/` | Hub-and-spoke network, IPAM | `4esnok_vs_azure_networking_r1` |
 | `management/` | Central Log Analytics workspace, managed Prometheus, Managed Grafana ([management design](./management_design.md)) | `4esnok_vs_azure_mgmt_r1` |
 | `workloads/cortex/` | Tier-2 workload cortex ([workloads](./workloads/README.md)) | `4esnok_vs_azure_cortex_r2` |
