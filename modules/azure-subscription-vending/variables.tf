@@ -10,7 +10,6 @@ variable "landing_zones" {
     error_message = "Each landing zone needs subscription_id, a lowercase GUID, and location."
   }
 
-  # One file per subscription owns its settings, so landing zones that share it can't overwrite each other
   validation {
     condition = alltrue([
       for sub in distinct([for lz in values(var.landing_zones) : try(lz.subscription_id, "")]) : length([

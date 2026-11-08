@@ -1,6 +1,4 @@
-# The Visual Studio subscription of the admin.4esnok.su tenant (entraid/tenants/4esnok_vs/config.yaml) itself: the
-# settings of the whole subscription. The other landing zones in it (platform-*.yaml, landingzone-*.yaml) stand in
-# for subscriptions of their own and only add resource groups (README.md#subscriptions).
+# Visual Studio subscription of the admin.4esnok.su tenant (entraid/tenants/4esnok_vs/config.yaml)
 subscription_id: 44b9d159-d353-477f-b94f-5ce0f3bd33f1
 location: newzealandnorth
 
@@ -11,7 +9,7 @@ location: newzealandnorth
 # tags:
 #   env: dev
 
-# Management group ID (not display name). Its first move below mg-4esnok is by hand (README.md#subscriptions).
+# Management group ID (not display name)
 management_group_id: mg-landingzones
 
 # budgets:
@@ -24,8 +22,7 @@ management_group_id: mg-landingzones
 #       - threshold: 100
 #         threshold_type: Forecasted
 
-# Users' access to the whole subscription, through groups (entraid/tenants/4esnok_vs/config.yaml): members change
-# there, not here. Owner stays outside Terraform. Pipelines get their roles on their own resource groups.
+# Access goes through groups (entraid/tenants/4esnok_vs/config.yaml): members change there, not here.
 role_assignments:
   - role: Contributor
     group: sg-az-sub-vs-contributor-t1

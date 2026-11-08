@@ -42,7 +42,6 @@ locals {
   config = yamldecode(file("${path.module}/config.yaml"))
   oidc   = var.tfc_azure_dynamic_credentials.default
 
-  # One landing zone per file, named after it
   landing_zones = {
     for f in fileset("${path.module}/subscriptions", "*.yaml") :
     trimsuffix(f, ".yaml") => yamldecode(file("${path.module}/subscriptions/${f}"))

@@ -1,6 +1,5 @@
 # Subscription vending with the Azure Verified Module (Azure/avm-ptn-alz-sub-vending), for existing subscriptions
-# only: one module call per landing zone. Landing zones that share a subscription stand in for subscriptions of
-# their own with their resource groups, so giving one its own subscription is a change of subscription_id.
+# only: one module call per landing zone (ESLZ/governance/README.md#subscriptions).
 
 locals {
   # Optional sections as empty collections (`try` also covers a key left without a value)
@@ -42,7 +41,7 @@ locals {
 }
 
 # Principals named in role assignments: group or service_principal (display name). principal_id with
-# principal_type skips the lookup. Users get access through groups, so they can't be named.
+# principal_type skips the lookup.
 data "azuread_group" "this" {
   for_each = toset([for a in local.all_role_assignments : a.group if try(a.group, null) != null])
 
@@ -80,7 +79,6 @@ locals {
           local.principals["group/${a.group}"].type, local.principals["service_principal/${a.service_principal}"].type,
           a.principal_type,
         )
-        # ABAC condition, e.g. to limit Role Based Access Control Administrator to the roles a pipeline hands out
         condition         = try(trimspace(a.condition), null)
         condition_version = try(a.condition, null) == null ? null : "2.0"
       }
@@ -107,8 +105,7 @@ module "subscription" {
   subscription_management_group_association_enabled = each.value.management_group_id != null
   subscription_management_group_id                  = each.value.management_group_id == null ? null : basename(var.management_group_ids[each.value.management_group_id])
 
-  # Only the namespaces in the YAML, not the module's default list. Each landing zone lists what its own stack
-  # deploys, because its pipeline has no rights to register them; registering a namespace twice is harmless.
+  # Only the namespaces in the YAML, not the module's default list
   subscription_register_resource_providers_enabled      = length(each.value.resource_providers) > 0
   subscription_register_resource_providers_and_features = each.value.resource_providers
 
@@ -152,7 +149,7 @@ module "subscription" {
       time_grain         = try(b.time_grain, "Monthly")
       time_period_start  = "${b.start_date}T00:00:00Z"
       time_period_end    = try("${b.end_date}T00:00:00Z", timeadd("${b.start_date}T00:00:00Z", "87600h")) # default: 10 years
-      resource_group_key = try(b.resource_group, null)                                                    # null: the subscription
+      resource_group_key = try(b.resource_group, null)
       notifications = {
         for n in try([for n in b.notifications : n], []) :
         "${try(n.threshold_type, "Actual")}_${try(n.operator, "GreaterThan")}_${n.threshold}" => {
