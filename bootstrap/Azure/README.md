@@ -2,8 +2,13 @@
 
 # Entra ID tenant bootstrap (tier 0)
 
-
 This directory contains the bootstrap of each Entra ID tenant.
+
+It creates (some are optional, depending on the tenant):
+ - break-glass user account
+ - new intermediate management group
+ - access to the new intermediate management group (for *-r1 workspaces)
+ - access to the Entra ID tenant (for *-r1 workspaces)
 
 It is run manually, when bootstrapping a new tenant or making fundamental changes.
 

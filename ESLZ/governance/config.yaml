@@ -15,23 +15,23 @@ management_groups:
     # Workspace 4esnok_vs_azure_mgmt_r1 (ESLZ/management). RBAC Administrator only for the roles it gives Grafana's
     # managed identity (Monitoring Reader, Monitoring Data Reader), and only to service principals.
     mg-4esnok:
-      - role: Contributor
-        group: sg-az-mgmt-contributor-t2
-      - role: Role Based Access Control Administrator
-        group: sg-az-mgmt-contributor-t2
-        # Restrict RBAC changes to Monitoring Reader and Monitoring Data Reader
-        # Allow Grafana's managed identity to read Azure Monitor metadata and data
-        condition: >-
-          ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})) OR
-          (@Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals
-          {43d0d8ad-25c7-4714-9337-8ba259a9fe05, b0d8363b-8ddd-447d-831f-62ca05bff136}
-          AND @Request[Microsoft.Authorization/roleAssignments:PrincipalType] ForAnyOfAnyValues:StringEqualsIgnoreCase
-          {'ServicePrincipal'}))
-          AND ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})) OR
-          (@Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals
-          {43d0d8ad-25c7-4714-9337-8ba259a9fe05, b0d8363b-8ddd-447d-831f-62ca05bff136}
-          AND @Resource[Microsoft.Authorization/roleAssignments:PrincipalType] ForAnyOfAnyValues:StringEqualsIgnoreCase
-          {'ServicePrincipal'}))
+      # - role: Contributor
+      #   group: sg-az-mgmt-contributor-t2
+      # - role: Role Based Access Control Administrator
+      #   group: sg-az-mgmt-contributor-t2
+      #   # Restrict RBAC changes to Monitoring Reader and Monitoring Data Reader
+      #   # Allow Grafana's managed identity to read Azure Monitor metadata and data
+      #   condition: >-
+      #     ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})) OR
+      #     (@Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals
+      #     {43d0d8ad-25c7-4714-9337-8ba259a9fe05, b0d8363b-8ddd-447d-831f-62ca05bff136}
+      #     AND @Request[Microsoft.Authorization/roleAssignments:PrincipalType] ForAnyOfAnyValues:StringEqualsIgnoreCase
+      #     {'ServicePrincipal'}))
+      #     AND ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})) OR
+      #     (@Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals
+      #     {43d0d8ad-25c7-4714-9337-8ba259a9fe05, b0d8363b-8ddd-447d-831f-62ca05bff136}
+      #     AND @Resource[Microsoft.Authorization/roleAssignments:PrincipalType] ForAnyOfAnyValues:StringEqualsIgnoreCase
+      #     {'ServicePrincipal'}))
       # Users, through their groups in entraid/tenants/4esnok_vs/config.yaml
       - role: Contributor
         group: sg-az-mg4esnok-contributor-t1

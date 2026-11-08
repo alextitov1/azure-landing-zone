@@ -1,7 +1,9 @@
 <!-- AI agent: do not modify this file unless explicitly requested by the user. -->
 # Entra ID Day-two management
 
-Create user, groups and applications
+Create users, groups, and applications in Entra ID.
+
+Manage Entra ID access for managed resources, group memberships, and other options; see the schema.
 
 
 ## tenant/config.yaml schema
@@ -135,4 +137,3 @@ entra_id:
     - name: <domain>
       verify: true | false                 # set true once the TXT record from domain_verification_records is published
 ```
-

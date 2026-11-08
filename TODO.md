@@ -54,3 +54,18 @@ Local bootstraps keep signing in through the desktop app.
 
 Try alzlibtool (github.com/Azure/alzlib) on ESLZ/governance/alz-lib: check the library and generate its documentation
 from alz_library_metadata.json (display_name, description), e.g. as a PR check.
+
+
+[ ] - Explain why subscription vending runs in ESLZ/governance
+
+CAF keeps subscription vending in its own pipeline, separate from the management groups and policy, with a dedicated
+Terraform state for each landing zone. Here it shares the governance workspace and state, a lab shortcut. Explain the
+difference and its cost in ESLZ/governance/README.md (Subscriptions): a landing zone file that fails blocks every
+governance plan, policy included.
+
+
+[ ] - Rename ESLZ to ALZ
+
+Enterprise-Scale (ESLZ) is Microsoft's old name for Azure landing zones (ALZ), and the modules and library used here
+already carry the new one. Rename ESLZ/ to ALZ/, with the workspaces' working directories in HCP/config.yaml and the
+paths in READMEs, comments and alz-lib/alz_library_metadata.json.
