@@ -56,13 +56,11 @@ module "naming" {
   custom_override_file = "${path.module}/naming-overrides.json"
 }
 
-module "resource_group" {
-  source  = "Azure/avm-res-resources-resourcegroup/azurerm"
-  version = "0.4.0"
-
-  name             = module.naming["connectivity"].names.resource_group.name
-  location         = local.location
-  enable_telemetry = false
+# Created and access-controlled by ESLZ/governance: the workspace has rights on this resource group only
+data "azapi_resource" "resource_group" {
+  type      = "Microsoft.Resources/resourceGroups@2024-03-01"
+  name      = local.config.resource_group
+  parent_id = local.subscription_id
 }
 
 # For IPAM. azurerm requires at least one feature, so Connectivity is enabled, but no network groups or
@@ -72,7 +70,7 @@ module "network_manager" {
   version = "0.3.0"
 
   name                           = module.naming["connectivity"].names.network_manager.name
-  resource_group_name            = module.resource_group.name
+  resource_group_name            = data.azapi_resource.resource_group.name
   location                       = local.location
   network_manager_scope          = { subscription_ids = [local.subscription_id] }
   network_manager_scope_accesses = ["Connectivity"]
@@ -139,7 +137,7 @@ module "hub" {
   version = "0.22.3"
 
   name             = module.naming["hub"].names.virtual_network.name
-  parent_id        = module.resource_group.resource_id
+  parent_id        = data.azapi_resource.resource_group.id
   location         = local.location
   enable_telemetry = false
 
@@ -158,13 +156,13 @@ module "nsg" {
   for_each = local.spoke_subnets
 
   name             = module.naming[each.value].names.network_security_group.name
-  parent_id        = module.resource_group.resource_id
+  parent_id        = data.azapi_resource.resource_group.id
   location         = local.location
   enable_telemetry = false
 }
 
-# Principals named in subnet consumers, as in ESLZ/subscriptions: group (display name), user (user principal
-# name) or service_principal (display name). principal_id with principal_type skips the lookup.
+# Principals named in subnet consumers: group (display name), user (user principal name) or service_principal
+# (display name). principal_id with principal_type skips the lookup.
 data "azuread_group" "this" {
   for_each = toset([for c in local.consumers : c.group if try(c.group, null) != null])
 
@@ -198,7 +196,7 @@ module "spoke" {
   for_each = local.spokes
 
   name             = module.naming[each.key].names.virtual_network.name
-  parent_id        = module.resource_group.resource_id
+  parent_id        = data.azapi_resource.resource_group.id
   location         = local.location
   enable_telemetry = false
 

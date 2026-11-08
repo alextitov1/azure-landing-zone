@@ -4,7 +4,8 @@ The central Log Analytics workspace in `newzealandnorth`, applied by the HCP Ter
 `4esnok_vs_azure_mgmt_r1`. It is the only workspace in the landing zone: platform and workload logs both go here
 ([management design](../management_design.md)).
 
-- Resource group `rg-mgmt-dev-nzn-01`.
+- Resource group `rg-mgmt-dev-nzn-01`, a landing zone of [subscription vending](../governance/README.md#subscriptions)
+  (`ESLZ/governance/subscriptions/platform-management.yaml`), which also registers the resource providers.
 - Workspace `log-mgmt-dev-nzn-01`: `PerGB2018`, 30 days retention, a 1 GB daily ingestion cap.
 - Entra ID sign-in only: shared keys (local authentication) are off.
 - Resource-context access: whoever can read a resource can read its logs here, without rights on the workspace.
@@ -14,12 +15,12 @@ The central Log Analytics workspace in `newzealandnorth`, applied by the HCP Ter
   (`grafana.enabled`). Standard X1, Grafana 12, public endpoint. Its managed identity has Monitoring Data Reader on
   the Prometheus workspace and Monitoring Reader on the subscription, so Prometheus, Azure Monitor metrics and
   Log Analytics are data sources. Users get Grafana Admin (`sg-az-sub-vs-contributor-t1`) or Grafana Viewer
-  (`sg-az-sub-vs-reader-t1`) from `ESLZ/subscriptions`, which also registers `Microsoft.Dashboard`.
+  (`sg-az-sub-vs-reader-t1`) on the resource group, from governance.
 
 The workspace signs in as `sp-prd-az-mgmt-contributor-hcp-workspace-t2`, created by
-[entraid](../../entraid/README.md). It gets Contributor on `mg-4esnok` through the group `sg-az-mgmt-contributor-t2`,
-plus Role Based Access Control Administrator limited to Grafana's two roles, from
-[governance](../governance/README.md).
+[entraid](../../entraid/README.md). Through the group `sg-az-mgmt-contributor-t2`, it gets Contributor on
+`rg-mgmt-dev-nzn-01` only, plus Role Based Access Control Administrator on `mg-4esnok` limited to Grafana's two
+roles, both from [governance](../governance/README.md).
 
 Configuration: `config/management.yaml`. Terraform: `terraform/`. Workloads read the `log_analytics_workspace_id`
 and `azure_monitor_workspace_id` outputs; `grafana_endpoint` is the Grafana URL.

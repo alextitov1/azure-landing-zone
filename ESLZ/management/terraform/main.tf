@@ -18,13 +18,11 @@ module "naming" {
   unique_length   = 0
 }
 
-module "resource_group" {
-  source  = "Azure/avm-res-resources-resourcegroup/azurerm"
-  version = "0.4.0"
-
-  name             = module.naming.names.resource_group.name
-  location         = local.location
-  enable_telemetry = false
+# Created and access-controlled by ESLZ/governance: the workspace has rights on this resource group only
+data "azapi_resource" "resource_group" {
+  type      = "Microsoft.Resources/resourceGroups@2024-03-01"
+  name      = local.config.resource_group
+  parent_id = "/subscriptions/${local.config.subscription_id}"
 }
 
 # Public ingestion and query (no private link scope). Access is resource-context: whoever can read a resource can
@@ -34,7 +32,7 @@ module "log_analytics" {
   version = "0.5.1"
 
   name                = module.naming.names.operational_insights_workspace.name
-  resource_group_name = module.resource_group.name
+  resource_group_name = data.azapi_resource.resource_group.name
   location            = local.location
   enable_telemetry    = false
 
