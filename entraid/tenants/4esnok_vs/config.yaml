@@ -29,32 +29,24 @@ entra_id:
       description: "Admin access to AKS clusters"
       members: [sysadmin]  # user mail_nicknames or application display names
 
-    # Workspace 4esnok_vs_azure_mgmt_r1 (ESLZ/management); its roles on mg-4esnok are assigned by ESLZ/governance
+    # Workspace 4esnok_vs_azure_mgmt_r1 (ESLZ/management); its roles are assigned by ESLZ/governance:
+    # Contributor on its resource group (subscriptions/platform-management.yaml), RBAC Administrator on mg-4esnok
     - display_name: sg-az-mgmt-contributor-t2
-      description: Contributor and constrained RBAC Administrator on mg-4esnok, for ESLZ/management
+      description: Contributor on rg-mgmt-dev-nzn-01, constrained RBAC Administrator on mg-4esnok (ESLZ/management)
       members: [sp-prd-az-mgmt-contributor-hcp-workspace-t2]
 
-    # Azure RBAC on the Visual Studio subscription (44b9d159-d353-477f-b94f-5ce0f3bd33f1), separate groups for
-    # users and for applications. The user groups' roles are assigned by ESLZ/subscriptions; the application
-    # groups' roles are assigned on management group mg-landingzones (management_groups below), which the
-    # subscription inherits once it is moved there.
-    # - display_name: "sg-az-sub-vs-contributor-t1"
-    #   description: "Users: Contributor on the Visual Studio subscription"
-    #   members: [sysadmin]
-    # - display_name: "sg-az-sub-vs-reader-t1"
-    #   description: "Users: Reader on the Visual Studio subscription"
-    #   members: []
-    # - display_name: "sg-az-sub-vs-apps-contributor-t1"
-    #   description: "Applications: Contributor and constrained RBAC Administrator on the Visual Studio subscription"
-    #   members:
-    #     - sp-hcp-azure-networking-r1-apply
-    # - display_name: "sg-az-sub-vs-apps-reader-t1"
-    #   description: "Applications: Reader on the Visual Studio subscription"
-    #   members:
-    #     - sp-hcp-azure-networking-r1-plan
+    # Users' Azure RBAC on the Visual Studio subscription (44b9d159-d353-477f-b94f-5ce0f3bd33f1), assigned by
+    # ESLZ/governance: subscriptions/admin-4esnok-su-vs.yaml, and the Grafana roles in platform-management.yaml.
+    # Pipelines get their roles on their own resource groups, never through these groups.
+    - display_name: "sg-az-sub-vs-contributor-t1"
+      description: "Users: Contributor on the Visual Studio subscription, Grafana Admin"
+      members: [sysadmin]
+    - display_name: "sg-az-sub-vs-reader-t1"
+      description: "Users: Reader on the Visual Studio subscription, Grafana Viewer"
+      members: []
 
     # # Tier-2 workload cortex (ESLZ/workloads/cortex): Contributor on its resource group rg-cortex-dev-nzn-01,
-    # # assigned by ESLZ/subscriptions.
+    # # assigned by ESLZ/governance (subscriptions/landingzone-cortex.yaml).
     # - display_name: "sg-az-cortex-contributor-t2"
     #   description: "Users: Contributor on the cortex resource group"
     #   members: []
@@ -73,8 +65,9 @@ entra_id:
           subject: organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_azure_mgmt_r1:run_phase:plan
 
     # Workspace 4esnok_vs_azure_networking_r1 (ESLZ/connectivity). Directory.Read.All resolves the principal names
-    # in its subnet consumers. Azure RBAC comes from group membership: sg-az-sub-vs-apps-reader-t1 (plan) and
-    # sg-az-sub-vs-apps-contributor-t1 (apply).
+    # in its subnet consumers. Azure RBAC on resource group rg-connectivity-dev-nzn-01 only, assigned by ESLZ/governance
+    # (subscriptions/platform-connectivity.yaml): Reader (plan); Contributor, and RBAC Administrator limited to
+    # Windows 365 Network User for subnet consumers (apply).
     - display_name: "sp-hcp-azure-networking-r1-plan"
       description: "HCP Terraform plan runs of 4esnok/4esnok_vs_r1/4esnok_vs_azure_networking_r1"
       federated_credentials:
@@ -92,7 +85,8 @@ entra_id:
         - Directory.Read.All
 
     # Workspace 4esnok_vs_azure_cortex_r2 (tier 2, ESLZ/workloads/cortex). No subscription-wide rights:
-    # ESLZ/subscriptions assigns Reader (plan) and Contributor (apply) on resource group rg-cortex-dev-nzn-01 only.
+    # ESLZ/governance (subscriptions/landingzone-cortex.yaml) assigns Reader (plan) and Contributor (apply) on
+    # resource group rg-cortex-dev-nzn-01 only.
     - display_name: "sp-hcp-4esnok-su-cortex-t2-plan-r0"
       description: "HCP Terraform plan runs of 4esnok/4esnok_vs_r2/4esnok_vs_azure_cortex_r2"
       federated_credentials:

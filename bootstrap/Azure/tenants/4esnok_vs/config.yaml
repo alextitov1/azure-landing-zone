@@ -60,6 +60,7 @@ entra_id:
           subject: organization:4esnok:project:4esnok_vs_r1:workspace:4esnok_vs_azure_governance_r1:run_phase:plan
       graph_app_roles:
         - Group.Read.All
+        - Application.Read.All  # service principals named in subscription vending role assignments (ESLZ/governance)
 
 # Intermediate root management group below the tenant root group (CAF),
 management_groups:
