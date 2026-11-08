@@ -30,7 +30,7 @@ projects:
           OP_SERVICE_ACCOUNT_TOKEN: op://cloud_r1/op_hcp_workspaces_t1/credential
 
       4esnok_vs_azure_governance_r1:
-        description: "Azure: management groups below mg-4esnok, policy and RBAC on them (ESLZ/governance)"
+        description: "Azure: management groups below mg-4esnok, policy and RBAC on them, subscription vending (ESLZ/governance)"
         tags: { env: mgmt, cloud: azure }
         execution_mode: remote
         auto_apply: true
@@ -38,7 +38,10 @@ projects:
           repo: alextitov1/azure-landing-zone
           github_app_installation: alextitov1
           working_directory: ESLZ/governance
-          trigger_patterns: ["/ESLZ/governance/**/*", "/modules/azure-management-groups/**/*"]
+          trigger_patterns:
+            - "/ESLZ/governance/**/*"
+            - "/modules/azure-management-groups/**/*"
+            - "/modules/azure-subscription-vending/**/*"
         variables:
           TFC_AZURE_PLAN_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-prd-az-mg4esnok-owner-hcp-workspace-t1
           TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-prd-az-mg4esnok-owner-hcp-workspace-t1

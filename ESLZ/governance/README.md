@@ -3,8 +3,9 @@
 The management groups below the intermediate root `mg-4esnok`, with Azure Policy and Azure RBAC on them, built with
 the Azure Verified Module for Azure Landing Zones
 ([`Azure/avm-ptn-alz`](https://registry.terraform.io/modules/Azure/avm-ptn-alz/azurerm)) through
-[modules/azure-management-groups](../../modules/azure-management-groups/main.tf). The HCP Terraform workspace
-`4esnok_vs_azure_governance_r1` applies it when a change is merged to `main`.
+[modules/azure-management-groups](../../modules/azure-management-groups/main.tf), and the subscriptions in them,
+configured by [subscription vending](#subscriptions). The HCP Terraform workspace `4esnok_vs_azure_governance_r1`
+applies it when a change is merged to `main`.
 
 `mg-4esnok`, its Azure RBAC and the tenant's hierarchy settings are tier 0
 ([bootstrap/Azure](../../bootstrap/Azure/README.md)). Tier 0 also creates this workspace's identity,
@@ -40,13 +41,6 @@ management_groups:
   parameters mapped to that name. `allowed_locations` is the regions `Deny-Resource-Locations` allows.
 - `role_assignments`: subscriptions below a management group inherit its role assignments. Groups are looked up in
   Entra ID by display name, so they must exist before the plan ([entraid](../../entraid/README.md) creates them).
-
-Subscriptions are not moved here, as that needs Owner on the subscription. Its Owner moves it, with Management
-Group Contributor on `mg-4esnok` from `role_assignments`:
-
-```sh
-az account management-group subscription add --name <management group> --subscription <subscription ID>
-```
 
 
 ## Policy
@@ -102,6 +96,106 @@ az policy remediation create --management-group <group> --policy-assignment <ass
 ```
 
 
+## Subscriptions
+
+Subscription vending as CAF describes it: each file in `subscriptions/` is a landing zone, configured by the Azure
+Verified Module [`Azure/avm-ptn-alz-sub-vending`](https://registry.terraform.io/modules/Azure/avm-ptn-alz-sub-vending/azure)
+through [modules/azure-subscription-vending](../../modules/azure-subscription-vending/main.tf): management group,
+resource providers and preview features, budgets, resource groups (optionally locked), user-assigned managed
+identities for workloads with their role assignments, and role assignments at subscription and resource group
+scope. Subscriptions are never created or cancelled here.
+
+There is one subscription, the Visual Studio one, so the landing zones share it. Each one's resource group stands
+in for the subscription it would have, and its pipeline gets roles on that resource group only:
+
+| File | Landing zone | As a subscription of its own |
+|---|---|---|
+| `admin-4esnok-su-vs.yaml` | The subscription itself: its management group | |
+| `platform-connectivity.yaml` | `rg-connectivity-dev-nzn-01`, [connectivity](../connectivity/README.md) | in `mg-platform` |
+| `landingzone-cortex.yaml` | `rg-cortex-dev-nzn-01` and its managed identities, [cortex](../workloads/cortex/README.md) | in `mg-landingzones` |
+
+One file per `subscription_id` holds the settings of the whole subscription: `display_name`, `tags`,
+`management_group_id`, `role_assignments` and budgets without `resource_group`. The plan fails when two files set
+them. `resource_providers` can be in every file: a landing zone lists what its stack deploys, as its pipeline
+cannot register providers. To give a landing zone a subscription of its own, change its `subscription_id`, and give
+the file the subscription's settings.
+
+```yaml
+subscription_id: <GUID>                # required, lowercase
+location: <region>                     # required; also for resource groups without a location
+display_name: <name>                   # renames the subscription when it differs; also needed for tags
+tags: { <key>: <value> }               # merged into the subscription's tags; tags removed here stay
+management_group_id: <group>           # a group of the hierarchy, e.g. mg-landingzones
+resource_providers:                    # registered, never unregistered
+  <namespace>: [<preview feature>]
+budgets:
+  <name>:
+    amount: <number>                   # required
+    start_date: <YYYY-MM-01>           # required; the first day of a month
+    end_date: <YYYY-MM-DD>             # default 10 years after start_date
+    time_grain: Monthly                # default
+    resource_group: <name>             # a resource group of this file; default the subscription
+    notifications:
+      - threshold: <percent>           # required
+        threshold_type: Actual | Forecasted               # default Actual
+        operator: GreaterThan | GreaterThanOrEqualTo      # default GreaterThan
+        contact_emails: [<email>]
+        contact_roles: [<role>]        # default [Owner]
+role_assignments:                      # at subscription scope
+  - role: <role>                       # required; built-in role name
+    group: <display name>              # a security group ...
+    service_principal: <display name>  # ... a service principal ...
+    principal_id: <object ID>          # ... or an object ID
+    principal_type: User | Group | ServicePrincipal       # with principal_id
+    condition: <ABAC condition>        # optional
+resource_groups:
+  <name>:
+    location: <region>                 # default the file's location
+    tags: { <key>: <value> }
+    lock: true | false                 # CanNotDelete lock; default false
+    role_assignments: [...]            # as above, at resource group scope
+managed_identities:                    # user-assigned, for workloads whose pipelines cannot assign roles
+  <name>:
+    resource_group: <name>             # required; a resource group of this file
+    role_assignments:
+      - role: <role>                   # required; built-in role name
+        resource_group: <name>         # on a resource group of this file ...
+        scope: /resourceGroups/<...>   # ... or a resource, by its ID relative to the subscription; neither: the subscription
+```
+
+- Principals are looked up in Entra ID by name, so they must exist before the plan. The workspace's application
+  reads groups and service principals (`Group.Read.All` and `Application.Read.All`, from tier 0). Users get access
+  through groups.
+- A managed identity that joins a subnet is a consumer of it in [connectivity](../connectivity/README.md), which
+  looks it up by name: this workspace applies first.
+
+**Add a landing zone:** add `subscriptions/<name>.yaml` with `subscription_id`, `location` and its resource groups.
+For a workload, see [Adding a workload](../workloads/README.md#adding-a-workload).
+
+**Add a subscription:** this workspace has Owner on `mg-4esnok`, but no rights on a subscription outside it. The
+subscription's Owner moves it into the hierarchy once, which also needs write access on the target group:
+
+```sh
+az account management-group subscription add --name <management group> --subscription <subscription ID>
+```
+
+Then add its file with the same `management_group_id`. From then on, this workspace keeps it there.
+
+Caveats:
+
+- **Blast radius:** vending shares this workspace and its state with the hierarchy and policy, whereas CAF keeps
+  it separate. A file that fails, for example one naming a missing group, stops every plan here, policy changes
+  included.
+- **Deletes:** removing a resource group, or its file, deletes it and everything in it when the change is merged,
+  unless it has `lock: true`. Removing a role assignment or a managed identity deletes it. Renaming a file
+  recreates its resource groups.
+- **Existing objects are not imported:** declaring a resource group or budget that already exists fails with
+  "already exists", and a role assignment created outside Terraform conflicts (`RoleAssignmentExists`, as the
+  module names assignments by a GUID derived from scope, principal and role). Delete it first, or leave it out.
+- **Renames outside Terraform** are not detected; the rename runs again only when `display_name` changes.
+- **Telemetry** of the module is off (`enable_telemetry = false`).
+
+
 ## Diagram
 
 ```mermaid
@@ -110,9 +204,12 @@ flowchart LR
   gov["4esnok_vs_azure_governance_r1<br/>ESLZ/governance"]
   subgraph root[mg-4esnok]
     p[mg-platform]
-    lz[mg-landingzones]
+    subgraph lz[mg-landingzones]
+      vs["Visual Studio subscription<br/>a resource group per landing zone"]
+    end
     sb[mg-sandbox]
   end
   t0 -- "creates, with its RBAC<br/>and the workspace's rights" --> root
   gov -- "creates, with policy and RBAC" --> p & lz & sb
+  gov -- "vends: placement, resource groups,<br/>RBAC, managed identities" --> vs
 ```

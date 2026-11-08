@@ -1,17 +1,12 @@
-# Subscriptions of the 4esnok.su tenant: one YAML file per subscription in ./config (see README.md), each
-# managed by the Azure Verified Module for subscription vending, used here for existing subscriptions only.
+# Subscription vending with the Azure Verified Module (Azure/avm-ptn-alz-sub-vending), for existing subscriptions
+# only: one module call per landing zone (ESLZ/governance/README.md#subscriptions).
 
 locals {
-  # YAML files with their optional sections as empty collections (`try` also covers a key left without a value)
-  subscriptions = {
-    for f in fileset("${path.module}/config", "*.yaml") : trimsuffix(f, ".yaml") => {
-      for k, v in yamldecode(file("${path.module}/config/${f}")) : k => v
-    }
-  }
+  # Optional sections as empty collections (`try` also covers a key left without a value)
   config = {
-    for sub, s in local.subscriptions : sub => {
+    for lz, s in var.landing_zones : lz => {
       subscription_id     = s.subscription_id
-      location            = try(s.location, "newzealandnorth")
+      location            = s.location
       display_name        = try(s.display_name, null)
       tags                = try({ for k, v in s.tags : k => v }, {})
       management_group_id = try(s.management_group_id, null)
@@ -35,9 +30,9 @@ locals {
     }
   }
 
-  # Every role assignment in the YAML files, at subscription scope (resource_group = null) and per resource group
+  # Every role assignment of a landing zone, at subscription scope (resource_group = null) and per resource group
   role_assignments = {
-    for sub, c in local.config : sub => concat(
+    for lz, c in local.config : lz => concat(
       [for a in c.role_assignments : merge(a, { resource_group = null })],
       flatten([for rg_name, rg in c.resource_groups : [for a in rg.role_assignments : merge(a, { resource_group = rg_name })]]),
     )
@@ -45,19 +40,13 @@ locals {
   all_role_assignments = flatten(values(local.role_assignments))
 }
 
-# Principals named in role assignments: group (display name), user (user principal name) or
-# service_principal (display name). principal_id with principal_type skips the lookup.
+# Principals named in role assignments: group or service_principal (display name). principal_id with
+# principal_type skips the lookup.
 data "azuread_group" "this" {
   for_each = toset([for a in local.all_role_assignments : a.group if try(a.group, null) != null])
 
   display_name     = each.key
   security_enabled = true
-}
-
-data "azuread_user" "this" {
-  for_each = toset([for a in local.all_role_assignments : a.user if try(a.user, null) != null])
-
-  user_principal_name = each.key
 }
 
 data "azuread_service_principal" "this" {
@@ -69,28 +58,29 @@ data "azuread_service_principal" "this" {
 locals {
   principals = merge(
     { for name, g in data.azuread_group.this : "group/${name}" => { id = g.object_id, type = "Group" } },
-    { for upn, u in data.azuread_user.this : "user/${upn}" => { id = u.object_id, type = "User" } },
     { for name, sp in data.azuread_service_principal.this : "service_principal/${name}" => { id = sp.object_id, type = "ServicePrincipal" } },
   )
 
-  # <subscription> => { "<resource group or subscription>|<role>|<principal>" => sub-vending role assignment }
+  # <landing zone> => { "<resource group or subscription>|<role>|<principal>" => sub-vending role assignment }
   vending_role_assignments = {
-    for sub, assignments in local.role_assignments : sub => {
+    for lz, assignments in local.role_assignments : lz => {
       for a in assignments : join("|", [
         coalesce(a.resource_group, "subscription"),
         a.role,
-        try("group/${a.group}", "user/${a.user}", "service_principal/${a.service_principal}", a.principal_id),
+        try("group/${a.group}", "service_principal/${a.service_principal}", a.principal_id),
         ]) => {
         definition               = a.role
         resource_group_scope_key = a.resource_group
         principal_id = try(
-          local.principals["group/${a.group}"].id, local.principals["user/${a.user}"].id,
-          local.principals["service_principal/${a.service_principal}"].id, a.principal_id,
+          local.principals["group/${a.group}"].id, local.principals["service_principal/${a.service_principal}"].id,
+          a.principal_id,
         )
         principal_type = try(
-          local.principals["group/${a.group}"].type, local.principals["user/${a.user}"].type,
-          local.principals["service_principal/${a.service_principal}"].type, a.principal_type,
+          local.principals["group/${a.group}"].type, local.principals["service_principal/${a.service_principal}"].type,
+          a.principal_type,
         )
+        condition         = try(trimspace(a.condition), null)
+        condition_version = try(a.condition, null) == null ? null : "2.0"
       }
     }
   }
@@ -111,8 +101,9 @@ module "subscription" {
   subscription_display_name    = each.value.display_name
   subscription_tags            = each.value.tags
 
+  # The name is read from the hierarchy's IDs, so the placement waits for the management group to exist
   subscription_management_group_association_enabled = each.value.management_group_id != null
-  subscription_management_group_id                  = each.value.management_group_id
+  subscription_management_group_id                  = each.value.management_group_id == null ? null : basename(var.management_group_ids[each.value.management_group_id])
 
   # Only the namespaces in the YAML, not the module's default list
   subscription_register_resource_providers_enabled      = length(each.value.resource_providers) > 0
@@ -132,7 +123,8 @@ module "subscription" {
   role_assignments        = local.vending_role_assignments[each.key]
 
   # User-assigned managed identities with their role assignments, for workloads whose pipelines cannot assign
-  # roles. Each assignment is scoped to a resource group of this file, a resource (scope) or the subscription.
+  # roles. Each assignment is scoped to a resource group of the same landing zone, a resource (scope) or the
+  # subscription.
   umi_enabled = length(each.value.managed_identities) > 0
   user_managed_identities = {
     for name, mi in each.value.managed_identities : name => {
@@ -152,11 +144,12 @@ module "subscription" {
   budget_enabled = length(each.value.budgets) > 0
   budgets = {
     for name, b in each.value.budgets : name => {
-      name              = name
-      amount            = b.amount
-      time_grain        = try(b.time_grain, "Monthly")
-      time_period_start = "${b.start_date}T00:00:00Z"
-      time_period_end   = try("${b.end_date}T00:00:00Z", timeadd("${b.start_date}T00:00:00Z", "87600h")) # default: 10 years
+      name               = name
+      amount             = b.amount
+      time_grain         = try(b.time_grain, "Monthly")
+      time_period_start  = "${b.start_date}T00:00:00Z"
+      time_period_end    = try("${b.end_date}T00:00:00Z", timeadd("${b.start_date}T00:00:00Z", "87600h")) # default: 10 years
+      resource_group_key = try(b.resource_group, null)
       notifications = {
         for n in try([for n in b.notifications : n], []) :
         "${try(n.threshold_type, "Actual")}_${try(n.operator, "GreaterThan")}_${n.threshold}" => {

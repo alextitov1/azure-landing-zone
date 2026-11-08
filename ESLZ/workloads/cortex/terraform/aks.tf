@@ -53,7 +53,7 @@ locals {
   aks_acns = local.aks.monitoring.network_observability || local.aks.security.network_security
 }
 
-# Control plane and kubelet identities, created by ESLZ/subscriptions with their role assignments, because this
+# Control plane and kubelet identities, created by ESLZ/governance with their role assignments, because this
 # pipeline cannot assign roles: Managed Identity Operator on the kubelet identity (control plane), AcrPull on the
 # resource group (kubelet). The control plane joins the node subnet as one of its consumers in ESLZ/connectivity.
 data "azapi_resource" "identity" {

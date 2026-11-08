@@ -14,15 +14,15 @@ Everything else is created by the platform workspaces:
 
 | What | Created by | Read by cortex |
 |---|---|---|
-| Resource group `rg-cortex-dev-nzn-01`, Reader (plan) and Contributor (apply) on it | `ESLZ/subscriptions` | name in `dev.yaml` |
+| Resource group `rg-cortex-dev-nzn-01`, Reader (plan) and Contributor (apply) on it | `ESLZ/governance` (`subscriptions/landingzone-cortex.yaml`) | name in `dev.yaml` |
 | Subnets `snet-app` and `snet-aks` (AKS nodes) in `vnet-cortex-dev-nzn-01` | `ESLZ/connectivity` | `subnets` output |
 | Service CIDR: IPAM static CIDR `cortex-aks-services` (/24) in the spokes pool | `ESLZ/connectivity` | `reservations` output |
 | Join on `snet-app` and `snet-aks` for the apply application (subnet `consumers`: Windows 365 Network User) | `ESLZ/connectivity` | |
-| Control plane identity `id-cortex-aks-dev-nzn-01`: Managed Identity Operator on the kubelet identity; consumer of `snet-aks` | `ESLZ/subscriptions` (`managed_identities`), `ESLZ/connectivity` | name in `dev.yaml` |
-| Kubelet identity `id-cortex-kubelet-dev-nzn-01`: AcrPull on the resource group | `ESLZ/subscriptions` (`managed_identities`) | name in `dev.yaml` |
+| Control plane identity `id-cortex-aks-dev-nzn-01`: Managed Identity Operator on the kubelet identity; consumer of `snet-aks` | `ESLZ/governance` (`managed_identities`), `ESLZ/connectivity` | name in `dev.yaml` |
+| Kubelet identity `id-cortex-kubelet-dev-nzn-01`: AcrPull on the resource group | `ESLZ/governance` (`managed_identities`) | name in `dev.yaml` |
 | Group `sg-az-aks-admin-t2` (cluster-admin) | `entraid` (tenant config) | object ID in `dev.yaml` |
 
-**Merge order** for a new cluster: `ESLZ/subscriptions` (identities), then `ESLZ/connectivity` (subnet, its
+**Merge order** for a new cluster: `ESLZ/governance` (identities), then `ESLZ/connectivity` (subnet, its
 consumers, which name the control plane identity, and the reservation), then `ESLZ/workloads/cortex`.
 
 ## Configuration
