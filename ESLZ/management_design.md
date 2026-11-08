@@ -72,9 +72,8 @@ Platform and security logs stay central.
 ## How this maps to this repository
 
 - One Visual Studio subscription holds everything, so the management landing zone is a resource group,
-  `rg-mgmt-dev-nzn-01`, not a subscription. Subscription vending in [ESLZ/governance](./governance/README.md#subscriptions)
-  creates it as if it were one, and [ESLZ/management](./management/README.md), a platform stack next to
-  `ESLZ/connectivity` with its own HCP workspace `4esnok_vs_azure_mgmt_r1`, deploys into it.
+  `rg-mgmt-dev-nzn-01`, not a subscription. It is deployed by [ESLZ/management](./management/README.md), a
+  platform stack next to `ESLZ/connectivity`, with its own HCP workspace `4esnok_vs_azure_mgmt_r1`.
 - `log-mgmt-dev-nzn-01` is the only workspace in the landing zone. The never-deployed `bootstrap/Azure/monitoring`,
   which created a second workspace for Entra ID logs, was removed.
 - [workloads/cortex/config/dev.yaml](./workloads/cortex/config/dev.yaml) already expects a

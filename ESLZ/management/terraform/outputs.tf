@@ -2,7 +2,7 @@
 # HCP/config.yaml), so they never hardcode platform IDs.
 output "resource_group_id" {
   description = "ID of the management resource group."
-  value       = data.azapi_resource.resource_group.id
+  value       = module.resource_group.resource_id
 }
 
 output "log_analytics_workspace_id" {
