@@ -27,7 +27,7 @@ terraform {
 
 # Remote runs sign in with the workspace's dynamic credentials; local runs use `az login`.
 provider "azapi" {
-  subscription_id      = local.config.subscription_id # the resource group module uses the provider's subscription
+  subscription_id      = local.config.subscription_id
   use_cli              = var.tfc_azure_dynamic_credentials == null
   use_oidc             = var.tfc_azure_dynamic_credentials != null
   client_id_file_path  = try(var.tfc_azure_dynamic_credentials.default.client_id_file_path, null)

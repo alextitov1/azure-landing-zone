@@ -2,7 +2,10 @@
 
 Lab hub-and-spoke network in `newzealandnorth`, applied by the HCP Terraform workspace `4esnok_vs_azure_networking_r1`.
 
-- Resource group `rg-connectivity-dev-nzn-01`.
+- Resource group `rg-connectivity-dev-nzn-01`, a landing zone of [subscription vending](../governance/README.md#subscriptions)
+  (`ESLZ/governance/subscriptions/platform-connectivity.yaml`). Governance creates it, and the workspace has rights
+  on it only: Reader for the plan application, and for the apply application Contributor and Role Based Access
+  Control Administrator limited to Windows 365 Network User, for subnet consumers.
 - Address space `10.200.0.0/16`, allocated by Azure Virtual Network Manager IPAM: pool `ipam-hub-dev-nzn-01` (`10.200.0.0/22`) and pool `ipam-spokes-dev-nzn-01` (`10.200.16.0/20`).
 - Hub `vnet-hub-dev-nzn-01` with `GatewaySubnet` (empty, reserved) and `snet-shared`.
 - One VNet per spoke (`vnet-<spoke>-dev-nzn-01`), peered with the hub, with an NSG on each subnet.
@@ -33,8 +36,8 @@ spokes:
 Each consumer gets the built-in role **Windows 365 Network User** on that subnet only. Despite the name, it is the
 narrowest built-in role with `Microsoft.Network/virtualNetworks/subnets/join/action`: it adds only read on the
 VNet, the subnet and its usages. A custom role is not an option, because the workspace cannot create role
-definitions. Consumers are named as in `ESLZ/subscriptions`: `group`, `user`, `service_principal`, or
-`principal_id` with `principal_type`. The workspace's applications have `Directory.Read.All` to resolve the
-names (`entraid/tenants/4esnok_vs/config.yaml`).
+definitions. A consumer is a `group`, `user` or `service_principal` by name, or a `principal_id` with
+`principal_type`. The workspace's applications have `Directory.Read.All` to resolve the names
+(`entraid/tenants/4esnok_vs/config.yaml`).
 
 **Remove the lab:** in HCP Terraform, workspace `4esnok_vs_azure_networking_r1` → Settings → Destruction and Deletion → Queue destroy plan.
