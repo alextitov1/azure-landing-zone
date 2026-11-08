@@ -34,10 +34,10 @@ entra_id:
       members: [sp-prd-az-mgmt-contributor-hcp-workspace-t2]
 
     - display_name: "sg-az-mg4esnok-contributor-t1"
-      description: "Users: Contributor on mg-4esnok and every subscription below it"
+      description: "Users: Contributor on mg-4esnok"
       members: [sysadmin]
     - display_name: "sg-az-mg4esnok-reader-t1"
-      description: "Users: Reader on mg-4esnok and every subscription below it"
+      description: "Users: Reader on mg-4esnok"
       members: []
 
     # - display_name: "sg-az-cortex-contributor-t2"
