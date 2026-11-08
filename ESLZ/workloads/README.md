@@ -43,4 +43,4 @@ the applications. Merge step 3 (and 4) after that, because role assignments and 
 applications. If consumers name a managed identity of step 3, merge step 4 after step 3 has applied. Merge step 5
 last. Its first plan needs the resource group, its role assignments and the connectivity outputs.
 
-Keep the applications out of `sg-az-mg4esnok-*-t1`. Those groups give users rights on every subscription.
+Keep the applications out of `sg-az-mg4esnok-*-t1`. Those groups give users rights on `mg-4esnok`.
