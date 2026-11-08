@@ -32,3 +32,8 @@ management_groups:
           {43d0d8ad-25c7-4714-9337-8ba259a9fe05, b0d8363b-8ddd-447d-831f-62ca05bff136}
           AND @Resource[Microsoft.Authorization/roleAssignments:PrincipalType] ForAnyOfAnyValues:StringEqualsIgnoreCase
           {'ServicePrincipal'}))
+      # Users, through their groups in entraid/tenants/4esnok_vs/config.yaml
+      - role: Contributor
+        group: sg-az-mg4esnok-contributor-t1
+      - role: Reader
+        group: sg-az-mg4esnok-reader-t1

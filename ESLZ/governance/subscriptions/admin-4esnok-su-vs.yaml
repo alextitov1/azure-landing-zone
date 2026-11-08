@@ -21,10 +21,3 @@ management_group_id: mg-landingzones
 #         contact_emails: [sysadmin@4esnok.su]
 #       - threshold: 100
 #         threshold_type: Forecasted
-
-# Access goes through groups (entraid/tenants/4esnok_vs/config.yaml): members change there, not here.
-role_assignments:
-  - role: Contributor
-    group: sg-az-sub-vs-contributor-t1
-  - role: Reader
-    group: sg-az-sub-vs-reader-t1
