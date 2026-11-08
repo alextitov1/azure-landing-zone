@@ -111,7 +111,6 @@ in for the subscription it would have, and its pipeline gets roles on that resou
 | File | Landing zone | As a subscription of its own |
 |---|---|---|
 | `admin-4esnok-su-vs.yaml` | The subscription itself: management group, users' access | |
-| `platform-management.yaml` | `rg-mgmt-dev-nzn-01`, [management](../management/README.md) | in `mg-platform` |
 | `platform-connectivity.yaml` | `rg-connectivity-dev-nzn-01`, [connectivity](../connectivity/README.md) | in `mg-platform` |
 | `landingzone-cortex.yaml` | `rg-cortex-dev-nzn-01` and its managed identities, [cortex](../workloads/cortex/README.md) | in `mg-landingzones` |
 
