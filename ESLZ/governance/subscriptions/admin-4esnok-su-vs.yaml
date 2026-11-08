@@ -12,6 +12,10 @@ location: newzealandnorth
 # Management group ID (not display name)
 management_group_id: mg-landingzones
 
+# Namespaces to register, each with its preview features. Removing one doesn't unregister it.
+# resource_providers:
+#   Microsoft.Compute: [EncryptionAtHost]
+
 # budgets:
 #   monthly:
 #     amount: 150
