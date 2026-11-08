@@ -2,7 +2,7 @@
 # of ../config/management.yaml. There are no published Azure Verified Modules for either, so they are plain azurerm
 # resources, and every azurerm argument can be set from the config (unset ones keep the provider default).
 # Grafana reads Prometheus through its managed identity, and Azure Monitor (metrics and the Log Analytics workspace)
-# across the subscription. Users get Grafana roles on the resource group from ESLZ/governance.
+# across the subscription.
 
 locals {
   prometheus = try(local.config.prometheus, { enabled = false })

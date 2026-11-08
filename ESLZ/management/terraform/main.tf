@@ -18,7 +18,6 @@ module "naming" {
   unique_length   = 0
 }
 
-# Created and access-controlled by ESLZ/governance: the workspace has rights on this resource group only
 data "azapi_resource" "resource_group" {
   type      = "Microsoft.Resources/resourceGroups@2024-03-01"
   name      = local.config.resource_group
