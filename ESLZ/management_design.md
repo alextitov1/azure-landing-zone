@@ -8,15 +8,16 @@ The management components that CAF and Azure Landing Zones (ALZ) expect, and whe
 
 | Component | What CAF expects | Status in this repo |
 |---|---|---|
-| Management subscription and management group | A dedicated subscription for platform management, under `Platform → Management` | Resource group `rg-mgmt-dev-nzn-01` in the shared Visual Studio subscription; `mg-platform` has no management child |
+| Management subscription and management group | A dedicated subscription for platform management, under `Platform → Management` | Resource group `rg-mgmt-dev-nzn-01` in the shared Visual Studio subscription, from subscription vending (`platform-management.yaml`); `mg-platform` has no management child |
 | Central Log Analytics workspace | One platform workspace, owned by the platform team | Done: `log-mgmt-dev-nzn-01` ([ESLZ/management](./management/README.md)) |
+| Private link | One Azure Monitor private link scope on the hub, so agents send privately | Done: `ampls-mgmt-dev-nzn-01` with the Log Analytics workspace and the Prometheus data collection endpoint; Log Analytics ingestion through it only ([private link](./management/README.md#private-link)) |
 | Entra ID diagnostic setting | Sign-in and audit logs in the central workspace | Not started (SignInLogs needs Entra ID P1; AuditLogs is free) |
 | Activity Log collection | `DeployIfNotExists` policy at management group scope sends every subscription's Activity Log to the workspace | Not started |
 | Resource diagnostic settings | Policy-driven diagnostic settings on platform resources (firewall, VPN gateway, Key Vault, AKS, …) | Not started: policy `Deploy-AKS-Diag-LAW` for AKS control-plane logs was removed for now and is in git history (`4e5a99e`) ([Policy](governance/README.md#policy)) |
 | Azure Monitor Agent and Data Collection Rules | AMA with a user-assigned managed identity; DCRs for VM Insights, Change Tracking, Defender for SQL | Not started |
 | Microsoft Defender for Cloud | Plans enabled per subscription by policy, connected to the central workspace | Not started |
 | Microsoft Sentinel | Optional SIEM on the central workspace | Not started |
-| Metrics and dashboards | Managed Prometheus (Azure Monitor workspace) and Azure Managed Grafana | Done: `amw-mgmt-dev-nzn-01`, `amg-mgmt-dev-aue-01` ([ESLZ/management](./management/README.md#cost)) |
+| Metrics and dashboards | Managed Prometheus (Azure Monitor workspace) and Azure Managed Grafana | Done: `amw-mgmt-dev-nzn-01`, `amg-mgmt-dev-aue-01` with the user-assigned identity `id-grafana-mgmt-dev-nzn-01` ([ESLZ/management](./management/README.md#cost)) |
 | Alerting | Azure Monitor Baseline Alerts (AMBA), Service Health alerts, action groups | Not started |
 | Update and change management | Azure Update Manager, Change Tracking through AMA | Not started |
 | Backup and recovery | Recovery Services or Backup vaults, backup policy | Not started |
@@ -72,8 +73,10 @@ Platform and security logs stay central.
 ## How this maps to this repository
 
 - One Visual Studio subscription holds everything, so the management landing zone is a resource group,
-  `rg-mgmt-dev-nzn-01`, not a subscription. It is deployed by [ESLZ/management](./management/README.md), a
-  platform stack next to `ESLZ/connectivity`, with its own HCP workspace `4esnok_vs_azure_mgmt_r1`.
+  `rg-mgmt-dev-nzn-01`, not a subscription. Subscription vending creates it; [ESLZ/management](./management/README.md),
+  a platform stack next to `ESLZ/connectivity` with its own HCP workspace `4esnok_vs_azure_mgmt_r1`, deploys into it.
+  Its pipeline has Contributor there and Monitoring Contributor on `mg-4esnok`, CAF's role for the team that runs
+  monitoring for every landing zone.
 - `log-mgmt-dev-nzn-01` is the only workspace in the landing zone. The never-deployed `bootstrap/Azure/monitoring`,
   which created a second workspace for Entra ID logs, was removed.
 - [workloads/cortex/config/dev.yaml](./workloads/cortex/config/dev.yaml) already expects a
@@ -93,6 +96,12 @@ Options to consider next, roughly in order.
   built-in one, with the cortex Terraform switch (`monitoring.enabled`). For the Terraform route: add
   `4esnok_vs_azure_cortex_r2` to `remote_state.workspaces` of `4esnok_vs_azure_mgmt_r1`, read `log_analytics_workspace_id` with
   `tfe_outputs`, and give the cortex apply app the read access its Data Collection Rule needs on the workspace.
+  Log Analytics takes ingestion through the private link scope only, so the cluster also needs a data collection
+  endpoint in its region in the scope (the Azure Monitor workspace's is one), associated with the cluster as
+  `configurationAccessEndpoint`; the management pipeline can make that association (Monitoring Contributor).
+- [ ] **Private Prometheus queries**: a `prometheusMetrics` private endpoint for the Azure Monitor workspace (zone
+  `privatelink.newzealandnorth.prometheus.monitor.azure.com`), and a Grafana managed private endpoint to it, approved
+  on the workspace, before `prometheus.public_network_access_enabled: false`.
 - [x] **Azure Monitor workspace for managed Prometheus**, and Managed Grafana on top of it.
 - [ ] **Cortex metrics**: cortex onboards container logs and Prometheus together, so it needs both
   `log_analytics_workspace_id` and `azure_monitor_workspace_id` (outputs of `4esnok_vs_azure_mgmt_r1`) before

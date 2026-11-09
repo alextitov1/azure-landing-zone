@@ -20,10 +20,15 @@ resource_group: rg-cortex-dev-nzn-01
 subnet: cortex/snet-app
 
 # Container registry crcortexdevnzn01 (Azure/avm-res-containerregistry-registry). The AKS nodes pull from it with
-# the kubelet identity (AcrPull on the resource group, assigned by ESLZ/governance).
+# the kubelet identity (AcrPull on the resource group, assigned by ESLZ/governance), through its private endpoint.
 registry:
-  sku: Basic                    # Basic, Standard or Premium (private endpoints, network rules, retention, zones)
-  public_network_access: true   # false needs Premium and a private endpoint
+  sku: Premium                  # Basic, Standard or Premium (private endpoints, network rules, retention, zones)
+  public_network_access: false  # false: only through the private endpoint (README.md#access)
+  # Private endpoint: key of the connectivity `subnets` output, a subnet this pipeline is a consumer of. Azure Policy
+  # writes its DNS record in the central zone privatelink.azurecr.io (Deploy-PrivateLink-DNS, ESLZ/governance).
+  # Needs Premium; remove it for Basic or Standard.
+  private_endpoint_subnet: cortex/snet-app
+  trusted_services: true        # trusted Azure services bypass the network rules; `az acr import` needs it
   zone_redundancy: false        # Premium only; changing it replaces the registry
   retention_days: 7             # days to keep untagged manifests; Premium only, ignored otherwise
   admin_user: false             # true adds a static username and password; keep Entra ID only
@@ -99,7 +104,13 @@ aks:
     dataplane: azure                 # azure, or cilium (Cilium network policies, ACNS network security)
     network_policy: none             # none, azure or calico (azure dataplane), cilium (cilium dataplane)
     outbound_type: loadBalancer      # loadBalancer, managedNATGateway or userDefinedRouting; creation only
-    private_cluster: false           # API server only on a private endpoint; creation only
+    private_cluster: true            # API server only on a private endpoint in the node subnet; creation only
+    # Private cluster DNS: none (the API server's public FQDN resolves to its private IP, so the jumpbox in the hub
+    # reaches it), system (a zone in the node resource group, linked to this spoke only) or the ID of a central
+    # zone, which needs Private DNS Zone Contributor on it and Network Contributor on the spoke VNet for the control
+    # plane identity. none needs public_fqdn: true.
+    private_dns_zone: none
+    public_fqdn: true
     authorized_ip_ranges: []         # public API server: CIDRs allowed to reach it; empty: any address
     # dns_prefix: aks-cortex-dev-nzn-01  # API server FQDN prefix; default the cluster name; creation only
 

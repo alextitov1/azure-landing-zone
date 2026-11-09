@@ -9,11 +9,12 @@ output "subnet_id" {
 }
 
 output "aks" {
-  description = "AKS cluster: ID, name, API server FQDN, OIDC issuer URL (for workload identity federated credentials), node resource group and kubelet identity."
+  description = "AKS cluster: ID, name, API server FQDNs (public, resolving to the private IP, and private), OIDC issuer URL (for workload identity federated credentials), node resource group and kubelet identity."
   value = {
     id                  = module.aks.resource_id
     name                = module.aks.name
     fqdn                = module.aks.fqdn
+    private_fqdn        = module.aks.private_fqdn
     oidc_issuer_url     = module.aks.oidc_issuer_profile_issuer_url
     node_resource_group = module.aks.node_resource_group_name
     kubelet_identity    = module.aks.kubelet_identity

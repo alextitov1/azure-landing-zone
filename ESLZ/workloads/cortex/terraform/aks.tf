@@ -1,5 +1,5 @@
-# AKS cluster, configured by `aks` in ../config/dev.yaml: Entra ID sign-in with Kubernetes RBAC, Azure CNI Overlay
-# in the cortex spoke, a system pool and user pools on Azure Linux.
+# AKS cluster, configured by `aks` in ../config/dev.yaml: Entra ID sign-in with Kubernetes RBAC, a private API
+# server, Azure CNI Overlay in the cortex spoke, a system pool and user pools on Azure Linux.
 
 locals {
   aks      = local.config.aks
@@ -112,9 +112,11 @@ module "aks" {
 
   # Networking
   api_server_access_profile = {
-    enable_private_cluster = local.aks.network.private_cluster
-    authorized_ip_ranges   = length(local.aks.network.authorized_ip_ranges) > 0 ? local.aks.network.authorized_ip_ranges : null
-    disable_run_command    = local.aks.security.disable_run_command
+    enable_private_cluster             = local.aks.network.private_cluster
+    private_dns_zone                   = local.aks.network.private_cluster ? try(local.aks.network.private_dns_zone, null) : null
+    enable_private_cluster_public_fqdn = local.aks.network.private_cluster ? try(local.aks.network.public_fqdn, null) : null
+    authorized_ip_ranges               = length(local.aks.network.authorized_ip_ranges) > 0 ? local.aks.network.authorized_ip_ranges : null
+    disable_run_command                = local.aks.security.disable_run_command
   }
   network_profile = {
     network_plugin      = "azure"

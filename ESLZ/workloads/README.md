@@ -26,7 +26,8 @@ share their state with the workloads listed in their `remote_state`
 
 | Workspace | Outputs |
 |---|---|
-| `4esnok_vs_azure_networking_r1` | `subnets` (`"<vnet>/<subnet>"` => ID), `reservations` (`"<spoke>/<name>"` => address prefix reserved in IPAM), `vnets`, `resource_group_id` |
+| `4esnok_vs_azure_networking_r1` | `subnets` (`"<vnet>/<subnet>"` => ID), `reservations` (`"<spoke>/<name>"` => address prefix reserved in IPAM), `vnets`, `private_dns_zone_ids` (zone name => ID), `resource_group_id` |
+| `4esnok_vs_azure_mgmt_r1` | `log_analytics_workspace_id`, `azure_monitor_workspace_id`, `private_link_scope_id`, `resource_group_id` |
 
 ## Adding a workload
 
@@ -35,7 +36,7 @@ share their state with the workloads listed in their `remote_state`
 | 1 | `entraid/tenants/4esnok_vs/config.yaml` | Applications `sp-hcp-4esnok-su-<workload>-t2-plan-r0` / `-apply-r0` (federated credentials for the workspace), user group `sg-az-<workload>-contributor-t2` |
 | 2 | `HCP/config.yaml` | Workspace `4esnok_vs_azure_<workload>_r2`, and the workload in `remote_state.workspaces` of the platform workspaces it reads |
 | 3 | `ESLZ/governance/subscriptions/landingzone-<workload>.yaml` | The landing zone ([subscription vending](../governance/README.md#subscriptions)): resource group `rg-<workload>-<env>-<region>-01` with Reader for the plan application, Contributor for the apply application and the user group; the `resource_providers` the workload deploys; `managed_identities` with their role assignments, if the workload needs identities with roles (its pipeline cannot assign roles) |
-| 4 | `ESLZ/connectivity/config/network.yaml` | A spoke for the workload, if it needs a network, with the apply application (and any managed identity of step 3 that must join, such as an AKS control plane) in `consumers` of each subnet it attaches NICs or private endpoints to (see `ESLZ/connectivity/README.md`), and `reservations` for ranges it uses outside the VNet |
+| 4 | `ESLZ/connectivity/config/network.yaml` | A spoke for the workload, if it needs a network, with the apply application (and any managed identity of step 3 that must join, such as an AKS control plane) in `consumers` of each subnet it attaches NICs or private endpoints to (see `ESLZ/connectivity/README.md`), and `reservations` for ranges it uses outside the VNet. For a private endpoint of a new service: its zone in `private_dns_zones`, and its policy in `Deploy-PrivateLink-DNS` (`ESLZ/governance/alz-lib`) |
 | 5 | `ESLZ/workloads/<workload>/` | Copy `cortex/` and rename |
 
 **Merge order.** Steps 1 and 2 can go in one merge: tier 1 runs again after the Entra ID workspace has created

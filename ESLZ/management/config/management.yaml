@@ -1,5 +1,5 @@
-# Platform management: the central Log Analytics workspace, managed Prometheus and Managed Grafana
-# (ESLZ/management_design.md).
+# Platform management: the central Log Analytics workspace, managed Prometheus, Managed Grafana and the Azure
+# Monitor private link scope (ESLZ/management_design.md).
 subscription_id: 44b9d159-d353-477f-b94f-5ce0f3bd33f1
 location: newzealandnorth
 
@@ -8,11 +8,16 @@ environment: dev
 region_code: nzn
 instance: 1
 
+# Created by ESLZ/governance (subscriptions/platform-management.yaml), which also grants this workspace access to it
+resource_group: rg-mgmt-dev-nzn-01
+
 log_analytics:
   sku: PerGB2018
   retention_in_days: 30              # 30-730; the first 31 days are free
   daily_quota_gb: 1                  # ingestion cap per day, protects the Visual Studio credit; -1 removes it
   local_authentication_enabled: false  # shared keys off: agents and queries sign in with Entra ID
+  internet_ingestion_enabled: false  # agents send through the private link scope only (private_link below)
+  internet_query_enabled: true       # false: queries only from VNets linked to the private link scope (the jumpbox)
 
 # Azure Monitor workspace for managed Prometheus (azurerm_monitor_workspace; no Azure Verified Module exists).
 # The workspace itself is free; ingestion is billed per sample. Every argument is listed: commented ones keep
@@ -21,7 +26,8 @@ prometheus:
   enabled: true
   # name: amw-mgmt-dev-nzn-01            # default from the naming convention; forces new
   # location: newzealandnorth            # default: the stack's location; forces new
-  # public_network_access_enabled: true  # default true; false needs a private endpoint to ingest and query
+  # public_network_access_enabled: true  # default true: queries (Grafana) over the internet; ingestion goes through
+  #                                      # its data collection endpoint, which is in the private link scope
   # tags: {}
   # timeouts: { create: 30m, read: 5m, update: 30m, delete: 30m }
 
@@ -33,6 +39,10 @@ grafana:
   region_code: aue                       # for the name
   major_version: 12                      # required: 11 or 12
   public_network_access_enabled: true    # default true
+  # User-assigned identity, created with its roles by ESLZ/governance (subscriptions/platform-management.yaml)
+  # because this pipeline can't assign roles: Monitoring Reader on the subscription, Monitoring Data Reader on the
+  # resource group (Prometheus). Changing it recreates Grafana.
+  identity: id-grafana-mgmt-dev-nzn-01
   # name: amg-mgmt-dev-aue-01            # default from the naming convention; 2-23 characters; forces new
   # sku: Standard                        # the only value; forces new
   # sku_size: X1                         # X1 or X2 (more capacity, higher hourly price); forces new
@@ -40,9 +50,6 @@ grafana:
   # api_key_enabled: false               # Grafana API keys and service accounts
   # deterministic_outbound_ip_enabled: false  # fixed outbound IPs, e.g. for firewalled data sources
   # auto_generated_domain_name_label_scope: TenantReuse  # the only value
-  # identity:                            # forces new. The role assignments below are made only for SystemAssigned;
-  #   type: SystemAssigned               # SystemAssigned (default here) or UserAssigned
-  #   identity_ids: []                   # user-assigned identity IDs, for UserAssigned
   # Data sources besides the Prometheus workspace above, which is always integrated
   # additional_azure_monitor_workspace_ids: []
   # Email for alerts and reports. The password is the sensitive variable grafana_smtp_password (TF_VAR_ in HCP).
@@ -56,3 +63,15 @@ grafana:
   #   verification_skip_enabled: false   # true skips SSL verification of the SMTP server
   # tags: {}
   # timeouts: { create: 30m, read: 5m, update: 30m, delete: 30m }
+
+# Azure Monitor private link scope (AMPLS): the Log Analytics workspace and the Azure Monitor workspace's data
+# collection endpoint, reached through one private endpoint in the hub. Every VNet linked to the Azure Monitor
+# private DNS zones (ESLZ/connectivity) then sends and queries through it. Azure Policy writes the endpoint's DNS
+# records (Deploy-PrivateLink-DNS, ESLZ/governance).
+private_link:
+  enabled: true
+  subnet: hub/snet-privatelink           # key of the connectivity `subnets` output; this workspace is its consumer
+  # Open: the linked VNets still reach Azure Monitor resources outside the scope, over the internet.
+  # PrivateOnly: only the resources in the scope.
+  ingestion_access_mode: Open
+  query_access_mode: Open
