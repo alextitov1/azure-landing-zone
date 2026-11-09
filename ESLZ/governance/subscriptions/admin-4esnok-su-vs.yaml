@@ -25,3 +25,10 @@ management_group_id: mg-landingzones
 #         contact_emails: [sysadmin@4esnok.su]
 #       - threshold: 100
 #         threshold_type: Forecasted
+
+role_assignments:
+  # Workspace 4esnok_vs_azure_networking_r1 (ESLZ/connectivity), which otherwise has roles on its resource group only.
+  # The scope of its network manager is this subscription, and Azure creates a network manager only for a caller
+  # that can write virtual networks across its scope; Network Contributor is the narrowest built-in role that can.
+  - role: Network Contributor
+    service_principal: sp-hcp-azure-networking-r1-apply
