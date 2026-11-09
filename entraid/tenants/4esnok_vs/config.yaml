@@ -30,8 +30,12 @@ entra_id:
       members: [sysadmin]  # user mail_nicknames or application display names
 
     - display_name: sg-az-mgmt-contributor-t2
-      description: Contributor and constrained RBAC Administrator on mg-4esnok, for ESLZ/management
+      description: Contributor on rg-mgmt-dev-nzn-01 and Monitoring Contributor on mg-4esnok, for ESLZ/management
       members: [sp-prd-az-mgmt-contributor-hcp-workspace-t2]
+
+    - display_name: sg-az-jumpbox-admin-t1
+      description: "Users: sign in to the jumpbox (ESLZ/connectivity) as administrator with Entra ID"
+      members: [sysadmin]
 
     - display_name: "sg-az-mg4esnok-contributor-t1"
       description: "Users: Contributor on mg-4esnok"
@@ -48,7 +52,8 @@ entra_id:
     # Identities of HCP Terraform workspaces (dynamic credentials, OIDC). Those of the tier-1 workspaces (entraid,
     # ESLZ/governance) are in tier 0.
 
-    # Workspace 4esnok_vs_azure_mgmt_r1 (ESLZ/management). Azure RBAC from sg-az-mgmt-contributor-t2.
+    # Workspace 4esnok_vs_azure_mgmt_r1 (ESLZ/management). Azure RBAC from sg-az-mgmt-contributor-t2; it joins the
+    # hub subnet snet-privatelink as one of its consumers (ESLZ/connectivity).
     - display_name: sp-prd-az-mgmt-contributor-hcp-workspace-t2
       description: HCP TF workspace 4esnok_vs_azure_mgmt_r1
       federated_credentials:
