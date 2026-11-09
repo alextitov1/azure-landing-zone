@@ -34,7 +34,7 @@ prometheus:
 # Azure Managed Grafana (azurerm_dashboard_grafana; the Azure Verified Module is only proposed). Billed per hour
 # and per active user (README.md#cost). Every argument is listed: commented ones keep their default.
 grafana:
-  enabled: true
+  enabled: false
   location: australiaeast                # not offered in newzealandnorth; forces new
   region_code: aue                       # for the name
   major_version: 12                      # required: 11 or 12
