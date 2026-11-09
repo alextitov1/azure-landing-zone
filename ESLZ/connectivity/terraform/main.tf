@@ -21,4 +21,5 @@ module "jumpbox" {
   resource_group_name = local.config.resource_group
   location            = local.config.location
   subnet_id           = module.network.subnets[local.jumpbox.subnet]
+  tags                = try(local.jumpbox.tags, null)
 }

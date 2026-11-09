@@ -50,6 +50,7 @@ module "private_endpoint" {
   subnet_resource_id             = var.private_endpoint_subnet_id
   private_connection_resource_id = azurerm_monitor_private_link_scope.this[0].id
   subresource_names              = ["azuremonitor"]
+  tags                           = try(local.private_link.tags, null)
   enable_telemetry               = false
 
   # Resources join the scope before the endpoint, so the endpoint's DNS covers them from the start

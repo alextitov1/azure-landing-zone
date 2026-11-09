@@ -71,7 +71,7 @@ module "aks" {
   name             = local.aks_name
   parent_id        = local.resource_group_id
   location         = local.config.location
-  tags             = local.tags
+  tags             = merge(local.tags, try(local.aks.tags, {}))
   enable_telemetry = false
 
   # Basics

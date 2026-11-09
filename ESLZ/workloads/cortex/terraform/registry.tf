@@ -13,7 +13,7 @@ module "registry" {
   name                = module.naming[local.config.workload].names.registry.name
   resource_group_name = local.config.resource_group
   location            = local.config.location
-  tags                = local.tags
+  tags                = merge(local.tags, try(local.registry.tags, {}))
   enable_telemetry    = false
 
   sku                           = local.registry.sku

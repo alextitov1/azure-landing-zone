@@ -61,7 +61,7 @@ grafana:
   #   from_address: grafana@example.com  # required
   #   from_name: Azure Managed Grafana Notification  # default
   #   verification_skip_enabled: false   # true skips SSL verification of the SMTP server
-  # tags: {}
+  tags: { cost: paid }                   # destroyed when idle (scripts/README.md)
   # timeouts: { create: 30m, read: 5m, update: 30m, delete: 30m }
 
 # Azure Monitor private link scope (AMPLS): the Log Analytics workspace and the Azure Monitor workspace's data
@@ -75,3 +75,4 @@ private_link:
   # PrivateOnly: only the resources in the scope.
   ingestion_access_mode: Open
   query_access_mode: Open
+  tags: { cost: paid }                   # the private endpoint only; destroyed when idle (scripts/README.md)

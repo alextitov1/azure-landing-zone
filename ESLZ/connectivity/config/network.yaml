@@ -87,6 +87,7 @@ private_dns_zones:
 # in its subnet's security_rules above.
 jumpbox:
   enabled: true
+  tags: { cost: paid }                 # VM, NIC and public IP; destroyed when idle (scripts/README.md)
   subnet: hub/snet-shared
   computer_name: jumpbox01             # Windows host name, at most 15 characters; Entra ID sign-in connects to it
   vm_size: Standard_B2as_v2            # 2 vCPU, 8 GiB, burstable
@@ -96,6 +97,7 @@ jumpbox:
     offer: WindowsServer
     sku: 2025-datacenter-azure-edition
     version: latest
+  patch_mode: AutomaticByPlatform      # Azure installs updates; required for Azure Edition (hotpatch) images
   os_disk:
     storage_account_type: StandardSSD_LRS
     size_gb: 128

@@ -14,6 +14,13 @@ Terraform workspace `4esnok_vs_azure_networking_r1`.
 - Private DNS zones for private endpoints, linked to the hub and every spoke (see below).
 - Jumpbox `vm-jumpbox-dev-nzn-01` in `snet-shared` (see below).
 
+The workspace signs in as `sp-hcp-azure-networking-r1-plan` and `sp-hcp-azure-networking-r1-apply`, created by
+[entraid](../../entraid/README.md). [Subscription vending](../governance/README.md#subscriptions) gives the plan
+application Reader on the resource group. The apply application gets Contributor on the resource group, may assign
+Windows 365 Network User there (see below), and gets Network Contributor on the subscription: the scope of the
+network manager is the subscription, and Azure creates a network manager only for a caller that can write virtual
+networks across its scope.
+
 Configuration: `config/network.yaml`. Terraform: `terraform/`, which calls `modules/azure-connectivity` (network and
 DNS) and `modules/azure-windows-jumpbox`. Workloads read the `subnets`, `reservations` and `private_dns_zone_ids`
 outputs.
@@ -77,7 +84,7 @@ registry, and Azure Monitor through its private link scope. The hub is peered wi
 spokes resolve the private DNS zones the same way.
 
 - Windows Server 2025 Datacenter Azure Edition, `Standard_B2as_v2` (2 vCPU, 8 GiB), Trusted Launch, a 128 GiB
-  Standard SSD.
+  Standard SSD. Azure installs its updates (patch mode `AutomaticByPlatform`).
 - Public IP `pip-jumpbox-dev-nzn-01`, also its route to the internet: new subnets have no default outbound access.
 - Shuts down every day at 19:00 New Zealand time. Start it from the portal or with `az vm start`.
 - The first boot installs `packages` with Chocolatey (Azure CLI, kubectl, kubelogin, Git, VS Code by default); the

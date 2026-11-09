@@ -32,6 +32,7 @@ module "virtual_machine" {
   os_type                = "Windows"
   sku_size               = var.config.vm_size
   source_image_reference = var.config.image
+  patch_mode             = try(var.config.patch_mode, null)
   os_disk = {
     name                 = local.names.disk_managed_disk_o.name
     caching              = "ReadWrite"

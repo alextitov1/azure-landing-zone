@@ -33,9 +33,11 @@ registry:
   retention_days: 7             # days to keep untagged manifests; Premium only, ignored otherwise
   admin_user: false             # true adds a static username and password; keep Entra ID only
   anonymous_pull: false         # Standard or Premium only
+  tags: { cost: paid }          # added to `tags` above; destroyed when idle (scripts/README.md)
 
 # AKS cluster aks-cortex-dev-nzn-01 (Azure/avm-res-containerservice-managedcluster), Dev/Test preset
 aks:
+  tags: { cost: paid }               # added to `tags` above; destroyed when idle (scripts/README.md)
   # --- Basics ---
   kubernetes_version: "1.35"         # <major>.<minor> takes the latest patch. Upgrade one minor version at a time.
   sku_tier: Free                     # Free (no SLA), Standard (uptime SLA) or Premium (Standard + long-term support)
