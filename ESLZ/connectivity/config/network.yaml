@@ -8,21 +8,45 @@ environment: dev
 region_code: nzn
 instance: 1
 
+# Created by ESLZ/governance (subscriptions/platform-connectivity.yaml), which also grants this workspace access to it
+resource_group: rg-connectivity-dev-nzn-01
+
 ipam:
   root: 10.200.0.0/16
   hub: 10.200.0.0/22
   spokes: 10.200.16.0/20
 
+# Subnets of the hub and the spokes (name: subnet). A subnet is its prefix length, or an object:
+#   prefix_length: <n>
+#   consumers:       principals that may join the subnet (NICs, private endpoints), with role Windows 365 Network User
+#                    (read and subnets/join/action) on that subnet only. A consumer is group (display name), user
+#                    (user principal name), service_principal (display name), or principal_id with principal_type,
+#                    as in ESLZ/governance/subscriptions.
+#   security_rules:  rules of the subnet's NSG, with the attribute names of azurerm_network_security_rule.
+# Every subnet gets an NSG, except those Azure doesn't allow one on, such as GatewaySubnet.
 hub:
   prefix_length: 22
-  subnets:  # name: prefix length
+  subnets:
     GatewaySubnet: 27  # reserved for a VPN gateway
-    snet-shared: 24
+    snet-shared:       # shared services: the jumpbox (jumpbox below)
+      prefix_length: 24
+      # RDP to the jumpbox from your public IP. The repository is public, so the address is published with it.
+      # security_rules:
+      #   - name: AllowRdpFromAdmin
+      #     priority: 100
+      #     direction: Inbound
+      #     access: Allow
+      #     protocol: Tcp
+      #     source_address_prefixes: [203.0.113.10/32]
+      #     source_port_range: "*"
+      #     destination_address_prefix: "*"
+      #     destination_port_range: "3389"
+    snet-privatelink:  # private endpoints of platform services: the Azure Monitor private link scope
+      prefix_length: 26
+      consumers:
+        - group: sg-az-mgmt-contributor-t2  # ESLZ/management
 
-# name: VNet prefix length and subnets, one NSG per subnet. A subnet is its prefix length, or prefix_length and
-# consumers: principals that may join the subnet (NICs, private endpoints), with role Windows 365 Network User
-# (read and subnets/join/action) on that subnet only. A consumer is group (display name), user (user principal
-# name), service_principal (display name), or principal_id with principal_type, as in ESLZ/subscriptions.
+# name: VNet prefix length and subnets (as for the hub above)
 spokes:
   workload:
     prefix_length: 24
@@ -31,7 +55,7 @@ spokes:
   cortex:  # ESLZ/workloads/cortex
     prefix_length: 24
     subnets:
-      snet-app:
+      snet-app:  # the container registry's private endpoint
         prefix_length: 26
         consumers:
           - service_principal: sp-hcp-4esnok-su-cortex-t2-apply-r0
@@ -39,10 +63,45 @@ spokes:
         prefix_length: 26
         consumers:
           - service_principal: sp-hcp-4esnok-su-cortex-t2-apply-r0  # creates the cluster in the subnet
-          # AKS control plane identity (created by ESLZ/subscriptions, which must be applied first): node NICs
-          # and internal load balancers
+          # AKS control plane identity (created by ESLZ/governance, which must be applied first): node NICs,
+          # internal load balancers and the API server's private endpoint
           - service_principal: id-cortex-aks-dev-nzn-01
     # Ranges used outside the VNet (name: prefix length): IPAM static CIDRs in the spokes pool, so no VNet is
     # ever allocated an overlapping range
     reservations:
       aks-services: 24  # Kubernetes service CIDR of the AKS cluster
+
+# Central private DNS zones for private endpoints, each linked to the hub and every spoke, so the VNets resolve
+# private endpoints without a DNS server of their own. Azure Policy writes the records (Deploy-PrivateLink-DNS in
+# ESLZ/governance/alz-lib), so a zone must exist before the policy that writes to it.
+private_dns_zones:
+  - privatelink.azurecr.io                     # Container Registry
+  - privatelink.monitor.azure.com              # Azure Monitor private link scope: this zone and the next four
+  - privatelink.oms.opinsights.azure.com
+  - privatelink.ods.opinsights.azure.com
+  - privatelink.agentsvc.azure-automation.net
+  - privatelink.blob.core.windows.net          # also Storage blob
+
+# Windows jumpbox in the hub, to reach private endpoints from inside the network (modules/azure-windows-jumpbox).
+# Members of sg-az-jumpbox-admin-t1 sign in with Entra ID (README.md#jumpbox). It has a public IP; RDP needs a rule
+# in its subnet's security_rules above.
+jumpbox:
+  enabled: true
+  subnet: hub/snet-shared
+  computer_name: jumpbox01             # Windows host name, at most 15 characters; Entra ID sign-in connects to it
+  vm_size: Standard_B2as_v2            # 2 vCPU, 8 GiB, burstable
+  zone: null                           # availability zone "1", "2" or "3"; null: none
+  image:
+    publisher: MicrosoftWindowsServer
+    offer: WindowsServer
+    sku: 2025-datacenter-azure-edition
+    version: latest
+  os_disk:
+    storage_account_type: StandardSSD_LRS
+    size_gb: 128
+  admin_username: azureadmin           # local administrator; the generated password is only in the state
+  shutdown:                            # daily auto-shutdown
+    time: "1900"
+    timezone: New Zealand Standard Time
+  # Installed with Chocolatey at the first boot
+  packages: [azure-cli, kubernetes-cli, azure-kubelogin, git, vscode]

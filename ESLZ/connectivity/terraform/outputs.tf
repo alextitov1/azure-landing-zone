@@ -2,26 +2,35 @@
 # HCP/config.yaml), so they never hardcode platform IDs.
 output "resource_group_id" {
   description = "ID of the connectivity resource group."
-  value       = module.resource_group.resource_id
+  value       = module.network.resource_group_id
 }
 
 output "subnets" {
   description = "Subnet IDs by \"<vnet>/<subnet>\", e.g. \"cortex/snet-app\" or \"hub/snet-shared\"."
-  value = merge(
-    { for name, s in module.hub.subnets : "hub/${name}" => s.resource_id },
-    merge([for spoke, m in module.spoke : { for name, s in m.subnets : "${spoke}/${name}" => s.resource_id }]...),
-  )
+  value       = module.network.subnets
 }
 
 output "reservations" {
   description = "Address prefixes reserved in IPAM by \"<spoke>/<name>\", e.g. \"cortex/aks-services\"."
-  value       = { for k, r in azapi_resource.reservation : k => r.output.properties.addressPrefixes[0] }
+  value       = module.network.reservations
 }
 
 output "vnets" {
   description = "VNet IDs and the address space IPAM allocated to them."
-  value = merge(
-    { hub = { id = module.hub.resource_id, address_space = module.hub.address_spaces } },
-    { for k, m in module.spoke : k => { id = m.resource_id, address_space = m.address_spaces } },
-  )
+  value       = module.network.vnets
+}
+
+output "private_dns_zone_ids" {
+  description = "Private DNS zone IDs by zone name, e.g. \"privatelink.azurecr.io\"."
+  value       = module.network.private_dns_zone_ids
+}
+
+output "jumpbox" {
+  description = "The jumpbox's host name (to connect to with Entra ID), public and private IP addresses and local administrator; null when disabled."
+  value = local.jumpbox.enabled ? {
+    computer_name      = module.jumpbox[0].computer_name
+    public_ip_address  = module.jumpbox[0].public_ip_address
+    private_ip_address = module.jumpbox[0].private_ip_address
+    admin_username     = module.jumpbox[0].admin_username
+  } : null
 }
