@@ -47,7 +47,7 @@ projects:
           TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_vs_azure_bootstrap_r0/client_ids/sp-prd-az-mg4esnok-owner-hcp-workspace-t1
 
       4esnok_vs_azure_mgmt_r1:
-        description: "Azure: management (central Log Analytics workspace, managed Prometheus, Managed Grafana)"
+        description: "Azure: management (central Log Analytics workspace, managed Prometheus, Managed Grafana, Azure Monitor private link scope)"
         tags: { env: mgmt, cloud: azure }
         execution_mode: remote
         auto_apply: true
@@ -55,27 +55,31 @@ projects:
           repo: alextitov1/azure-landing-zone
           github_app_installation: alextitov1
           working_directory: ESLZ/management/terraform
-          trigger_patterns: ["/ESLZ/management/**/*"]
+          trigger_patterns: ["/ESLZ/management/**/*", "/modules/azure-management/**/*"]
         variables:
           TFC_AZURE_PLAN_CLIENT_ID: tfe://4esnok_vs_entraid_directory_r1/client_ids/sp-prd-az-mgmt-contributor-hcp-workspace-t2
           TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_vs_entraid_directory_r1/client_ids/sp-prd-az-mgmt-contributor-hcp-workspace-t2
 
-  #     4esnok_vs_azure_networking_r2:
-  #       description: "Azure: lab hub-and-spoke network"
-  #       tags: { env: dev, cloud: azure, project: 4esnok.su }
-  #       execution_mode: remote
-  #       auto_apply: true
-  #       remote_state:  # workspaces that read the VNet and subnet IDs (tfe_outputs)
-  #         share_with: workspaces
-  #         workspaces: [4esnok_vs_azure_cortex_r2]
-  #       vcs:
-  #         repo: alextitov1/azure-landing-zone
-  #         github_app_installation: alextitov1
-  #         working_directory: ESLZ/connectivity/terraform
-  #         trigger_patterns: ["/ESLZ/connectivity/**/*"]
-  #       variables:
-  #         TFC_AZURE_PLAN_CLIENT_ID: tfe://4esnok_vs_entraid_directory_r1/client_ids/sp-hcp-azure-networking-r1-plan
-  #         TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_vs_entraid_directory_r1/client_ids/sp-hcp-azure-networking-r1-apply
+      4esnok_vs_azure_networking_r1:
+        description: "Azure: lab hub-and-spoke network, private DNS zones, jumpbox (ESLZ/connectivity)"
+        tags: { env: dev, cloud: azure, project: 4esnok.su }
+        execution_mode: remote
+        auto_apply: true
+        remote_state:  # workspaces that read the VNet, subnet and private DNS zone IDs (tfe_outputs)
+          share_with: workspaces
+          # add 4esnok_vs_azure_cortex_r2 once its workspace below is uncommented
+          workspaces: [4esnok_vs_azure_mgmt_r1]
+        vcs:
+          repo: alextitov1/azure-landing-zone
+          github_app_installation: alextitov1
+          working_directory: ESLZ/connectivity/terraform
+          trigger_patterns:
+            - "/ESLZ/connectivity/**/*"
+            - "/modules/azure-connectivity/**/*"
+            - "/modules/azure-windows-jumpbox/**/*"
+        variables:
+          TFC_AZURE_PLAN_CLIENT_ID: tfe://4esnok_vs_entraid_directory_r1/client_ids/sp-hcp-azure-networking-r1-plan
+          TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_vs_entraid_directory_r1/client_ids/sp-hcp-azure-networking-r1-apply
 
 
   # 4esnok_vs_r2:
