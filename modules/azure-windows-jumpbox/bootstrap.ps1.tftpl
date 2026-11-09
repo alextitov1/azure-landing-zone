@@ -1,0 +1,16 @@
+# First boot of the jumpbox, run by its CustomScriptExtension (modules/azure-windows-jumpbox/main.tf)
+$ErrorActionPreference = 'Stop'
+
+# Edge opens without its first-run pages
+$edge = 'HKLM:\SOFTWARE\Policies\Microsoft\Edge'
+New-Item -Path $edge -Force | Out-Null
+Set-ItemProperty -Path $edge -Name HideFirstRunExperience -Value 1 -Type DWord
+
+# Server Manager doesn't open at every sign-in
+Get-ScheduledTask -TaskName ServerManager | Disable-ScheduledTask | Out-Null
+%{ if length(packages) > 0 ~}
+
+[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+& "$env:ProgramData\chocolatey\bin\choco.exe" install -y --no-progress ${join(" ", packages)}
+%{ endif ~}

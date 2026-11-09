@@ -1,0 +1,13 @@
+{
+  "schema_version": 2,
+  "resources": {
+    "compute_virtual_machine": {
+      "dashes": true,
+      "min_length": 1,
+      "max_length": 64,
+      "scope": "resource group",
+      "override_reason": "The catalog drops the dashes for virtual machines, which allow them; keep <type>-<workload>-<env>-<region>-<nn>.",
+      "override_source": "ESLZ/README.md"
+    }
+  }
+}
