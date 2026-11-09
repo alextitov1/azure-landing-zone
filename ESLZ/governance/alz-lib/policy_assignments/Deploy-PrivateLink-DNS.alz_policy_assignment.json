@@ -1,0 +1,31 @@
+{
+  "type": "Microsoft.Authorization/policyAssignments",
+  "apiVersion": "2024-04-01",
+  "name": "Deploy-PrivateLink-DNS",
+  "location": "${default_location}",
+  "dependsOn": [],
+  "identity": {
+    "type": "SystemAssigned"
+  },
+  "properties": {
+    "description": "Private endpoints get their DNS records in the central private DNS zones of ESLZ/connectivity, written by this assignment's managed identity, so landing zone pipelines need no rights on the zones.",
+    "displayName": "Configure private endpoints to use the central private DNS zones",
+    "policyDefinitionId": "/providers/Microsoft.Management/managementGroups/placeholder/providers/Microsoft.Authorization/policySetDefinitions/Deploy-PrivateLink-DNS",
+    "enforcementMode": "Default",
+    "nonComplianceMessages": [
+      {
+        "message": "Private endpoints {enforcementMode} register in the central private DNS zones of ESLZ/connectivity."
+      }
+    ],
+    "parameters": {
+      "dnsZoneSubscriptionId": {
+        "value": "00000000-0000-0000-0000-000000000000"
+      },
+      "dnsZoneResourceGroupName": {
+        "value": "placeholder"
+      }
+    },
+    "scope": "/providers/Microsoft.Management/managementGroups/placeholder",
+    "notScopes": []
+  }
+}

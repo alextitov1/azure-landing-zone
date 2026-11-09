@@ -12,6 +12,30 @@
           "policy_assignment_name": "Deny-Resource-Locations"
         }
       ]
+    },
+    {
+      "default_name": "private_link_dns_zone_subscription_id",
+      "description": "The subscription of the central private DNS zones (ESLZ/connectivity).",
+      "policy_assignments": [
+        {
+          "parameter_names": [
+            "dnsZoneSubscriptionId"
+          ],
+          "policy_assignment_name": "Deploy-PrivateLink-DNS"
+        }
+      ]
+    },
+    {
+      "default_name": "private_link_dns_zone_resource_group_name",
+      "description": "The resource group of the central private DNS zones (ESLZ/connectivity).",
+      "policy_assignments": [
+        {
+          "parameter_names": [
+            "dnsZoneResourceGroupName"
+          ],
+          "policy_assignment_name": "Deploy-PrivateLink-DNS"
+        }
+      ]
     }
   ]
 }

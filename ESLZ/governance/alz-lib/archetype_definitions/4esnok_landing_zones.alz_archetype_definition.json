@@ -2,9 +2,12 @@
   "$schema": "https://raw.githubusercontent.com/Azure/Azure-Landing-Zones-Library/main/schemas/archetype_definition.json",
   "name": "4esnok_landing_zones",
   "policy_assignments": [
-    "Deny-Storage-http"
+    "Deny-Storage-http",
+    "Deploy-PrivateLink-DNS"
   ],
   "policy_definitions": [],
-  "policy_set_definitions": [],
+  "policy_set_definitions": [
+    "Deploy-PrivateLink-DNS"
+  ],
   "role_definitions": []
 }

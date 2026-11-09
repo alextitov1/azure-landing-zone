@@ -1,0 +1,83 @@
+{
+  "name": "Deploy-PrivateLink-DNS",
+  "type": "Microsoft.Authorization/policySetDefinitions",
+  "properties": {
+    "description": "Gives private endpoints a DNS zone group that writes their records into the central private DNS zones of ESLZ/connectivity, for the services the landing zones use. A lean version of the ALZ initiative Deploy-Private-DNS-Zones, whose role assignments need all of its zones to exist. A new member needs its zone in ESLZ/connectivity first.",
+    "displayName": "Configure private endpoints to use the central private DNS zones",
+    "metadata": {
+      "category": "Network",
+      "version": "1.0.0"
+    },
+    "parameters": {
+      "dnsZoneSubscriptionId": {
+        "type": "String",
+        "metadata": {
+          "displayName": "Subscription ID",
+          "description": "The subscription of the central private DNS zones."
+        }
+      },
+      "dnsZoneResourceGroupName": {
+        "type": "String",
+        "metadata": {
+          "displayName": "Resource group name",
+          "description": "The resource group of the central private DNS zones."
+        }
+      },
+      "effect": {
+        "type": "String",
+        "allowedValues": [
+          "DeployIfNotExists",
+          "Disabled"
+        ],
+        "defaultValue": "DeployIfNotExists",
+        "metadata": {
+          "displayName": "Effect",
+          "description": "Enable or disable the execution of the policies."
+        }
+      }
+    },
+    "policyDefinitions": [
+      {
+        "policyDefinitionReferenceId": "DINE-Private-DNS-Azure-ACR",
+        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/e9585a95-5b8c-4d03-b193-dc7eb5ac4c32",
+        "definitionVersion": "1.*.*",
+        "groupNames": [],
+        "parameters": {
+          "effect": {
+            "value": "[parameters('effect')]"
+          },
+          "privateDnsZoneId": {
+            "value": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/privateDnsZones/{2}', parameters('dnsZoneSubscriptionId'), parameters('dnsZoneResourceGroupName'), 'privatelink.azurecr.io')]"
+          }
+        }
+      },
+      {
+        "policyDefinitionReferenceId": "DINE-Private-DNS-Azure-Monitor",
+        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/437914ee-c176-4fff-8986-7e05eb971365",
+        "definitionVersion": "1.*.*",
+        "groupNames": [],
+        "parameters": {
+          "effect": {
+            "value": "[parameters('effect')]"
+          },
+          "privateDnsZoneId1": {
+            "value": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/privateDnsZones/{2}', parameters('dnsZoneSubscriptionId'), parameters('dnsZoneResourceGroupName'), 'privatelink.monitor.azure.com')]"
+          },
+          "privateDnsZoneId2": {
+            "value": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/privateDnsZones/{2}', parameters('dnsZoneSubscriptionId'), parameters('dnsZoneResourceGroupName'), 'privatelink.oms.opinsights.azure.com')]"
+          },
+          "privateDnsZoneId3": {
+            "value": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/privateDnsZones/{2}', parameters('dnsZoneSubscriptionId'), parameters('dnsZoneResourceGroupName'), 'privatelink.ods.opinsights.azure.com')]"
+          },
+          "privateDnsZoneId4": {
+            "value": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/privateDnsZones/{2}', parameters('dnsZoneSubscriptionId'), parameters('dnsZoneResourceGroupName'), 'privatelink.agentsvc.azure-automation.net')]"
+          },
+          "privateDnsZoneId5": {
+            "value": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/privateDnsZones/{2}', parameters('dnsZoneSubscriptionId'), parameters('dnsZoneResourceGroupName'), 'privatelink.blob.core.windows.net')]"
+          }
+        }
+      }
+    ],
+    "policyType": "Custom"
+  }
+}

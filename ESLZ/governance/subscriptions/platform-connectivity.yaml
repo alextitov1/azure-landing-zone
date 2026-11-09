@@ -4,6 +4,8 @@ location: newzealandnorth
 
 resource_providers:
   Microsoft.Network: []
+  Microsoft.Compute: []      # the jumpbox
+  Microsoft.DevTestLab: []   # the jumpbox's auto-shutdown schedule
 
 resource_groups:
   rg-connectivity-dev-nzn-01:
@@ -12,6 +14,9 @@ resource_groups:
         service_principal: sp-hcp-azure-networking-r1-plan
       - role: Contributor
         service_principal: sp-hcp-azure-networking-r1-apply
+      # Entra ID sign-in to the jumpbox; Owner and Contributor don't include it
+      - role: Virtual Machine Administrator Login
+        group: sg-az-jumpbox-admin-t1
       # Only Windows 365 Network User, the role subnet consumers get
       - role: Role Based Access Control Administrator
         service_principal: sp-hcp-azure-networking-r1-apply
