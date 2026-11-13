@@ -26,6 +26,9 @@ management_groups:
   location: <region>                   # required; for policy managed identities
   policy_default_values:               # optional; assignment parameters set here
     <default name>: <value>            # e.g. allowed_locations: [<region>, ...]
+  policy_assign_permissions_unset:     # optional; parameters whose resource gets no role assignment for the policy
+    - definition_name: <name>          # policy definition; a GUID for a built-in one
+      parameter_name: <name>
   role_assignments:                    # optional; assignments at groups created outside this module
     <management group>:                # e.g. mg-landingzones
       - role: <role>                   # required; built-in role name
@@ -87,6 +90,7 @@ role_assignments:                      # at subscription scope
   - role: <role>                       # required; built-in role name
     group: <display name>              # a security group ...
     service_principal: <display name>  # ... a service principal ...
+    policy_assignment: <management group>/<assignment>    # ... a policy assignment's managed identity ...
     principal_id: <object ID>          # ... or an object ID
     principal_type: User | Group | ServicePrincipal       # with principal_id
     condition: <ABAC condition>        # optional

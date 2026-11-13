@@ -14,6 +14,16 @@ management_groups:
     # Where Deploy-PrivateLink-DNS writes private endpoints' DNS records: the central zones of ESLZ/connectivity
     private_link_dns_zone_subscription_id: 44b9d159-d353-477f-b94f-5ce0f3bd33f1
     private_link_dns_zone_resource_group_name: rg-connectivity-dev-nzn-01
+  # Deploy-PrivateLink-DNS's zone parameters, by built-in policy: without this, its identity gets a role on each zone,
+  # and this workspace can't apply while ESLZ/connectivity is destroyed. It has a role on the zones' resource group
+  # instead (subscriptions/platform-connectivity.yaml).
+  policy_assign_permissions_unset:
+    - { definition_name: e9585a95-5b8c-4d03-b193-dc7eb5ac4c32, parameter_name: privateDnsZoneId }   # Container Registry
+    - { definition_name: 437914ee-c176-4fff-8986-7e05eb971365, parameter_name: privateDnsZoneId1 }  # Azure Monitor
+    - { definition_name: 437914ee-c176-4fff-8986-7e05eb971365, parameter_name: privateDnsZoneId2 }
+    - { definition_name: 437914ee-c176-4fff-8986-7e05eb971365, parameter_name: privateDnsZoneId3 }
+    - { definition_name: 437914ee-c176-4fff-8986-7e05eb971365, parameter_name: privateDnsZoneId4 }
+    - { definition_name: 437914ee-c176-4fff-8986-7e05eb971365, parameter_name: privateDnsZoneId5 }
   role_assignments:        # by management group
     mg-4esnok:
       # Workspace 4esnok_vs_azure_mgmt_r1 (ESLZ/management), which has Contributor on its own resource group only

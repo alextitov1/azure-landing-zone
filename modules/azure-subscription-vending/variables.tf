@@ -36,3 +36,9 @@ variable "management_group_ids" {
   type        = map(string)
   description = "Resource IDs of the management groups, by name (output of modules/azure-management-groups)."
 }
+
+variable "policy_assignment_principal_ids" {
+  type        = map(string)
+  default     = {}
+  description = "Principal IDs of policy assignments' managed identities, by \"<management group>/<assignment>\" (output of modules/azure-management-groups), for role assignments that name a policy_assignment."
+}

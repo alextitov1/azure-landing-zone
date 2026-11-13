@@ -71,8 +71,10 @@ records.
   here.
 
 **Add a service:** add its zone to `private_dns_zones` and apply; then add the built-in "Configure ... to use private
-DNS zones" policy for it to the `Deploy-PrivateLink-DNS` initiative. The policy's managed identity gets Network
-Contributor on each zone, so the zone has to exist first.
+DNS zones" policy for it to the `Deploy-PrivateLink-DNS` initiative, and its zone parameters to
+`policy_assign_permissions_unset` in `ESLZ/governance/config.yaml`. The policy's managed identity has Private DNS Zone
+Contributor on the resource group, not on each zone, so either workspace can be applied or destroyed first. A private
+endpoint created while its zone is missing gets no record until the policy is remediated.
 
 Not here yet: a DNS Private Resolver in the hub, with zones linked to the hub only. It's CAF's design once
 on-premises networks or VPN clients need these names; each endpoint is $180 a month.

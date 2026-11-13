@@ -75,7 +75,7 @@ spokes:
 
 # Central private DNS zones for private endpoints, each linked to the hub and every spoke, so the VNets resolve
 # private endpoints without a DNS server of their own. Azure Policy writes the records (Deploy-PrivateLink-DNS in
-# ESLZ/governance/alz-lib), so a zone must exist before the policy that writes to it.
+# ESLZ/governance/alz-lib) through its role on this resource group, so zones can be added and removed freely.
 private_dns_zones:
   - privatelink.azurecr.io                     # Container Registry
   - privatelink.monitor.azure.com              # Azure Monitor private link scope: this zone and the next four

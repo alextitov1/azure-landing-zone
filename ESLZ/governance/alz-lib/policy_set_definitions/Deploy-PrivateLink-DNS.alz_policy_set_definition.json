@@ -2,7 +2,7 @@
   "name": "Deploy-PrivateLink-DNS",
   "type": "Microsoft.Authorization/policySetDefinitions",
   "properties": {
-    "description": "Gives private endpoints a DNS zone group that writes their records into the central private DNS zones of ESLZ/connectivity, for the services the landing zones use. A lean version of the ALZ initiative Deploy-Private-DNS-Zones, whose role assignments need all of its zones to exist. A new member needs its zone in ESLZ/connectivity first.",
+    "description": "Gives private endpoints a DNS zone group that writes their records into the central private DNS zones of ESLZ/connectivity, for the services the landing zones use. A lean version of the ALZ initiative Deploy-Private-DNS-Zones, whose role assignments need all of its zones to exist. A new member needs its zone parameters in policy_assign_permissions_unset of ESLZ/governance/config.yaml.",
     "displayName": "Configure private endpoints to use the central private DNS zones",
     "metadata": {
       "category": "Network",

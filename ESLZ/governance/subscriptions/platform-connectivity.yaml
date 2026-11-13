@@ -12,6 +12,10 @@ resource_groups:
         service_principal: sp-hcp-azure-networking-r1-plan
       - role: Contributor
         service_principal: sp-hcp-azure-networking-r1-apply
+      # The policy's identity joins private endpoints to the central zones. On the resource group rather than on each
+      # zone, so the assignment survives the zones being destroyed and recreated by ESLZ/connectivity.
+      - role: Private DNS Zone Contributor
+        policy_assignment: mg-landingzones/Deploy-PrivateLink-DNS
       # Only Windows 365 Network User, the role subnet consumers get
       - role: Role Based Access Control Administrator
         service_principal: sp-hcp-azure-networking-r1-apply

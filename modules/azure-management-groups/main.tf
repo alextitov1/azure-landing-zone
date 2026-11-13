@@ -43,6 +43,15 @@ module "alz" {
     for name, value in try(var.config.policy_default_values, {}) : name => jsonencode({ value = value })
   }
 
+  # Parameters that name a resource of another workspace: the module would assign the policy's identity a role on
+  # that resource, and waits an hour for one that doesn't exist. The role is assigned where the resource is vended.
+  override_policy_definition_parameter_assign_permissions_unset = try(toset([
+    for p in var.config.policy_assign_permissions_unset : {
+      definition_name = p.definition_name
+      parameter_name  = p.parameter_name
+    }
+  ]), null)
+
   # "<management group>|<role>|group/<name> or id/<principal ID>" => module input
   management_group_role_assignments = {
     for ra in local.role_assignments :

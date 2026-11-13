@@ -41,7 +41,7 @@ locals {
 }
 
 # Principals named in role assignments: group or service_principal (display name). principal_id with
-# principal_type skips the lookup.
+# principal_type skips the lookup, and policy_assignment names a policy's managed identity.
 data "azuread_group" "this" {
   for_each = toset([for a in local.all_role_assignments : a.group if try(a.group, null) != null])
 
@@ -67,17 +67,19 @@ locals {
       for a in assignments : join("|", [
         coalesce(a.resource_group, "subscription"),
         a.role,
-        try("group/${a.group}", "service_principal/${a.service_principal}", a.principal_id),
+        try("group/${a.group}", "service_principal/${a.service_principal}", "policy_assignment/${a.policy_assignment}", a.principal_id),
         ]) => {
         definition               = a.role
         resource_group_scope_key = a.resource_group
+        # A policy assignment's identity is read from the variable, not local.principals: it is unknown until the
+        # assignment exists, and would make every other principal unknown with it
         principal_id = try(
           local.principals["group/${a.group}"].id, local.principals["service_principal/${a.service_principal}"].id,
-          a.principal_id,
+          var.policy_assignment_principal_ids[a.policy_assignment], a.principal_id,
         )
         principal_type = try(
           local.principals["group/${a.group}"].type, local.principals["service_principal/${a.service_principal}"].type,
-          a.principal_type,
+          can(a.policy_assignment) ? "ServicePrincipal" : a.principal_type,
         )
         condition         = try(trimspace(a.condition), null)
         condition_version = try(a.condition, null) == null ? null : "2.0"

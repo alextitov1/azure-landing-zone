@@ -87,6 +87,8 @@ module "subscription_vending" {
 
   landing_zones        = local.landing_zones
   management_group_ids = module.management_groups.management_group_ids
+
+  policy_assignment_principal_ids = module.management_groups.policy_assignment_principal_ids
 }
 
 output "management_group_ids" {
