@@ -52,6 +52,12 @@ module "alz" {
     }
   ]), null)
 
+  # The module's default also retries "not found" for an hour, on reads too, so a role assignment deleted outside
+  # Terraform (e.g. with its scope) hangs the plan instead of being planned for recreation
+  retries = {
+    policy_role_assignments = { error_message_regex = ["AuthorizationFailed"] }
+  }
+
   # "<management group>|<role>|group/<name> or id/<principal ID>" => module input
   management_group_role_assignments = {
     for ra in local.role_assignments :
