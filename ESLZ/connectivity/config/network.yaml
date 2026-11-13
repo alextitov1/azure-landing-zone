@@ -33,16 +33,16 @@ hub:
       consumers:
         - service_principal: sp-hcp-4esnok-su-jumpbox-t2-apply-r0
       # RDP to the jumpbox from your public IP. The repository is public, so the address is published with it.
-      # security_rules:
-      #   - name: AllowRdpFromAdmin
-      #     priority: 100
-      #     direction: Inbound
-      #     access: Allow
-      #     protocol: Tcp
-      #     source_address_prefixes: [203.0.113.10/32]
-      #     source_port_range: "*"
-      #     destination_address_prefix: "*"
-      #     destination_port_range: "3389"
+      security_rules:
+        - name: AllowRdpFromAdmin
+          priority: 100
+          direction: Inbound
+          access: Allow
+          protocol: Tcp
+          source_address_prefixes: [60.234.52.225/32]
+          source_port_range: "*"
+          destination_address_prefix: "*"
+          destination_port_range: "3389"
     snet-privatelink:  # private endpoints of platform services: the Azure Monitor private link scope
       prefix_length: 26
       consumers:
