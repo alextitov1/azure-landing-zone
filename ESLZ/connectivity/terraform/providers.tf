@@ -34,8 +34,8 @@ provider "azapi" {
   oidc_token_file_path = try(var.tfc_azure_dynamic_credentials.default.oidc_token_file_path, null)
 }
 
-# Only for the modules that use azurerm internally: Network Manager (Azure/avm-res-network-networkmanager) and the
-# jumpbox (Azure/avm-res-compute-virtualmachine). Signs in with the workspace's dynamic credentials natively.
+# Only for Network Manager (Azure/avm-res-network-networkmanager), which uses azurerm internally. Signs in with the
+# workspace's dynamic credentials natively.
 provider "azurerm" {
   features {}
   subscription_id                 = local.config.subscription_id

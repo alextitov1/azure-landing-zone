@@ -9,9 +9,10 @@ Resources are deployed with [Azure Verified Modules](https://azure.github.io/Azu
 | Directory | Contents | HCP Terraform workspace |
 |---|---|---|
 | `governance/` | Management groups below `mg-4esnok`, Azure Policy, RBAC on management groups; subscription vending: subscriptions, a resource group per landing zone, role assignments | `4esnok_vs_azure_governance_r1` |
-| `connectivity/` | Hub-and-spoke network, IPAM, private DNS zones, jumpbox | `4esnok_vs_azure_networking_r1` |
+| `connectivity/` | Hub-and-spoke network, IPAM, private DNS zones | `4esnok_vs_azure_networking_r1` |
 | `management/` | Central Log Analytics workspace, managed Prometheus, Managed Grafana, Azure Monitor private link scope ([management design](./management_design.md)) | `4esnok_vs_azure_mgmt_r1` |
 | `workloads/cortex/` | Tier-2 workload cortex ([workloads](./workloads/README.md)) | `4esnok_vs_azure_cortex_r2` |
+| `workloads/jumpbox/` | Tier-2 workload jumpbox: a Windows VM in the hub to reach private endpoints | `4esnok_vs_azure_jumpbox_r2` |
 
 ## Naming
 

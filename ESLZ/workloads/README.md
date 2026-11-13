@@ -8,6 +8,7 @@ the network or other workloads.
 | Directory | HCP Terraform workspace | Resource group |
 |---|---|---|
 | `cortex/` | `4esnok_vs_azure_cortex_r2` | `rg-cortex-dev-nzn-01` |
+| `jumpbox/` | `4esnok_vs_azure_jumpbox_r2` | `rg-jumpbox-dev-nzn-01` |
 
 ## Layout
 

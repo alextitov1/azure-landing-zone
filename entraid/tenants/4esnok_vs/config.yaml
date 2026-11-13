@@ -34,7 +34,7 @@ entra_id:
       members: [sp-prd-az-mgmt-contributor-hcp-workspace-t2]
 
     - display_name: sg-az-jumpbox-admin-t1
-      description: "Users: sign in to the jumpbox (ESLZ/connectivity) as administrator with Entra ID"
+      description: "Users: sign in to the jumpbox (ESLZ/workloads/jumpbox) as administrator with Entra ID"
       members: [sysadmin]
 
     - display_name: "sg-az-mg4esnok-contributor-t1"
@@ -92,6 +92,19 @@ entra_id:
       federated_credentials:
         - name: "hcp-4esnok_vs_azure_cortex_r2-apply"
           subject: "organization:4esnok:project:4esnok_vs_r2:workspace:4esnok_vs_azure_cortex_r2:run_phase:apply"
+
+    # Workspace 4esnok_vs_azure_jumpbox_r2 (tier 2, ESLZ/workloads/jumpbox)
+    - display_name: "sp-hcp-4esnok-su-jumpbox-t2-plan-r0"
+      description: "HCP Terraform plan runs of 4esnok/4esnok_vs_r2/4esnok_vs_azure_jumpbox_r2"
+      federated_credentials:
+        - name: "hcp-4esnok_vs_azure_jumpbox_r2-plan"
+          subject: "organization:4esnok:project:4esnok_vs_r2:workspace:4esnok_vs_azure_jumpbox_r2:run_phase:plan"
+
+    - display_name: "sp-hcp-4esnok-su-jumpbox-t2-apply-r0"
+      description: "HCP Terraform apply runs of 4esnok/4esnok_vs_r2/4esnok_vs_azure_jumpbox_r2"
+      federated_credentials:
+        - name: "hcp-4esnok_vs_azure_jumpbox_r2-apply"
+          subject: "organization:4esnok:project:4esnok_vs_r2:workspace:4esnok_vs_azure_jumpbox_r2:run_phase:apply"
 
     # Example: an application with a client secret stored in 1Password and a direct EntraID role,
     # used as a group member by display name.

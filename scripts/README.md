@@ -8,7 +8,7 @@ The rest of the lab stays in place, and the next run of each workspace creates t
 The resources carry the Azure tag `cost: paid`, set with `tags:` in the stack's YAML. The same tag filters Azure Cost
 Management. Tagged:
 
-- Jumpbox: the VM, its NIC and public IP; the OS disk is deleted with the VM ([connectivity](../ESLZ/connectivity/README.md)).
+- Jumpbox: the VM, its NIC and public IP; the OS disk is deleted with the VM ([jumpbox](../ESLZ/workloads/jumpbox/README.md)).
 - The private endpoint of the Azure Monitor private link scope, and Managed Grafana ([management](../ESLZ/management/README.md#cost)).
 - The container registry (Premium) and the AKS cluster ([cortex](../ESLZ/workloads/cortex/README.md)); their private
   endpoint and node resource group go with them.
@@ -47,7 +47,7 @@ applied with its tag.
 ```sh
 ./scripts/hcp-destroy-paid.sh --list                          # list what is tagged; no runs
 ./scripts/hcp-destroy-paid.sh                                 # every workspace, asking for each
-./scripts/hcp-destroy-paid.sh 4esnok_vs_azure_networking_r1   # only the named workspaces
+./scripts/hcp-destroy-paid.sh 4esnok_vs_azure_jumpbox_r2      # only the named workspaces
 ./scripts/hcp-destroy-paid.sh --yes                           # without asking
 ```
 
@@ -60,6 +60,6 @@ The next apply of a workspace creates its resources again: **New run** in HCP, o
 workspace's trigger patterns.
 
 > [!WARNING]
-> The workspaces auto-apply, so merging an unrelated change to connectivity brings the jumpbox back too. Data held
+> The workspaces auto-apply, so merging an unrelated change to a workspace brings its resources back too. Data held
 > by the destroyed resources is lost: the jumpbox's disk, the registry's images, and Grafana dashboards not kept in
 > Terraform.

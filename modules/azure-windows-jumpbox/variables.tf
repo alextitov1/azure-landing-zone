@@ -1,6 +1,6 @@
 variable "config" {
   type        = any
-  description = "The jumpbox section of ESLZ/connectivity/config/network.yaml; see ESLZ/connectivity/README.md."
+  description = "The jumpbox section of ESLZ/workloads/jumpbox/config/dev.yaml; see ESLZ/workloads/jumpbox/README.md."
 
   validation {
     condition     = can(regex("^[A-Za-z0-9-]{1,15}$", var.config.computer_name)) && !can(regex("^[0-9]+$", var.config.computer_name))

@@ -1,0 +1,41 @@
+# Workload jumpbox, environment dev. The subnet comes from the outputs of the connectivity workspace, never from an
+# ID written here.
+subscription_id: 44b9d159-d353-477f-b94f-5ce0f3bd33f1
+location: newzealandnorth
+
+# Names: <type>-<workload>-<environment>-<region_code>-<instance> (ESLZ/README.md)
+workload: jumpbox
+environment: dev
+region_code: nzn
+instance: 1
+
+tags:
+  env: dev
+  workload: jumpbox
+  cost: paid  # VM, NIC and public IP; destroyed when idle (scripts/README.md)
+
+# Created by ESLZ/governance (subscriptions/landingzone-jumpbox.yaml), which also grants this workspace access to it
+resource_group: rg-jumpbox-dev-nzn-01
+
+# Hub subnet in ESLZ/connectivity (config/network.yaml): key of its `subnets` output, a subnet this pipeline is a
+# consumer of. RDP needs a rule in that subnet's security_rules.
+subnet: hub/snet-shared
+
+# Windows jumpbox, to reach private endpoints from inside the network (modules/azure-windows-jumpbox).
+# Members of sg-az-jumpbox-admin-t1 sign in with Entra ID (README.md#sign-in).
+jumpbox:
+  computer_name: jumpbox01             # Windows host name, at most 15 characters; Entra ID sign-in connects to it
+  vm_size: Standard_B2as_v2            # 2 vCPU, 8 GiB, burstable
+  zone: null                           # availability zone "1", "2" or "3"; null: none
+  image:
+    publisher: MicrosoftWindowsServer
+    offer: WindowsServer
+    sku: 2025-datacenter-azure-edition
+    version: latest
+  patch_mode: AutomaticByPlatform      # Azure installs updates; required for Azure Edition (hotpatch) images
+  os_disk:
+    storage_account_type: StandardSSD_LRS
+    size_gb: 128
+  admin_username: azureadmin           # local administrator; the generated password is only in the state
+  # Installed with Chocolatey at the first boot
+  packages: [azure-cli, kubernetes-cli, azure-kubelogin, git, vscode]

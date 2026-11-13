@@ -1,0 +1,18 @@
+# Workload landing zone jumpbox (ESLZ/workloads/jumpbox)
+subscription_id: 44b9d159-d353-477f-b94f-5ce0f3bd33f1
+location: newzealandnorth
+
+resource_providers:
+  Microsoft.Compute: []
+
+resource_groups:
+  rg-jumpbox-dev-nzn-01:
+    tags: { env: dev, workload: jumpbox }
+    role_assignments:
+      - role: Reader
+        service_principal: sp-hcp-4esnok-su-jumpbox-t2-plan-r0
+      - role: Contributor
+        service_principal: sp-hcp-4esnok-su-jumpbox-t2-apply-r0
+      # Entra ID sign-in to the jumpbox; Owner and Contributor don't include it
+      - role: Virtual Machine Administrator Login
+        group: sg-az-jumpbox-admin-t1

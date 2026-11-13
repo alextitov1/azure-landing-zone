@@ -94,7 +94,7 @@ groups. Members of `sg-az-cortex-contributor-t2` push images to the registry.
 
 The API server and the registry answer only inside the network:
 
-- From the [jumpbox](../../connectivity/README.md#jumpbox) in the hub, which has the Azure CLI, kubectl and
+- From the [jumpbox](../jumpbox/README.md) in the hub, which has the Azure CLI, kubectl and
   kubelogin: `kubectl`, `az acr login`, pushes.
 - From anywhere, through Azure Resource Manager: `az aks command invoke -g rg-cortex-dev-nzn-01 -n
   aks-cortex-dev-nzn-01 --command "kubectl get pods -A"` (needs `security.disable_run_command: false`), and

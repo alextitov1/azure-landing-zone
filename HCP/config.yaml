@@ -61,14 +61,14 @@ projects:
           TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_vs_entraid_directory_r1/client_ids/sp-prd-az-mgmt-contributor-hcp-workspace-t2
 
       4esnok_vs_azure_networking_r1:
-        description: "Azure: lab hub-and-spoke network, private DNS zones, jumpbox (ESLZ/connectivity)"
+        description: "Azure: lab hub-and-spoke network, private DNS zones (ESLZ/connectivity)"
         tags: { env: dev, cloud: azure, project: 4esnok.su }
         execution_mode: remote
         auto_apply: true
         remote_state:  # workspaces that read the VNet, subnet and private DNS zone IDs (tfe_outputs)
           share_with: workspaces
           # add 4esnok_vs_azure_cortex_r2 once its workspace below is uncommented
-          workspaces: [4esnok_vs_azure_mgmt_r1]
+          workspaces: [4esnok_vs_azure_mgmt_r1, 4esnok_vs_azure_jumpbox_r2]
         vcs:
           repo: alextitov1/azure-landing-zone
           github_app_installation: alextitov1
@@ -76,34 +76,47 @@ projects:
           trigger_patterns:
             - "/ESLZ/connectivity/**/*"
             - "/modules/azure-connectivity/**/*"
-            - "/modules/azure-windows-jumpbox/**/*"
         variables:
           TFC_AZURE_PLAN_CLIENT_ID: tfe://4esnok_vs_entraid_directory_r1/client_ids/sp-hcp-azure-networking-r1-plan
           TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_vs_entraid_directory_r1/client_ids/sp-hcp-azure-networking-r1-apply
 
 
-  # 4esnok_vs_r2:
-  #   description: "Ring 2 vs.4esnok.su workspaces"
-  #   variable_sets:
-  #     - name: 4esnok_vs_r2-azure
-  #       # Azure dynamic credentials; each workspace's client IDs are its `variables:`
-  #       variables:
-  #         TFC_AZURE_PROVIDER_AUTH: "true"
-  #         ARM_TENANT_ID: 05af71f4-43e2-4c1a-8917-3bf5cb165cfe
-  #   workspaces:
-  #     4esnok_vs_azure_cortex_r2:
-  #       description: "Azure: workload cortex"
-  #       tags: { env: dev, cloud: azure, project: 4esnok.su }
-  #       execution_mode: remote
-  #       auto_apply: true
-  #       vcs:
-  #         repo: alextitov1/azure-landing-zone
-  #         github_app_installation: alextitov1
-  #         working_directory: ESLZ/workloads/cortex/terraform
-  #         trigger_patterns: ["/ESLZ/workloads/cortex/**/*"]
-  #       variables:
-  #         TFC_AZURE_PLAN_CLIENT_ID: tfe://4esnok_vs_entraid_directory_r1/client_ids/sp-hcp-4esnok-su-cortex-t2-plan-r0
-  #         TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_vs_entraid_directory_r1/client_ids/sp-hcp-4esnok-su-cortex-t2-apply-r0
+  4esnok_vs_r2:
+    description: "Ring 2 vs.4esnok.su workspaces"
+    variable_sets:
+      - name: 4esnok_vs_r2-azure
+        # Azure dynamic credentials; each workspace's client IDs are its `variables:`
+        variables:
+          TFC_AZURE_PROVIDER_AUTH: "true"
+          ARM_TENANT_ID: 05af71f4-43e2-4c1a-8917-3bf5cb165cfe
+    workspaces:
+      4esnok_vs_azure_jumpbox_r2:
+        description: "Azure: workload jumpbox (ESLZ/workloads/jumpbox)"
+        tags: { env: dev, cloud: azure, project: 4esnok.su }
+        execution_mode: remote
+        auto_apply: true
+        vcs:
+          repo: alextitov1/azure-landing-zone
+          github_app_installation: alextitov1
+          working_directory: ESLZ/workloads/jumpbox/terraform
+          trigger_patterns: ["/ESLZ/workloads/jumpbox/**/*", "/modules/azure-windows-jumpbox/**/*"]
+        variables:
+          TFC_AZURE_PLAN_CLIENT_ID: tfe://4esnok_vs_entraid_directory_r1/client_ids/sp-hcp-4esnok-su-jumpbox-t2-plan-r0
+          TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_vs_entraid_directory_r1/client_ids/sp-hcp-4esnok-su-jumpbox-t2-apply-r0
+
+      # 4esnok_vs_azure_cortex_r2:
+      #   description: "Azure: workload cortex"
+      #   tags: { env: dev, cloud: azure, project: 4esnok.su }
+      #   execution_mode: remote
+      #   auto_apply: true
+      #   vcs:
+      #     repo: alextitov1/azure-landing-zone
+      #     github_app_installation: alextitov1
+      #     working_directory: ESLZ/workloads/cortex/terraform
+      #     trigger_patterns: ["/ESLZ/workloads/cortex/**/*"]
+      #   variables:
+      #     TFC_AZURE_PLAN_CLIENT_ID: tfe://4esnok_vs_entraid_directory_r1/client_ids/sp-hcp-4esnok-su-cortex-t2-plan-r0
+      #     TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_vs_entraid_directory_r1/client_ids/sp-hcp-4esnok-su-cortex-t2-apply-r0
 
   # 4esnok_mail_r0:
   #   description: "Ring 0 mail.4esnok.su workspaces"

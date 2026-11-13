@@ -28,8 +28,10 @@ hub:
   prefix_length: 22
   subnets:
     GatewaySubnet: 27  # reserved for a VPN gateway
-    snet-shared:       # shared services: the jumpbox (jumpbox below)
+    snet-shared:       # shared services: the jumpbox (ESLZ/workloads/jumpbox)
       prefix_length: 24
+      consumers:
+        - service_principal: sp-hcp-4esnok-su-jumpbox-t2-apply-r0
       # RDP to the jumpbox from your public IP. The repository is public, so the address is published with it.
       # security_rules:
       #   - name: AllowRdpFromAdmin
@@ -81,29 +83,3 @@ private_dns_zones:
   - privatelink.ods.opinsights.azure.com
   - privatelink.agentsvc.azure-automation.net
   - privatelink.blob.core.windows.net          # also Storage blob
-
-# Windows jumpbox in the hub, to reach private endpoints from inside the network (modules/azure-windows-jumpbox).
-# Members of sg-az-jumpbox-admin-t1 sign in with Entra ID (README.md#jumpbox). It has a public IP; RDP needs a rule
-# in its subnet's security_rules above.
-jumpbox:
-  enabled: true
-  tags: { cost: paid }                 # VM, NIC and public IP; destroyed when idle (scripts/README.md)
-  subnet: hub/snet-shared
-  computer_name: jumpbox01             # Windows host name, at most 15 characters; Entra ID sign-in connects to it
-  vm_size: Standard_B2as_v2            # 2 vCPU, 8 GiB, burstable
-  zone: null                           # availability zone "1", "2" or "3"; null: none
-  image:
-    publisher: MicrosoftWindowsServer
-    offer: WindowsServer
-    sku: 2025-datacenter-azure-edition
-    version: latest
-  patch_mode: AutomaticByPlatform      # Azure installs updates; required for Azure Edition (hotpatch) images
-  os_disk:
-    storage_account_type: StandardSSD_LRS
-    size_gb: 128
-  admin_username: azureadmin           # local administrator; the generated password is only in the state
-  shutdown:                            # daily auto-shutdown
-    time: "1900"
-    timezone: New Zealand Standard Time
-  # Installed with Chocolatey at the first boot
-  packages: [azure-cli, kubernetes-cli, azure-kubelogin, git, vscode]

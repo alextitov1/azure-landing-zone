@@ -27,6 +27,7 @@ ws: 4esnok_vs_azure_networking_r1
 
 project: 4esnok_vs_r2
 ws: 4esnok_vs_azure_cortex_r2
+ws: 4esnok_vs_azure_jumpbox_r2
 
 
 [ ] - naming convention for 1Password tokens and Vaults

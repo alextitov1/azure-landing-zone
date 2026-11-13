@@ -1,5 +1,5 @@
 # Windows jumpbox to reach private endpoints from inside the network: Entra ID sign-in, a public IP for RDP and
-# outbound access, tools installed at the first boot, and a daily auto-shutdown.
+# outbound access, and tools installed at the first boot.
 
 # Names: <type>-<workload>-<env>-<region>-<nn>, see ESLZ/README.md
 module "naming" {
@@ -98,14 +98,6 @@ module "virtual_machine" {
       settings = jsonencode({
         commandToExecute = "powershell.exe -ExecutionPolicy Bypass -Command \"Copy-Item C:\\AzureData\\CustomData.bin C:\\AzureData\\bootstrap.ps1 -Force; & C:\\AzureData\\bootstrap.ps1 *> C:\\AzureData\\bootstrap.log\""
       })
-    }
-  }
-
-  shutdown_schedules = {
-    daily = {
-      daily_recurrence_time = var.config.shutdown.time
-      timezone              = var.config.shutdown.timezone
-      notification_settings = { enabled = false }
     }
   }
 }

@@ -51,7 +51,7 @@ goes through that endpoint.
   (`prometheusMetrics`, zone `privatelink.<region>.prometheus.monitor.azure.com`). It isn't created, so Grafana keeps
   querying over the internet; a private-only workspace would need a Grafana managed private endpoint.
 - To query the logs only from inside the network, set `log_analytics.internet_query_enabled: false`: the portal's
-  Logs blade then works from the [jumpbox](../connectivity/README.md#jumpbox), and Grafana's Log Analytics queries
+  Logs blade then works from the [jumpbox](../workloads/jumpbox/README.md), and Grafana's Log Analytics queries
   stop.
 
 An AKS cluster or a VM sends through the scope once a data collection endpoint in its region is in the scope and

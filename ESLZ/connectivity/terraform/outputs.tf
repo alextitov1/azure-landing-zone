@@ -24,13 +24,3 @@ output "private_dns_zone_ids" {
   description = "Private DNS zone IDs by zone name, e.g. \"privatelink.azurecr.io\"."
   value       = module.network.private_dns_zone_ids
 }
-
-output "jumpbox" {
-  description = "The jumpbox's host name (to connect to with Entra ID), public and private IP addresses and local administrator; null when disabled."
-  value = local.jumpbox.enabled ? {
-    computer_name      = module.jumpbox[0].computer_name
-    public_ip_address  = module.jumpbox[0].public_ip_address
-    private_ip_address = module.jumpbox[0].private_ip_address
-    admin_username     = module.jumpbox[0].admin_username
-  } : null
-}
