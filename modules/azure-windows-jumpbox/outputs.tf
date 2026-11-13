@@ -18,6 +18,11 @@ output "public_ip_address" {
   value       = one(values(module.virtual_machine.public_ips)).ip_address
 }
 
+output "fqdn" {
+  description = "Public DNS name of the public IP, when the jumpbox has a DNS record."
+  value       = var.dns_record == null ? null : "${var.dns_record.name}.${var.dns_record.zone_name}"
+}
+
 output "private_ip_address" {
   description = "Private IP address in the subnet."
   value       = one(values(module.virtual_machine.network_interfaces)).private_ip_address

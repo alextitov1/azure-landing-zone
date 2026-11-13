@@ -27,7 +27,7 @@ share their state with the workloads listed in their `remote_state`
 
 | Workspace | Outputs |
 |---|---|
-| `4esnok_vs_azure_networking_r1` | `subnets` (`"<vnet>/<subnet>"` => ID), `reservations` (`"<spoke>/<name>"` => address prefix reserved in IPAM), `vnets`, `private_dns_zone_ids` (zone name => ID), `resource_group_id` |
+| `4esnok_vs_azure_networking_r1` | `subnets` (`"<vnet>/<subnet>"` => ID), `reservations` (`"<spoke>/<name>"` => address prefix reserved in IPAM), `vnets`, `private_dns_zone_ids` (zone name => ID), `public_dns_zones` (zone name => ID, resource group, name servers), `resource_group_id` |
 | `4esnok_vs_azure_mgmt_r1` | `log_analytics_workspace_id`, `azure_monitor_workspace_id`, `private_link_scope_id`, `resource_group_id` |
 
 ## Adding a workload

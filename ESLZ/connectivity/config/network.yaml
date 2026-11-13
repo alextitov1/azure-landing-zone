@@ -83,3 +83,12 @@ private_dns_zones:
   - privatelink.ods.opinsights.azure.com
   - privatelink.agentsvc.azure-automation.net
   - privatelink.blob.core.windows.net          # also Storage blob
+
+# Public DNS zones. A zone resolves publicly once its parent delegates it: NS records at the parent's host, added by
+# hand, with the name servers in the public_dns_zones output (README.md#public-dns-zones).
+public_dns_zones:
+  az.4esnok.su:  # the lab's subdomain; 4esnok.su itself is hosted outside Azure
+    consumers:   # may write the zone's records (DNS Zone Contributor on it)
+      - service_principal: sp-hcp-4esnok-su-jumpbox-t2-apply-r0
+    readers:     # plan identities, which refresh the records they manage (Reader on it)
+      - service_principal: sp-hcp-4esnok-su-jumpbox-t2-plan-r0

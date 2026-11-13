@@ -5,7 +5,7 @@ locals {
   config = yamldecode(file("${path.module}/../config/dev.yaml"))
 }
 
-# Outputs of ESLZ/connectivity: subnets = { "<vnet>/<subnet>" = <subnet ID> }
+# Outputs of ESLZ/connectivity: subnets = { "<vnet>/<subnet>" = <subnet ID> } and public_dns_zones by zone name
 data "tfe_outputs" "connectivity" {
   organization = "4esnok"
   workspace    = "4esnok_vs_azure_networking_r1"
@@ -21,4 +21,11 @@ module "jumpbox" {
   location            = local.config.location
   subnet_id           = data.tfe_outputs.connectivity.nonsensitive_values.subnets[local.config.subnet]
   tags                = try(local.config.tags, null)
+
+  dns_record = try(local.config.dns, null) == null ? null : {
+    name                = local.config.dns.name
+    zone_name           = local.config.dns.zone
+    resource_group_name = data.tfe_outputs.connectivity.nonsensitive_values.public_dns_zones[local.config.dns.zone].resource_group_name
+    ttl                 = local.config.dns.ttl
+  }
 }

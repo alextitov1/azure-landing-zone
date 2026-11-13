@@ -24,3 +24,8 @@ output "private_dns_zone_ids" {
   description = "Private DNS zone IDs by zone name, e.g. \"privatelink.azurecr.io\"."
   value       = module.network.private_dns_zone_ids
 }
+
+output "public_dns_zones" {
+  description = "Public DNS zones by name, e.g. \"az.4esnok.su\": ID, resource group and the name servers to delegate the zone to."
+  value       = module.network.public_dns_zones
+}

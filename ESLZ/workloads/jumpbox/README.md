@@ -15,6 +15,9 @@ Verified Module
 - Windows Server 2025 Datacenter Azure Edition, `Standard_B2as_v2` (2 vCPU, 8 GiB), Trusted Launch, a 128 GiB
   Standard SSD. Azure installs its updates (patch mode `AutomaticByPlatform`).
 - Public IP `pip-jumpbox-dev-nzn-01`, also its route to the internet: new subnets have no default outbound access.
+- DNS name `jumpbox01.az.4esnok.su` (`dns` in the config, the `fqdn` of the `jumpbox` output): an A record for the
+  public IP in the platform's [public zone](../../connectivity/README.md#public-dns-zones). It resolves once that zone
+  is delegated. Entra ID sign-in by this name is untested; the steps below still use the host name.
 - No auto-shutdown: stop it with `az vm deallocate` and start it with `az vm start`, or destroy it when idle
   ([scripts](../../../scripts/README.md)).
 - The first boot installs `packages` with Chocolatey (Azure CLI, kubectl, kubelogin, Git, VS Code by default); the
@@ -34,6 +37,7 @@ Everything else is created by the platform workspaces:
 | Subnet `snet-shared` in `vnet-hub-dev-nzn-01` | `ESLZ/connectivity` | `subnets` output |
 | Join on `snet-shared` for the apply application (subnet `consumers`: Windows 365 Network User) | `ESLZ/connectivity` | |
 | NSG `nsg-hub-shared-dev-nzn-01` and its RDP rule (`security_rules` of the subnet) | `ESLZ/connectivity` | |
+| Public DNS zone `az.4esnok.su`, with DNS Zone Contributor (apply) and Reader (plan) on it (the zone's `consumers` and `readers`) | `ESLZ/connectivity` | `public_dns_zones` output |
 | Group `sg-az-jumpbox-admin-t1` | `entraid` (tenant config) | |
 
 ## Sign in

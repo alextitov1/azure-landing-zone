@@ -21,6 +21,13 @@ resource_group: rg-jumpbox-dev-nzn-01
 # consumer of. RDP needs a rule in that subnet's security_rules.
 subnet: hub/snet-shared
 
+# A record for the public IP, <name>.<zone>, in a public DNS zone of ESLZ/connectivity (config/network.yaml) that
+# lists this pipeline in its consumers and readers
+dns:
+  zone: az.4esnok.su
+  name: jumpbox01
+  ttl: 300  # seconds; short, because a redeployed jumpbox gets a new address
+
 # Windows jumpbox, to reach private endpoints from inside the network (modules/azure-windows-jumpbox).
 # Members of sg-az-jumpbox-admin-t1 sign in with Entra ID (README.md#sign-in).
 jumpbox:

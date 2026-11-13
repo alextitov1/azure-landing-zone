@@ -61,7 +61,7 @@ projects:
           TFC_AZURE_APPLY_CLIENT_ID: tfe://4esnok_vs_entraid_directory_r1/client_ids/sp-prd-az-mgmt-contributor-hcp-workspace-t2
 
       4esnok_vs_azure_networking_r1:
-        description: "Azure: lab hub-and-spoke network, private DNS zones (ESLZ/connectivity)"
+        description: "Azure: lab hub-and-spoke network, private and public DNS zones (ESLZ/connectivity)"
         tags: { env: dev, cloud: azure, project: 4esnok.su }
         execution_mode: remote
         auto_apply: true

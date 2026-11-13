@@ -16,13 +16,16 @@ resource_groups:
       # zone, so the assignment survives the zones being destroyed and recreated by ESLZ/connectivity.
       - role: Private DNS Zone Contributor
         policy_assignment: mg-landingzones/Deploy-PrivateLink-DNS
-      # Only Windows 365 Network User, the role subnet consumers get
+      # Only the roles ESLZ/connectivity gives consumers of its resources: Windows 365 Network User (7eabc9a4, subnets),
+      # DNS Zone Contributor (befefa01) and Reader (acdd72a7) on public DNS zones
       - role: Role Based Access Control Administrator
         service_principal: sp-hcp-azure-networking-r1-apply
         condition: >-
           ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})) OR
           (@Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals
-          {7eabc9a4-85f7-4f71-b8ab-75daaccc1033}))
+          {7eabc9a4-85f7-4f71-b8ab-75daaccc1033, befefa01-2a29-4197-83a8-272ff33ce314,
+          acdd72a7-3385-48ef-bd42-f606fba81ae7}))
           AND ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})) OR
           (@Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals
-          {7eabc9a4-85f7-4f71-b8ab-75daaccc1033}))
+          {7eabc9a4-85f7-4f71-b8ab-75daaccc1033, befefa01-2a29-4197-83a8-272ff33ce314,
+          acdd72a7-3385-48ef-bd42-f606fba81ae7}))

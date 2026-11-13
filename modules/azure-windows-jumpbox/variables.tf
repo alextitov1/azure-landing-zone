@@ -33,6 +33,17 @@ variable "subnet_id" {
   description = "Subnet of the VM's network interface."
 }
 
+variable "dns_record" {
+  type = object({
+    name                = string
+    zone_name           = string
+    resource_group_name = string
+    ttl                 = number
+  })
+  description = "A record for the public IP: its name, and the public DNS zone with its resource group. null: no record."
+  default     = null
+}
+
 variable "tags" {
   type        = map(string)
   description = "Tags of the VM and its resources."

@@ -1,6 +1,6 @@
 # Hub-and-spoke network of ESLZ/connectivity, from its config/network.yaml: VNets and subnets get their address
 # space from Azure Virtual Network Manager IPAM pools (a root pool with a hub pool and a spokes pool below it).
-# Private DNS zones are in dns.tf.
+# Private and public DNS zones are in dns.tf.
 
 locals {
   config            = var.config
@@ -29,7 +29,10 @@ locals {
   nsg_subnets = merge([
     for vnet, subnets in local.subnets : { for name, s in subnets : "${vnet}/${name}" => s if s.nsg_workload != null }
   ]...)
-  consumers = flatten([for subnets in values(local.subnets) : [for s in values(subnets) : s.consumers]])
+  consumers = concat(
+    flatten([for subnets in values(local.subnets) : [for s in values(subnets) : s.consumers]]),
+    flatten([for z in values(local.public_dns_zones) : concat(z.consumers, z.readers)]),
+  )
 
   # Windows 365 Network User: the narrowest built-in role with Microsoft.Network/virtualNetworks/subnets/join/action
   # (virtualNetworks/read, subnets/read, usages/read and subnets/join/action, nothing else). Connectivity cannot
@@ -169,7 +172,7 @@ module "nsg" {
   }
 }
 
-# Principals named in subnet consumers, as in ESLZ/governance/subscriptions: group (display name), user (user
+# Principals named in subnet consumers and in public DNS zone consumers and readers, as in ESLZ/governance/subscriptions: group (display name), user (user
 # principal name) or service_principal (display name). principal_id with principal_type skips the lookup.
 data "azuread_group" "this" {
   for_each = toset([for c in local.consumers : c.group if try(c.group, null) != null])

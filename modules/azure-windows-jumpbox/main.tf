@@ -17,6 +17,17 @@ locals {
   names = module.naming.names
 }
 
+# In the platform's zone, which this pipeline may write as one of the zone's consumers (ESLZ/connectivity)
+resource "azurerm_dns_a_record" "this" {
+  count = var.dns_record == null ? 0 : 1
+
+  name                = var.dns_record.name
+  zone_name           = var.dns_record.zone_name
+  resource_group_name = var.dns_record.resource_group_name
+  ttl                 = var.dns_record.ttl
+  records             = [one(values(module.virtual_machine.public_ips)).ip_address]
+}
+
 module "virtual_machine" {
   source  = "Azure/avm-res-compute-virtualmachine/azurerm"
   version = "0.21.0"

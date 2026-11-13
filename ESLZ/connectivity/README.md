@@ -13,16 +13,18 @@ workspace `4esnok_vs_azure_networking_r1`.
 - Reservations: ranges a spoke uses outside its VNet, such as the service CIDR of the cortex AKS cluster. They are
   IPAM static CIDRs in the spokes pool, so no VNet is ever allocated an overlapping range.
 - Private DNS zones for private endpoints, linked to the hub and every spoke (see below).
+- Public DNS zone `az.4esnok.su`, where workloads create their records (see below).
 
 The workspace signs in as `sp-hcp-azure-networking-r1-plan` and `sp-hcp-azure-networking-r1-apply`, created by
 [entraid](../../entraid/README.md). [Subscription vending](../governance/README.md#subscriptions) gives the plan
 application Reader on the resource group. The apply application gets Contributor on the resource group, may assign
-Windows 365 Network User there (see below), and gets Network Contributor on the subscription: the scope of the
+Windows 365 Network User, DNS Zone Contributor and Reader there (see below), and gets Network Contributor on the
+subscription: the scope of the
 network manager is the subscription, and Azure creates a network manager only for a caller that can write virtual
 networks across its scope.
 
 Configuration: `config/network.yaml`. Terraform: `terraform/`, which calls `modules/azure-connectivity`. Workloads
-read the `subnets`, `reservations` and `private_dns_zone_ids` outputs.
+read the `subnets`, `reservations`, `private_dns_zone_ids` and `public_dns_zones` outputs.
 
 **Add a spoke:** add an entry under `spokes:` with its prefix length and subnets, and `reservations` if it needs
 address space outside its VNet.
@@ -75,6 +77,20 @@ DNS zones" policy for it to the `Deploy-PrivateLink-DNS` initiative, and its zon
 `policy_assign_permissions_unset` in `ESLZ/governance/config.yaml`. The policy's managed identity has Private DNS Zone
 Contributor on the resource group, not on each zone, so either workspace can be applied or destroyed first. A private
 endpoint created while its zone is missing gets no record until the policy is remediated.
+
+## Public DNS zones
+
+`public_dns_zones` in the config lists the zones. `az.4esnok.su` is the lab's subdomain; `4esnok.su` itself is hosted
+outside Azure and isn't managed here.
+
+- **Delegation is manual.** A zone answers publicly only once its parent delegates it: add `NS` records for the
+  subdomain (`az`) at the parent's DNS host, with the `name_servers` of the `public_dns_zones` output. Azure assigns
+  the name servers when the zone is created, so a destroyed and recreated zone can need new records. Before the
+  delegation, query a name server directly: `dig @<name server> <name>`.
+- **Records belong to the workloads.** A zone's `consumers` get **DNS Zone Contributor** on it and create their own
+  records; `readers` get **Reader**, for plan identities, which refresh those records. Both are named like subnet
+  consumers. A consumer can write any record of the zone.
+- $0.50 a month per zone, so not tagged `cost: paid`.
 
 Not here yet: a DNS Private Resolver in the hub, with zones linked to the hub only. It's CAF's design once
 on-premises networks or VPN clients need these names; each endpoint is $180 a month.
