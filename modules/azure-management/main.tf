@@ -1,6 +1,6 @@
 # Platform management of ESLZ/management, from its config/management.yaml: the central Log Analytics workspace, the
 # one workspace for platform and workload logs (ESLZ/management_design.md). Prometheus and Grafana are in
-# observability.tf, the Azure Monitor private link scope in private_link.tf.
+# observability.tf, OTLP ingestion in otlp.tf, the Azure Monitor private link scope in private_link.tf.
 
 locals {
   config            = var.config

@@ -1,6 +1,6 @@
 # Azure Monitor private link scope (AMPLS), from the private_link section of the config: the Log Analytics workspace
-# and the Azure Monitor workspace's data collection endpoint (Prometheus ingestion), behind one private endpoint in
-# the hub. Microsoft recommends a single AMPLS on the hub of a hub-and-spoke network: the Azure Monitor private DNS
+# the Azure Monitor workspace's data collection endpoint (Prometheus ingestion) and the OTLP data collection endpoint
+# (otlp.tf), behind one private endpoint in the hub. Microsoft recommends a single AMPLS on the hub of a hub-and-spoke network: the Azure Monitor private DNS
 # zones are shared, so every VNet linked to them reaches Azure Monitor through this endpoint.
 
 locals {
@@ -36,6 +36,17 @@ resource "azurerm_monitor_private_link_scoped_service" "prometheus" {
   linked_resource_id  = azurerm_monitor_workspace.prometheus[0].default_data_collection_endpoint_id
 }
 
+# The OTLP endpoint stays public as well when otlp.public_network_access is on; in the scope, the linked VNets reach
+# it privately
+resource "azurerm_monitor_private_link_scoped_service" "otlp" {
+  count = local.private_link.enabled && local.otlp.enabled ? 1 : 0
+
+  name                = module.otlp_endpoint[0].name
+  resource_group_name = local.config.resource_group
+  scope_name          = azurerm_monitor_private_link_scope.this[0].name
+  linked_resource_id  = module.otlp_endpoint[0].resource_id
+}
+
 # No DNS zone group: Azure Policy adds one that writes the records into the central zones (Deploy-PrivateLink-DNS in
 # ESLZ/governance), so this pipeline needs no rights on them. The module doesn't manage zone groups it wasn't given.
 module "private_endpoint" {
@@ -57,5 +68,6 @@ module "private_endpoint" {
   depends_on = [
     azurerm_monitor_private_link_scoped_service.log_analytics,
     azurerm_monitor_private_link_scoped_service.prometheus,
+    azurerm_monitor_private_link_scoped_service.otlp,
   ]
 }

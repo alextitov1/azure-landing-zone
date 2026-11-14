@@ -1,5 +1,5 @@
 # Platform management, from ../config/management.yaml (README.md): the central Log Analytics workspace, managed
-# Prometheus, Managed Grafana and the Azure Monitor private link scope (ESLZ/management_design.md).
+# Prometheus, Managed Grafana, OTLP ingestion and the Azure Monitor private link scope (ESLZ/management_design.md).
 
 locals {
   config       = yamldecode(file("${path.module}/../config/management.yaml"))

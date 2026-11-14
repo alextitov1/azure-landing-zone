@@ -6,6 +6,11 @@ variable "config" {
     condition     = !try(var.config.grafana.enabled, false) || try(var.config.grafana.identity, null) != null
     error_message = "grafana.identity is required: the user-assigned identity that subscription vending creates for Grafana."
   }
+
+  validation {
+    condition     = !try(var.config.otlp.enabled, false) || try(var.config.prometheus.enabled, false)
+    error_message = "otlp is enabled, so prometheus.enabled is required: OTLP metrics go to the Azure Monitor workspace."
+  }
 }
 
 variable "private_endpoint_subnet_id" {

@@ -1,5 +1,5 @@
-# Platform management: the central Log Analytics workspace, managed Prometheus, Managed Grafana and the Azure
-# Monitor private link scope (ESLZ/management_design.md).
+# Platform management: the central Log Analytics workspace, managed Prometheus, Managed Grafana, OTLP ingestion and
+# the Azure Monitor private link scope (ESLZ/management_design.md).
 subscription_id: 44b9d159-d353-477f-b94f-5ce0f3bd33f1
 location: newzealandnorth
 
@@ -64,8 +64,17 @@ grafana:
   tags: { cost: paid }                   # destroyed when idle (scripts/README.md)
   # timeouts: { create: 30m, read: 5m, update: 30m, delete: 30m }
 
-# Azure Monitor private link scope (AMPLS): the Log Analytics workspace and the Azure Monitor workspace's data
-# collection endpoint, reached through one private endpoint in the hub. Every VNet linked to the Azure Monitor
+# OTLP ingestion: a data collection endpoint and a data collection rule that takes OpenTelemetry logs and traces to
+# the Log Analytics workspace and metrics to the Azure Monitor workspace, so it needs prometheus above. Senders sign
+# in with Entra ID as members of sg-az-otlp-publisher-t2 (README.md#otlp).
+otlp:
+  enabled: true
+  public_network_access: true            # false: senders only from VNets linked to the private link scope
+  metrics_stream: Custom-Metrics-Otel    # part of the metrics URL; starts with Custom-Metrics- and a letter
+  # tags: {}
+
+# Azure Monitor private link scope (AMPLS): the Log Analytics workspace, the Azure Monitor workspace's data
+# collection endpoint and the OTLP one, reached through one private endpoint in the hub. Every VNet linked to the Azure Monitor
 # private DNS zones (ESLZ/connectivity) then sends and queries through it. Azure Policy writes the endpoint's DNS
 # records (Deploy-PrivateLink-DNS, ESLZ/governance).
 private_link:

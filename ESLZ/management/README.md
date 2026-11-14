@@ -16,10 +16,12 @@ The central Log Analytics workspace in `newzealandnorth`, applied by the HCP Ter
   `id-grafana-mgmt-dev-nzn-01` has Monitoring Reader on the subscription and Monitoring Data Reader on the resource
   group, so Prometheus, Azure Monitor metrics and Log Analytics are data sources. Users get Grafana Admin
   (`sg-az-mg4esnok-contributor-t1`) or Grafana Viewer (`sg-az-mg4esnok-reader-t1`).
+- OTLP ingestion: data collection endpoint `dce-mgmt-dev-nzn-01` and data collection rule `dcr-otlp-dev-nzn-01`
+  (`otlp.enabled`), see [OTLP](#otlp).
 - Azure Monitor private link scope `ampls-mgmt-dev-nzn-01` (`private_link.enabled`), see below.
 
 Subscription vending (`ESLZ/governance/subscriptions/platform-management.yaml`) creates the resource group, Grafana's
-identity and all the role assignments above, because this pipeline can't assign roles.
+identity and all the role assignments here, because this pipeline can't assign roles.
 
 The workspace signs in as `sp-prd-az-mgmt-contributor-hcp-workspace-t2`, created by
 [entraid](../../entraid/README.md). Through the group `sg-az-mgmt-contributor-t2`, it has Contributor on its resource
@@ -29,7 +31,34 @@ diagnostic settings and data collection rules in every landing zone.
 
 Configuration: `config/management.yaml`. Terraform: `terraform/`, which calls `modules/azure-management`. Workloads
 read the `log_analytics_workspace_id`, `azure_monitor_workspace_id` and `private_link_scope_id` outputs;
-`grafana_endpoint` is the Grafana URL.
+`grafana_endpoint` is the Grafana URL and `otlp_endpoints` the OTLP URLs.
+
+## OTLP
+
+Azure Monitor takes OpenTelemetry signals over OTLP
+([Ingest OTLP data into Azure Monitor](https://learn.microsoft.com/azure/azure-monitor/containers/opentelemetry-protocol-ingestion)).
+An application sends to the data collection endpoint; the data collection rule routes what arrives:
+
+- Logs and traces go to the Log Analytics workspace, in its OpenTelemetry tables.
+- Metrics go to the Azure Monitor workspace, so PromQL and Grafana read them. That is why `otlp` needs
+  `prometheus.enabled`.
+- There is no Application Insights resource, so the Application Insights views in the portal stay empty.
+
+The `otlp_endpoints` output has the URLs for the traces, logs and metrics exporters, over HTTP (`http/protobuf`).
+The metrics URL contains `otlp.metrics_stream`.
+
+Senders sign in with Entra ID, with a token for `https://monitor.azure.com/.default`. Members of
+`sg-az-otlp-publisher-t2` ([entraid](../../entraid/README.md)) have Monitoring Metrics Publisher on the resource
+group, where this rule is the only one. Microsoft documents the OpenTelemetry Collector with its `azure_auth`
+extension as the sender; an OpenTelemetry SDK's own OTLP exporter doesn't add the token.
+
+The endpoint is public (`otlp.public_network_access`) and also in the private link scope, so it is reached from the
+internet and, privately, from the VNets. The Log Analytics workspace takes ingestion through the scope only
+(`log_analytics.internet_ingestion_enabled`); if logs and traces sent over the internet don't arrive, that setting
+is the first thing to check.
+
+**Let someone send:** add the user, service principal or managed identity to `sg-az-otlp-publisher-t2` in
+`entraid/tenants/4esnok_vs/config.yaml`.
 
 ## Private link
 
@@ -38,8 +67,8 @@ reaches every resource in the scope. Microsoft recommends a single scope on the 
 because the Azure Monitor DNS zones are shared: once a VNet resolves them privately, all of its Azure Monitor traffic
 goes through that endpoint.
 
-- In the scope: the Log Analytics workspace, and the data collection endpoint that Azure created with the Azure
-  Monitor workspace, through which managed Prometheus ingests.
+- In the scope: the Log Analytics workspace, the data collection endpoint that Azure created with the Azure
+  Monitor workspace, through which managed Prometheus ingests, and the [OTLP](#otlp) data collection endpoint.
 - Private endpoint `pep-ampls-mgmt-dev-nzn-01` in the hub subnet `snet-privatelink`
   ([connectivity](../connectivity/README.md); this workspace is a consumer of the subnet). Every VNet linked to the
   Azure Monitor private DNS zones, the hub and all spokes, reaches the scope through it.
