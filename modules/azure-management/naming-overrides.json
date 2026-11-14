@@ -9,6 +9,14 @@
       "override_reason": "The catalog drops the dashes for Managed Grafana, which allows them; keep <type>-<workload>-<env>-<region>-<nn>.",
       "override_source": "ESLZ/README.md"
     },
+    "component": {
+      "dashes": true,
+      "min_length": 1,
+      "max_length": 255,
+      "scope": "resource group",
+      "override_reason": "The catalog drops the dashes for Application Insights, which allows them; keep <type>-<workload>-<env>-<region>-<nn>.",
+      "override_source": "ESLZ/README.md"
+    },
     "data_collection_endpoint": {
       "dashes": true,
       "min_length": 3,

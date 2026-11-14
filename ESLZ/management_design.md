@@ -18,7 +18,7 @@ The management components that CAF and Azure Landing Zones (ALZ) expect, and whe
 | Microsoft Defender for Cloud | Plans enabled per subscription by policy, connected to the central workspace | Not started |
 | Microsoft Sentinel | Optional SIEM on the central workspace | Not started |
 | Metrics and dashboards | Managed Prometheus (Azure Monitor workspace) and Azure Managed Grafana | Done: `amw-mgmt-dev-nzn-01`, `amg-mgmt-dev-aue-01` with the user-assigned identity `id-grafana-mgmt-dev-nzn-01` ([ESLZ/management](./management/README.md#cost)) |
-| Application telemetry | OpenTelemetry signals from applications, in the platform's workspaces or a workload's own | Done: OTLP ingestion through `dce-mgmt-dev-nzn-01` and `dcr-otlp-dev-nzn-01`, without Application Insights ([OTLP](./management/README.md#otlp)) |
+| Application telemetry | OpenTelemetry signals from applications, in the platform's workspaces or a workload's own | Done: OTLP ingestion through `dce-mgmt-dev-nzn-01` and `dcr-otlp-dev-nzn-01`, with Application Insights `appi-otlp-dev-nzn-01` on top ([OTLP](./management/README.md#otlp)) |
 | Alerting | Azure Monitor Baseline Alerts (AMBA), Service Health alerts, action groups | Not started |
 | Update and change management | Azure Update Manager, Change Tracking through AMA | Not started |
 | Backup and recovery | Recovery Services or Backup vaults, backup policy | Not started |
