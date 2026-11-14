@@ -1,11 +1,16 @@
 # OTLP ingestion, from the otlp section of the config: a data collection endpoint that receives OpenTelemetry
 # signals, and a data collection rule that routes logs and traces to the Log Analytics workspace and metrics to the
-# Azure Monitor workspace. The rule follows Microsoft's template for direct OTLP ingestion, without its Application
-# Insights reference:
+# Azure Monitor workspace. The rule follows Microsoft's template for direct OTLP ingestion; its Application Insights
+# resource is optional (otlp.application_insights):
 # https://learn.microsoft.com/azure/azure-monitor/containers/opentelemetry-protocol-ingestion
 
 locals {
   otlp = try(local.config.otlp, { enabled = false })
+
+  otlp_application_insights         = try(local.otlp.application_insights, { enabled = false })
+  otlp_application_insights_enabled = local.otlp.enabled && local.otlp_application_insights.enabled
+  # The rule's alias for the Application Insights resource; null leaves the telemetry unlinked
+  otlp_reference = local.otlp_application_insights_enabled ? "applicationInsights" : null
 
   # Azure Monitor defines the log and trace streams; only the metrics stream is named by the rule's owner
   otlp_log_streams = ["Microsoft-OTel-Logs"]
@@ -51,6 +56,23 @@ module "otlp_endpoint" {
   enable_telemetry      = false
 }
 
+# Stores nothing itself: the rule stamps the telemetry with this resource, which is what its portal views (search,
+# application map, failures) read from the workspace. Senders still use the OTLP endpoints, not its connection string.
+module "otlp_application_insights" {
+  source  = "Azure/avm-res-insights-component/azurerm"
+  version = "0.5.0"
+  count   = local.otlp_application_insights_enabled ? 1 : 0
+
+  name                          = module.naming_otlp[0].names.component.name
+  parent_id                     = local.resource_group_id
+  location                      = local.location
+  workspace_id                  = module.log_analytics.resource_id
+  daily_data_cap_in_gb          = local.otlp_application_insights.daily_data_cap_in_gb
+  local_authentication_disabled = local.otlp_application_insights.local_authentication_disabled
+  tags                          = try(local.otlp.tags, null)
+  enable_telemetry              = false
+}
+
 module "otlp_rule" {
   source  = "Azure/avm-res-insights-datacollectionrule/azurerm"
   version = "0.1.0"
@@ -64,21 +86,34 @@ module "otlp_rule" {
   tags                        = try(local.otlp.tags, null)
   enable_telemetry            = false
 
+  references = local.otlp_application_insights_enabled ? {
+    application_insights = [{
+      name        = local.otlp_reference
+      resource_id = module.otlp_application_insights[0].resource_id
+    }]
+  } : null
+
+  # replace_resource_id_with_reference is always set: left out, the module sends null, which the API rejects
   direct_data_sources = {
     otel_logs = [{
-      name                            = "otelLogs"
-      streams                         = local.otlp_log_streams
-      enrich_with_resource_attributes = ["*"]
+      name                               = "otelLogs"
+      streams                            = local.otlp_log_streams
+      enrich_with_resource_attributes    = ["*"]
+      enrich_with_reference              = local.otlp_reference
+      replace_resource_id_with_reference = local.otlp_application_insights_enabled
     }]
     otel_traces = [{
-      name                            = "otelTraces"
-      streams                         = local.otlp_trace_streams
-      enrich_with_resource_attributes = ["*"]
+      name                               = "otelTraces"
+      streams                            = local.otlp_trace_streams
+      enrich_with_resource_attributes    = ["*"]
+      enrich_with_reference              = local.otlp_reference
+      replace_resource_id_with_reference = local.otlp_application_insights_enabled
     }]
     otel_metrics = [{
       name                            = "otelMetrics"
       streams                         = [local.otlp.metrics_stream]
       enrich_with_resource_attributes = ["*"]
+      enrich_with_reference           = local.otlp_reference
     }]
   }
 

@@ -34,6 +34,11 @@ output "otlp_data_collection_rule_id" {
   value       = one(module.otlp_rule[*].resource_id)
 }
 
+output "otlp_application_insights_id" {
+  description = "Resource ID of the Application Insights resource the OTLP telemetry is linked to; null when disabled."
+  value       = one(module.otlp_application_insights[*].resource_id)
+}
+
 output "private_link_scope_id" {
   description = "Resource ID of the Azure Monitor private link scope; null when disabled."
   value       = try(azurerm_monitor_private_link_scope.this[0].id, null)

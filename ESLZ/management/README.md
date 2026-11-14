@@ -16,8 +16,8 @@ The central Log Analytics workspace in `newzealandnorth`, applied by the HCP Ter
   `id-grafana-mgmt-dev-nzn-01` has Monitoring Reader on the subscription and Monitoring Data Reader on the resource
   group, so Prometheus, Azure Monitor metrics and Log Analytics are data sources. Users get Grafana Admin
   (`sg-az-mg4esnok-contributor-t1`) or Grafana Viewer (`sg-az-mg4esnok-reader-t1`).
-- OTLP ingestion: data collection endpoint `dce-mgmt-dev-nzn-01` and data collection rule `dcr-otlp-dev-nzn-01`
-  (`otlp.enabled`), see [OTLP](#otlp).
+- OTLP ingestion: data collection endpoint `dce-mgmt-dev-nzn-01`, data collection rule `dcr-otlp-dev-nzn-01` and
+  Application Insights `appi-otlp-dev-nzn-01` (`otlp.enabled`), see [OTLP](#otlp).
 - Azure Monitor private link scope `ampls-mgmt-dev-nzn-01` (`private_link.enabled`), see below.
 
 Subscription vending (`ESLZ/governance/subscriptions/platform-management.yaml`) creates the resource group, Grafana's
@@ -31,7 +31,8 @@ diagnostic settings and data collection rules in every landing zone.
 
 Configuration: `config/management.yaml`. Terraform: `terraform/`, which calls `modules/azure-management`. Workloads
 read the `log_analytics_workspace_id`, `azure_monitor_workspace_id` and `private_link_scope_id` outputs;
-`grafana_endpoint` is the Grafana URL and `otlp_endpoints` the OTLP URLs.
+`grafana_endpoint` is the Grafana URL, `otlp_endpoints` the OTLP URLs and `otlp_application_insights_id` the
+Application Insights resource.
 
 ## OTLP
 
@@ -42,7 +43,10 @@ An application sends to the data collection endpoint; the data collection rule r
 - Logs and traces go to the Log Analytics workspace, in its OpenTelemetry tables.
 - Metrics go to the Azure Monitor workspace, so PromQL and Grafana read them. That is why `otlp` needs
   `prometheus.enabled`.
-- There is no Application Insights resource, so the Application Insights views in the portal stay empty.
+- Application Insights `appi-otlp-dev-nzn-01` (`otlp.application_insights.enabled`) stores nothing itself: the rule
+  links the logs, traces and metrics to it, and its portal views (search, application map, failures) read them from
+  the workspaces. It has no cost of its own; the data is billed once, as ingestion into the workspaces. Senders
+  still use the OTLP URLs, not its connection string. Its views expect metrics with delta temporality.
 
 The `otlp_endpoints` output has the URLs for the traces, logs and metrics exporters, over HTTP (`http/protobuf`).
 The metrics URL contains `otlp.metrics_stream`.

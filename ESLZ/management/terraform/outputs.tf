@@ -35,6 +35,11 @@ output "otlp_data_collection_rule_id" {
   value       = module.management.otlp_data_collection_rule_id
 }
 
+output "otlp_application_insights_id" {
+  description = "Resource ID of the Application Insights resource the OTLP telemetry is linked to; null when disabled."
+  value       = module.management.otlp_application_insights_id
+}
+
 output "private_link_scope_id" {
   description = "Resource ID of the Azure Monitor private link scope, for data collection endpoints that must join it; null when disabled."
   value       = module.management.private_link_scope_id

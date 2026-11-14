@@ -71,6 +71,12 @@ otlp:
   enabled: true
   public_network_access: true            # false: senders only from VNets linked to the private link scope
   metrics_stream: Custom-Metrics-Otel    # part of the metrics URL; starts with Custom-Metrics- and a letter
+  # Application Insights on top of the same data: the rule links the telemetry to it, for the portal's application
+  # views. No cost of its own: the data is stored and billed once, in the Log Analytics workspace.
+  application_insights:
+    enabled: true
+    daily_data_cap_in_gb: 1              # module default 100; matches log_analytics.daily_quota_gb
+    local_authentication_disabled: true  # no instrumentation key: Entra ID only, as the workspace
   # tags: {}
 
 # Azure Monitor private link scope (AMPLS): the Log Analytics workspace, the Azure Monitor workspace's data
