@@ -25,6 +25,16 @@ output "grafana_endpoint" {
   value       = module.management.grafana_endpoint
 }
 
+output "otlp_endpoints" {
+  description = "OTLP URLs for the traces, logs and metrics exporters; null when disabled."
+  value       = module.management.otlp_endpoints
+}
+
+output "otlp_data_collection_rule_id" {
+  description = "Resource ID of the OTLP data collection rule, the scope of a sender's Monitoring Metrics Publisher role; null when disabled."
+  value       = module.management.otlp_data_collection_rule_id
+}
+
 output "private_link_scope_id" {
   description = "Resource ID of the Azure Monitor private link scope, for data collection endpoints that must join it; null when disabled."
   value       = module.management.private_link_scope_id

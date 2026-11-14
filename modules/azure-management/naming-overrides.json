@@ -9,6 +9,22 @@
       "override_reason": "The catalog drops the dashes for Managed Grafana, which allows them; keep <type>-<workload>-<env>-<region>-<nn>.",
       "override_source": "ESLZ/README.md"
     },
+    "data_collection_endpoint": {
+      "dashes": true,
+      "min_length": 3,
+      "max_length": 44,
+      "scope": "resource group",
+      "override_reason": "The catalog drops the dashes for data collection endpoints, which allow them; keep <type>-<workload>-<env>-<region>-<nn>.",
+      "override_source": "ESLZ/README.md"
+    },
+    "data_collection_rule": {
+      "dashes": true,
+      "min_length": 3,
+      "max_length": 64,
+      "scope": "resource group",
+      "override_reason": "The catalog drops the dashes for data collection rules, which allow them; keep <type>-<workload>-<env>-<region>-<nn>.",
+      "override_source": "ESLZ/README.md"
+    },
     "monitor_private_link_scope": {
       "resource_type": "Microsoft.Insights/privateLinkScopes",
       "slug": "ampls",

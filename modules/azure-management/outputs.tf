@@ -24,6 +24,16 @@ output "grafana_endpoint" {
   value       = try(azurerm_dashboard_grafana.this[0].endpoint, null)
 }
 
+output "otlp_endpoints" {
+  description = "OTLP URLs for the traces, logs and metrics exporters; null when disabled."
+  value       = local.otlp_endpoints
+}
+
+output "otlp_data_collection_rule_id" {
+  description = "Resource ID of the OTLP data collection rule, the scope of a sender's Monitoring Metrics Publisher role; null when disabled."
+  value       = one(module.otlp_rule[*].resource_id)
+}
+
 output "private_link_scope_id" {
   description = "Resource ID of the Azure Monitor private link scope; null when disabled."
   value       = try(azurerm_monitor_private_link_scope.this[0].id, null)
